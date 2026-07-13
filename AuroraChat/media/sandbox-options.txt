@@ -1,0 +1,190 @@
+VERSION = 1,
+
+option AuroraChat.EnablePM
+{
+  type = boolean,
+  default = true,
+
+  page = AuroraChat,
+  translation = AuroraChat.EnablePM,
+}
+
+option AuroraChat.EnableOOC
+{
+  type = boolean,
+  default = true,
+
+  page = AuroraChat,
+  translation = AuroraChat.EnableOOC,
+}
+
+option AuroraChat.EnableAll
+{
+  type = boolean,
+  default = true,
+
+  page = AuroraChat,
+  translation = AuroraChat.EnableAll,
+}
+
+option AuroraChat.EnablePrivate
+{
+  type = boolean,
+  default = true,
+
+  page = AuroraChat,
+  translation = AuroraChat.EnablePrivate,
+}
+
+option AuroraChat.EnableBuffs
+{
+  type = boolean,
+  default = true,
+
+  page = AuroraChat,
+  translation = AuroraChat.EnableBuffs,
+}
+
+option AuroraChat.RangeXYWhisper
+{
+  type = integer, min = 0, max = 100,
+  default = 1,
+
+  page = AuroraChat,
+  translation = AuroraChat.RangeXYWhisper,
+}
+
+option AuroraChat.RangeZWhisper
+{
+  type = integer, min = 0, max = 7,
+  default = 0,
+
+  page = AuroraChat,
+  translation = AuroraChat.RangeZWhisper,
+}
+
+option AuroraChat.RangeXYLow
+{
+  type = integer, min = 0, max = 100,
+  default = 5,
+
+  page = AuroraChat,
+  translation = AuroraChat.RangeXYLow,
+}
+
+option AuroraChat.RangeZLow
+{
+  type = integer, min = 0, max = 7,
+  default = 0,
+
+  page = AuroraChat,
+  translation = AuroraChat.RangeZLow,
+}
+
+option AuroraChat.RangeXYSay
+{
+  type = integer, min = 0, max = 100,
+  default = 10,
+
+  page = AuroraChat,
+  translation = AuroraChat.RangeXYSay,
+}
+
+option AuroraChat.RangeZSay
+{
+  type = integer, min = 0, max = 7,
+  default = 1,
+
+  page = AuroraChat,
+  translation = AuroraChat.RangeZSay,
+}
+
+option AuroraChat.RangeXYLoud
+{
+  type = integer, min = 0, max = 100,
+  default = 30,
+
+  page = AuroraChat,
+  translation = AuroraChat.RangeXYLoud,
+}
+
+option AuroraChat.RangeZLoud
+{
+  type = integer, min = 0, max = 7,
+  default = 4,
+
+  page = AuroraChat,
+  translation = AuroraChat.RangeZLoud,
+}
+
+option AuroraChat.RangeXYShout
+{
+  type = integer, min = 0, max = 100,
+  default = 50,
+
+  page = AuroraChat,
+  translation = AuroraChat.RangeXYShout,
+}
+
+option AuroraChat.RangeZShout
+{
+  type = integer, min = 0, max = 7,
+  default = 7,
+
+  page = AuroraChat,
+  translation = AuroraChat.RangeZShout,
+}
+
+option AuroraChat.EnableHardOfHearing
+{
+  type = boolean,
+  default = false,
+
+  page = AuroraChat,
+  translation = AuroraChat.EnableHardOfHearing,
+}
+
+option AuroraChat.EnableDeaf
+{
+  type = boolean,
+  default = false,
+
+  page = AuroraChat,
+  translation = AuroraChat.EnableDeaf,
+}
+
+option AuroraChat.AllowPlayerCoords
+{
+  type = boolean,
+  default = true,
+
+  page = AuroraChat,
+  translation = AuroraChat.AllowPlayerCoords,
+}
+
+option AuroraChat.EnableModCharacter
+{
+  type = boolean,
+  default = true,
+
+  page = AuroraChat,
+  translation = AuroraChat.EnableModCharacter,
+}
+
+option AuroraChat.EnableSelfInjury
+{
+  type = boolean,
+  default = true,
+
+  page = AuroraChat,
+  translation = AuroraChat.EnableSelfInjury,
+}
+
+option AuroraChat.EnableAutoCleanup
+{
+  type = boolean,
+  default = true,
+
+  page = AuroraChat,
+  translation = AuroraChat.EnableAutoCleanup,
+}
