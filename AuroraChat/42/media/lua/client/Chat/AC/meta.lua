@@ -560,7 +560,6 @@ function AC.Meta.CreateCharacterContext(context, myPlayer)
 
     if SandboxVars.AuroraChat.EnableModCharacter then
         characterContext:addOption("Set Name", nil, AC.MakeShowDialogPrompt("Input your new name", AC.Commands.SetName))
-        characterContext:addOption("Set Name Color", nil, AC.MakeColorDialogPrompt("New Name Color (blank for default)", AC.Commands.SetColor))
         characterContext:addOption("Grow Hair", nil, AC.Commands.GrowHair)
         characterContext:addOption("Set Hair Color", nil, AC.MakeColorDialogPrompt("Set Hair Color", AC.Commands.SetHairColor))
         if not myPlayer:isFemale() then
@@ -607,7 +606,13 @@ function AC.Meta.CreateChatSettingsContext(context)
     local chatColorsContext = chatSettingsContext:getNew(chatSettingsContext)
     chatSettingsContext:addSubMenu(chatColorsOption, chatColorsContext)
 
+    chatColorsContext:addOption("Set Name Color", nil, AC.MakeColorDialogPrompt("New Name Color (blank for default)", AC.Commands.SetColor))
     chatColorsContext:addOption("Set Speech Color", nil, AC.MakeColorDialogPrompt("New Speech Color (blank for default)", AC.Commands.SetSayColor))
+    local function resetColors()
+        AC.Commands.SetColor("")
+        AC.Commands.SetSayColor("")
+    end
+    chatColorsContext:addOption("Reset Colors", nil, resetColors)
     -- chatColorsContext:addOption("Set Emote Color", nil, AC.MakeColorDialogPrompt("New Emote Color (blank for default)", AC.Commands.SetEmoteColor))
     -- chatColorsContext:addOption("Set Do Color", nil, AC.MakeColorDialogPrompt("New Do Color (blank for default)", AC.Commands.SetDoColor))
     -- chatColorsContext:addOption("Set OOC Color", nil, AC.MakeColorDialogPrompt("New OOC Color (blank for default)", AC.Commands.SetOocColor))
