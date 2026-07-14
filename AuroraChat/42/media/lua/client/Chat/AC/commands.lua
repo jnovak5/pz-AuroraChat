@@ -595,6 +595,9 @@ function AC.Commands.Injure(args)
         AC_Utils.addErrorToChat("Invalid injury. Use /injure bodypart injury")
         return
     end
+    if isClient() then
+        syncBodyPart(bodyPart, 0xFFFFFFFFFFF)
+    end
     AC_Utils.addInfoToChat("<RGB:1.0,0.0,0.0>Injury applied!")
 end
 
