@@ -225,10 +225,13 @@ function GroundHightlighter:tryHighlightWorldSquare(sq, enabled)
     for i = 0, objs:size() - 1 do
         local obj = objs:get(i)
         if obj:isFloor() or self.xray or not enabled then
-            obj:setHighlighted(enabled, false)
+            obj:setHighlighted(0, enabled, false)
+            obj:setOutlineHighlight(0, enabled)
             if enabled then
                 if not self.colorInfo then self.colorInfo = ColorInfo.new(self.color.r, self.color.g, self.color.b, self.color.a) end
-                obj:setHighlightColor(self.colorInfo)
+                obj:setHighlightColor(0, self.colorInfo)
+                obj:setCustomColor(self.colorInfo)
+                obj:setOutlineHighlightCol(0, self.colorInfo)
             end
         end
     end
@@ -256,11 +259,7 @@ function GroundHightlighter:setColor(r, g, b, a)
     self.color.g = g
     self.color.b = b
     self.color.a = a or 1.0
-    if not self.colorInfo then 
-        self.colorInfo = ColorInfo.new(r, g, b, self.color.a) 
-    else 
-        self.colorInfo:set(r, g, b, self.color.a) 
-    end
+    self.colorInfo = ColorInfo.new(r, g, b, self.color.a)
     if self.type ~= "none" then
         self:setHightlighted(false)
         self:setHightlighted(true)
