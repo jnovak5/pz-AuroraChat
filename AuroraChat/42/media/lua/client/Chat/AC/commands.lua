@@ -19,8 +19,8 @@ end
 
 function AC.Commands.SetColor(args)
     if not args or args == "" then
-        AC.Meta.SetColor(nil)
-        AC_Utils.addInfoToChat(AC.Meta.GetColor() .. "Color reset to default.")
+        AC.Meta.SetNameColor(nil, nil, nil)
+        AC_Utils.addInfoToChat("Color reset to default.")
         return
     end
     local color = AC.GetColor(args)

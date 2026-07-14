@@ -30,7 +30,12 @@ end
 
 local function SetPlayerColor(player, r, g, b)
     if not player then return end
-    if not r or not g or not b then return end
+    if not r or not g or not b then
+        PlayerDB.PlayerColors[player:getUsername()] = nil
+        ModData.add("AC_PlayerColors", PlayerDB.PlayerColors)
+        sendServerCommand("AC", "SetPlayerColor", {player:getUsername(), nil, nil, nil})
+        return
+    end
     PlayerDB.PlayerColors[player:getUsername()] = {r = r, g = g, b = b}
     ModData.add("AC_PlayerColors", PlayerDB.PlayerColors)
     sendServerCommand("AC", "SetPlayerColor", {player:getUsername(), r, g, b})

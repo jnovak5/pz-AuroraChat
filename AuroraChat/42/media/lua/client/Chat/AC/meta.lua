@@ -568,14 +568,6 @@ function AC.Meta.CreateCharacterContext(context, myPlayer)
         end
     end
 
-    if SandboxVars.AuroraChat.EnableAutoCleanup then
-        if AC.Buffs.IsAutoCleanEnabled() then
-            characterContext:addOption("Disable Autoclean", false, AC.Buffs.SetAutoCleanEnabled)
-        else
-            characterContext:addOption("Enable Autoclean", true, AC.Buffs.SetAutoCleanEnabled)
-        end
-    end
-
     if SandboxVars.AuroraChat.EnableSelfInjury then
         local injureSelfOption = characterContext:addOption("Add Injury", nil, nil)
         local injureSelfContext = characterContext:getNew(characterContext)
