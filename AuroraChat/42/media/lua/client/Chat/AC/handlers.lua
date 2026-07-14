@@ -398,11 +398,11 @@ function AC.Handlers.AddLineInChat(chatMessage, tabID)
     end
 
     if chattingPlayer and not parsedMessage.radioFrequency and not parsedMessage.fromRecorder then
-        local textOnlyMessage = AC.Parsing.GetTextOnly(parsedMessage)
+        local textOnlyMessage = AC.Parsing.GetOverheadText(parsedMessage)
         textOnlyMessage = textOnlyMessage:gsub("\r\n", " "):gsub("\n", " "):gsub("\r", " ")
         textOnlyMessage = textOnlyMessage:sub(1,1):upper() .. textOnlyMessage:sub(2)
         local colorRGB = AC.Meta.GetNameColorRGB(parsedMessage.playerUsername)
-        pcall(function() chattingPlayer:addLineChatElement(textOnlyMessage, colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, 30.0, "") end)
+        pcall(function() chattingPlayer:addLineChatElement(textOnlyMessage, 1, 1, 1, UIFont.Dialogue, 30.0, "") end)
     end
 
     if parsedMessage.chatModifier == "alert" then

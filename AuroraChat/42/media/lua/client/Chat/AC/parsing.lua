@@ -398,6 +398,32 @@ function AC.Parsing.GetTextOnly(parsedMessage)
     return message
 end
 
+function AC.Parsing.GetOverheadText(parsedMessage)
+    local message = ""
+    for n, part in ipairs(parsedMessage.parts) do
+        if n == 1 and part.type == "emote" and AC.Parsing.GetSpecialStart(part.text) then
+            message = message .. part.text
+        elseif part.type == "textmuted" then
+            message = message .. ' "Something you dont understand."'
+        elseif part.type == "text" then
+            message = message .. ' "' .. part.text .. '"'
+        elseif part.type == "ooc" then
+            message = message .. " (( " .. part.text .. " ))"
+        elseif part.type == "environment" then
+            message = message .. " [[ " .. part.text .. " ]]"
+        else
+            message = message .. " " .. part.text
+        end
+    end
+    if message:contains("&lt;") then message = message:gsub("&lt;", "<") end
+    if message:contains("&gt;") then message = message:gsub("&gt;", ">") end
+    if message:sub(1,1) == " " then message = message:sub(2) end
+    if message:sub(1,1) == '"' and message:sub(-1) == '"' then
+        message = message:sub(2, -2)
+    end
+    return message
+end
+
 function AC.Parsing.GetLogText(parsedMessage)
     local message = ""
     if parsedMessage.radioFrequency and parsedMessage.radioFrequency > 0 then

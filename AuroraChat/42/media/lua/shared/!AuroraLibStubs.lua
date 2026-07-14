@@ -287,7 +287,7 @@ end
 
 function GroundHightlighter:highlightCircle(x, y, radius, z)
     self:remove()
-    self.type = "circle"
+    self.type = "circle_edge"
     self.radius = radius
     self.center.x = math.floor(x)
     self.center.y = math.floor(y)
