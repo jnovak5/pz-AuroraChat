@@ -601,8 +601,16 @@ function AC.Meta.CreateChatSettingsContext(context)
     chatColorsContext:addOption("Set Name Color", nil, AC.MakeColorDialogPrompt("New Name Color (blank for default)", AC.Commands.SetColor))
     chatColorsContext:addOption("Set Speech Color", nil, AC.MakeColorDialogPrompt("New Speech Color (blank for default)", AC.Commands.SetSayColor))
     local function resetColors()
-        AC.Commands.SetColor("")
-        AC.Commands.SetSayColor("")
+        if AC.Commands.SetColor then AC.Commands.SetColor("") end
+        if AC.Commands.SetSayColor then AC.Commands.SetSayColor("") end
+        if AC.Commands.SetEmoteColor then AC.Commands.SetEmoteColor("") end
+        if AC.Commands.SetOocColor then AC.Commands.SetOocColor("") end
+        if AC.Meta.SetDoColor then AC.Meta.SetDoColor(nil) end
+        if AC.Commands.SetWhisperVolumeColor then AC.Commands.SetWhisperVolumeColor("") end
+        if AC.Commands.SetLowVolumeColor then AC.Commands.SetLowVolumeColor("") end
+        if AC.Commands.SetSayVolumeColor then AC.Commands.SetSayVolumeColor("") end
+        if AC.Commands.SetLoudVolumeColor then AC.Commands.SetLoudVolumeColor("") end
+        if AC.Commands.SetShoutVolumeColor then AC.Commands.SetShoutVolumeColor("") end
     end
     chatColorsContext:addOption("Reset Colors", nil, resetColors)
     -- chatColorsContext:addOption("Set Emote Color", nil, AC.MakeColorDialogPrompt("New Emote Color (blank for default)", AC.Commands.SetEmoteColor))
