@@ -272,13 +272,13 @@ function AC.Meta.SetNameColor(r, g, b)
     sendClientCommand(getPlayer(), "AC", "SetPlayerColor", {r, g, b})
 end
 
-function AC.Meta.GetSayColor() return getChatPref("SayColor") end
+function AC.Meta.GetSayColor() return getChatPref("SayColor") or "" end
 function AC.Meta.SetSayColor(c) writeChatPref("SayColor", c) end
-function AC.Meta.GetEmoteColor() return getChatPref("EmoteColor") end
+function AC.Meta.GetEmoteColor() return getChatPref("EmoteColor") or "" end
 function AC.Meta.SetEmoteColor(c) writeChatPref("EmoteColor", c) end
-function AC.Meta.GetDoColor() return getChatPref("DoColor") end
+function AC.Meta.GetDoColor() return getChatPref("DoColor") or "" end
 function AC.Meta.SetDoColor(c) writeChatPref("DoColor", c) end
-function AC.Meta.GetOocColor() return getChatPref("OocColor") end
+function AC.Meta.GetOocColor() return getChatPref("OocColor") or "" end
 function AC.Meta.SetOocColor(c) writeChatPref("OocColor", c) end
 function AC.Meta.GetWhisperVolumeColor() return getChatPref("WhisperVolumeColor") end
 function AC.Meta.SetWhisperVolumeColor(c) writeChatPref("WhisperVolumeColor", c) end
