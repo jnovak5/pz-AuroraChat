@@ -230,7 +230,6 @@ function GroundHightlighter:tryHighlightWorldSquare(sq, enabled)
             if enabled then
                 if not self.colorInfo then self.colorInfo = ColorInfo.new(self.color.r, self.color.g, self.color.b, self.color.a) end
                 obj:setHighlightColor(0, self.colorInfo)
-                obj:setCustomColor(self.colorInfo)
                 obj:setOutlineHighlightCol(0, self.colorInfo)
             end
         end

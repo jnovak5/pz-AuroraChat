@@ -103,15 +103,6 @@ function ISChat:render()
     end
 
     if ISChat.instance.showRangeTicks > 0 then
-        if self.showRangeTicks % 20 == 0 then
-            if self.showRangeSwitch then
-                self.groundHighlighter:setColor(0.8, 0.8, 0.8, 1.0)
-            else
-                self.groundHighlighter:setColor(0.2, 0.2, 0.2, 1.0)
-            end
-            self.showRangeSwitch = not self.showRangeSwitch
-        end
-
         if ISChat.instance.showRangeTicks == 1 then
             self.groundHighlighter:remove()
         end
