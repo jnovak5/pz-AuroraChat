@@ -240,7 +240,7 @@ function GroundHightlighter:setHightlighted(enabled)
     local cell = getCell()
     for x = self.bounds.x1, self.bounds.x2 do
         for y = self.bounds.y1, self.bounds.y2 do
-            local sq = cell:getOrCreateGridSquare(x, y, self.center.z)
+            local sq = cell:getGridSquare(x, y, self.center.z)
             if sq then self:tryHighlightWorldSquare(sq, enabled) end
         end
     end

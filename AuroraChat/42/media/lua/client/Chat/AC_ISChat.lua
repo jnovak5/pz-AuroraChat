@@ -135,7 +135,7 @@ end
 AC.ISChatOriginal.createChildren = AC.ISChatOriginal.createChildren or ISChat.createChildren
 function ISChat:createChildren()
     AC.ISChatOriginal.createChildren(self)
-    self.textEntry:setMaxTextLength(300)
+    self.textEntry:setMaxTextLength(1250)
 
     self.muteTypingButton = ISButton:new(self.gearButton:getX() - 30, 1, 20, 16, "", self, ISChat.onMuteTypingButtonClick)
     self.muteTypingButton.anchorRight = true
