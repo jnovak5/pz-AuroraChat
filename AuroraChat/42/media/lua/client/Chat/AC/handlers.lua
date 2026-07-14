@@ -327,23 +327,23 @@ function AC.Handlers.AddLineInChat(chatMessage, tabID)
                     if parsedMessage.chatType == "whisper" and AC.CanSeePlayer(chattingPlayer, false, AC.ChatTypes["say"].xyRange) then
                         local colorRGB = AC.Meta.GetNameColorRGB(parsedMessage.playerUsername)
                         if parsedMessage.onRadio then
-                            pcall(function() chattingPlayer:addLineChatElement("Whispered into a walkie", 1, 1, 1, UIFont.Dialogue, AC.ChatTypes["say"].xyRange, "") end)
+                            pcall(function() chattingPlayer:addLineChatElement("Whispered into a walkie", colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, AC.ChatTypes["say"].xyRange, "") end)
                         else
-                            pcall(function() chattingPlayer:addLineChatElement("Whispered", 1, 1, 1, UIFont.Dialogue, AC.ChatTypes["say"].xyRange, "") end)
+                            pcall(function() chattingPlayer:addLineChatElement("Whispered", colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, AC.ChatTypes["say"].xyRange, "") end)
                         end
                     elseif parsedMessage.chatType == "low" and AC.CanSeePlayer(chattingPlayer, false, AC.ChatTypes["say"].xyRange) then
                         local colorRGB = AC.Meta.GetNameColorRGB(parsedMessage.playerUsername)
                         if parsedMessage.onRadio then
-                            pcall(function() chattingPlayer:addLineChatElement("Spoke Quietly into a walkie", 1, 1, 1, UIFont.Dialogue, AC.ChatTypes["say"].xyRange, "") end)
+                            pcall(function() chattingPlayer:addLineChatElement("Spoke Quietly into a walkie", colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, AC.ChatTypes["say"].xyRange, "") end)
                         else
-                            pcall(function() chattingPlayer:addLineChatElement("Spoke Quietly", 1, 1, 1, UIFont.Dialogue, AC.ChatTypes["say"].xyRange, "") end)
+                            pcall(function() chattingPlayer:addLineChatElement("Spoke Quietly", colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, AC.ChatTypes["say"].xyRange, "") end)
                         end
                     elseif parsedMessage.chatType == "say" and AC.CanSeePlayer(chattingPlayer, false, AC.ChatTypes["loud"].xyRange) then
                         local colorRGB = AC.Meta.GetNameColorRGB(parsedMessage.playerUsername)
                         if parsedMessage.onRadio then
-                            pcall(function() chattingPlayer:addLineChatElement("Spoke into a walkie", 1, 1, 1, UIFont.Dialogue, AC.ChatTypes["loud"].xyRange, "") end)
+                            pcall(function() chattingPlayer:addLineChatElement("Spoke into a walkie", colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, AC.ChatTypes["loud"].xyRange, "") end)
                         else
-                            pcall(function() chattingPlayer:addLineChatElement("Spoke", 1, 1, 1, UIFont.Dialogue, AC.ChatTypes["loud"].xyRange, "") end)
+                            pcall(function() chattingPlayer:addLineChatElement("Spoke", colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, AC.ChatTypes["loud"].xyRange, "") end)
                         end
                     end
                 end
@@ -399,9 +399,10 @@ function AC.Handlers.AddLineInChat(chatMessage, tabID)
 
     if chattingPlayer and not parsedMessage.radioFrequency and not parsedMessage.fromRecorder then
         local textOnlyMessage = AC.Parsing.GetTextOnly(parsedMessage)
+        textOnlyMessage = textOnlyMessage:gsub("\r\n", " "):gsub("\n", " "):gsub("\r", " ")
         textOnlyMessage = textOnlyMessage:sub(1,1):upper() .. textOnlyMessage:sub(2)
         local colorRGB = AC.Meta.GetNameColorRGB(parsedMessage.playerUsername)
-        pcall(function() chattingPlayer:addLineChatElement(textOnlyMessage, 1, 1, 1, UIFont.Dialogue, 30.0, "") end)
+        pcall(function() chattingPlayer:addLineChatElement(textOnlyMessage, colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, 30.0, "") end)
     end
 
     if parsedMessage.chatModifier == "alert" then

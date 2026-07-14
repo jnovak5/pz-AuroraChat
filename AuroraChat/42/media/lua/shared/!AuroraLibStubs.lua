@@ -212,9 +212,8 @@ function GroundHightlighter:isVisible(x, y)
     if self.type == "circle_edge" then
         local dx = x - self.center.x
         local dy = y - self.center.y
-        local dist = (dx * dx) + (dy * dy)
-        local r2 = self.radius * self.radius
-        return dist >= r2 - 1.5 and dist <= r2 + 1.5
+        local dist = math.sqrt((dx * dx) + (dy * dy))
+        return dist >= self.radius - 0.75 and dist <= self.radius + 0.75
     end
     return self:isPointInRadius(x, y)
 end
