@@ -13,20 +13,12 @@ end
 
 function AC.Afk.StartAfk()
     AC.Meta.EnableAfk()
-    Events.OnPlayerMove.Add(AC.Afk.OnMove)
-    AC_Utils.addInfoToChat("You are now AFK, walk to cancel")
+    AC_Utils.addInfoToChat("You are now AFK. Type /afk again to cancel.")
 end
 
 function AC.Afk.StopAfk()
     AC.Meta.DisableAfk()
-    Events.OnPlayerMove.Remove(AC.Afk.OnMove)
     AC_Utils.addInfoToChat("You are no longer AFK")
-end
-
-function AC.Afk.OnMove(player)
-    if AC.Afk.IsSelfAfk() and player == getPlayer() then
-        AC.Afk.StopAfk()
-    end
 end
 
 AC.Afk.IndicatorWidth = getTextManager():MeasureStringX(UIFont.Small, "AFK")
@@ -101,14 +93,14 @@ function AC.Afk.CheckLocalPlayersForAfk()
 end
 
 function AC.Afk.AlertPlayerHasGoneAfk(player)
-    player:addLineChatElement("Is AFK", 1, 1, 1)
+    pcall(function() player:addLineChatElement("Is AFK", 1, 1, 1) end)
     local username = player:getUsername()
     local message = AC.Meta.GetNameColor(username) .. AC.Meta.GetName(username) .. " " .. AC.ChatColors["info"] .. AC_Utils.MagicSpace .. "is AFK"
     AC_Utils.addInfoToChat(message)
 end
 
 function AC.Afk.AlertPlayerHasReturned(player)
-    player:addLineChatElement("Is no longer AFK", 1, 1, 1)
+    pcall(function() player:addLineChatElement("Is no longer AFK", 1, 1, 1) end)
     local username = player:getUsername()
     local message = AC.Meta.GetNameColor(username) .. AC.Meta.GetName(username) .. " " .. AC.ChatColors["info"] .. AC_Utils.MagicSpace .. "is no longer AFK"
     AC_Utils.addInfoToChat(message)

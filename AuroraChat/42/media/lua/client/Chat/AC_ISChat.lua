@@ -47,9 +47,9 @@ function ISChat:initialise()
 end
 
 AC.ISChatOriginal.onTextChange = AC.ISChatOriginal.onTextChange or ISChat.onTextChange
-function ISChat:onTextChange()
+ISChat.onTextChange = function()
     if ISChat.instance.currentTabID > 6 then
-        AC.ISChatOriginal.onTextChange(self)
+        if AC.ISChatOriginal.onTextChange then AC.ISChatOriginal.onTextChange() end
         AC.Indicator.onCleared()
         return
     end
@@ -144,6 +144,7 @@ end
 AC.ISChatOriginal.createChildren = AC.ISChatOriginal.createChildren or ISChat.createChildren
 function ISChat:createChildren()
     AC.ISChatOriginal.createChildren(self)
+    self.textEntry:setMaxTextLength(2000)
 
     self.muteTypingButton = ISButton:new(self.gearButton:getX() - 30, 1, 20, 16, "", self, ISChat.onMuteTypingButtonClick)
     self.muteTypingButton.anchorRight = true
@@ -258,7 +259,7 @@ end
 
 AC.ISChatOriginal.onCommandEntered = AC.ISChatOriginal.onCommandEntered or ISChat.onCommandEntered
 function ISChat:onCommandEntered()
-    local text = ISChat.instance.textEntry:getInternalText()
+    local text = ISChat.instance.textEntry:getText()
 
     AC.Indicator.onCleared(true)
     local currentTabId = ISChat.instance.tabs[ISChat.instance.currentTabID].tabID
@@ -274,7 +275,7 @@ function ISChat:onCommandEntered()
         return
     end
 
-    AC.ISChatOriginal.onCommandEntered(self)
+    AC.ISChatOriginal.onCommandEntered(self or ISChat.instance)
 end
 
 function ISChat:onMuteTypingButtonClick()

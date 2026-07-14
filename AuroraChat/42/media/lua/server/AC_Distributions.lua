@@ -1,6 +1,8 @@
 require 'Items/ProceduralDistributions'
 
 local function addItemToDist(category, item, chance)
+    if not ProceduralDistributions.list[category] then return end
+    if not ProceduralDistributions.list[category].items then return end
     table.insert(ProceduralDistributions.list[category].items, item)
     table.insert(ProceduralDistributions.list[category].items, chance)
 end

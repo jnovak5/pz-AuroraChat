@@ -61,51 +61,42 @@ function AC.Buffs.ApplyRpBuffs()
     AC.Buffs.LastApplied = ts
 
     local stats = player:getStats()
-    local bodyDamage = player:getBodyDamage()
     local apm = AC.Buffs.AmountsPerMessage
     local multiplier = getGameTime():getMultiplier()
 
-    local boredom = bodyDamage:getBoredomLevel()
-    if boredom > apm.boredom then
-        local boredomNew = normalizeValue(boredom, apm.boredom * multiplier)
-        bodyDamage:setBoredomLevel(boredomNew)
+    -- B42 API: use CharacterStat enums with stats:remove(stat, amount)
+    -- remove() decreases the stat value (reduces boredom, hunger, etc.)
+    if stats:get(CharacterStat.BOREDOM) > apm.boredom then
+        stats:remove(CharacterStat.BOREDOM, apm.boredom * multiplier)
     end
 
-    local hunger = stats:getHunger()
-    if hunger > apm.hunger then
-        local hungerNew = normalizeValue(hunger, apm.hunger * multiplier)
-        stats:setHunger(hungerNew)
+    if stats:get(CharacterStat.HUNGER) > apm.hunger then
+        stats:remove(CharacterStat.HUNGER, apm.hunger * multiplier)
     end
 
-    local thirst = stats:getThirst()
-    if thirst > apm.thirst then
-        local thirstNew = normalizeValue(thirst, apm.thirst * multiplier)
-        stats:setThirst(thirstNew)
+    if stats:get(CharacterStat.THIRST) > apm.thirst then
+        stats:remove(CharacterStat.THIRST, apm.thirst * multiplier)
     end
 
-    local stressSmokes = stats:getStressFromCigarettes()
-    if stressSmokes > apm.stressSmokes then
-        local stressSmokesNew = normalizeValue(stressSmokes, apm.stressSmokes * multiplier)
-        stats:setStressFromCigarettes(stressSmokesNew)
+    if stats:get(CharacterStat.STRESS) > apm.stressSmokes then
+        stats:remove(CharacterStat.STRESS, apm.stressSmokes * multiplier)
     end
 
-    local unhappyness = bodyDamage:getUnhappynessLevel()
-    if unhappyness > apm.unhappyness then
-        local unhappynessNew = normalizeValue(unhappyness, apm.unhappyness * multiplier)
-        bodyDamage:setUnhappynessLevel(unhappynessNew)
+    if stats:get(CharacterStat.UNHAPPINESS) > apm.unhappyness then
+        stats:remove(CharacterStat.UNHAPPINESS, apm.unhappyness * multiplier)
     end
 end
 
 function AC.Buffs.CleanCharacter()
     local player = getPlayer()
-    -- B42 safe iteration: loop until FromIndex returns nil
-    local i = 0
-    while true do
-        local part = BloodBodyPartType.FromIndex(i)
-        if not part then break end
-        player:getHumanVisual():setBlood(part, 0)
-        player:getHumanVisual():setDirt(part, 0)
-        i = i + 1
+    -- B42 safe iteration: FromIndex is 0-based, MAX:index() gives the count
+    local visual = player:getHumanVisual()
+    for i=1, BloodBodyPartType.MAX:index() do
+        local part = BloodBodyPartType.FromIndex(i-1)
+        if part then
+            visual:setBlood(part, 0)
+            visual:setDirt(part, 0)
+        end
     end
     sendVisual(player)
     triggerEvent("OnClothingUpdated", player)

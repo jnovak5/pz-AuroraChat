@@ -1,5 +1,4 @@
 {
-  "EN": {
     "UI_AC_Typing": "Typing: ",
     "UI_AC_ManyTyping": "Many people typing",
     "UI_AC_StartRecording": "Start Recording",
@@ -15,5 +14,4 @@
     "UI_AC_InsertToRecorder": "Insert Tape in Recorder",
     "UI_AC_InsertBlankTape": "Insert Blank Tape",
     "UI_AC_RenameTape": "Rename Tape"
-  }
 }

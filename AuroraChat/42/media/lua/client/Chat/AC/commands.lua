@@ -340,7 +340,7 @@ end
 
 function AC.Commands.GoAFK()
     if AC.Afk.IsSelfAfk() then
-        AC_Utils.addErrorToChat("You are already AFK. Walk around to stop being AFK.")
+        AC.Afk.StopAfk()
     else
         AC.Afk.StartAfk()
     end
@@ -353,17 +353,17 @@ function AC.Commands.GrowBeard()
         return
     end
     local action = ISTrimBeard:new(player, "Long", nil, 0)
-    action:perform()
+    ISTimedActionQueue.add(action)
 end
 
 function AC.Commands.GrowHair()
     local player = getPlayer()
     if player:isFemale() then
         local action = ISCutHair:new(player, "Long2", nil, 0)
-        action:perform()
+        ISTimedActionQueue.add(action)
     else
         local action = ISCutHair:new(player, "Fabian", nil, 0)
-        action:perform()
+        ISTimedActionQueue.add(action)
     end
 end
 

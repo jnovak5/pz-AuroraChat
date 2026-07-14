@@ -3,7 +3,7 @@
 if getActivatedMods():contains("WastelandLib") then return end
 
 AC_Utils = {}
-AC_Utils.MagicSpace = "▶ ◀​ "
+AC_Utils.MagicSpace = " <SPACE> "
 
 --- Returns true if the player has any staff access level (Admin, Moderator, Overseer, GM or Observer)
 --- @param player IsoPlayer
@@ -227,7 +227,8 @@ function GroundHightlighter:tryHighlightWorldSquare(sq, enabled)
         if obj:isFloor() or self.xray or not enabled then
             obj:setHighlighted(enabled, false)
             if enabled then
-                obj:setHighlightColor(self.color.r, self.color.g, self.color.b, self.color.a)
+                if not self.colorInfo then self.colorInfo = ColorInfo.new(self.color.r, self.color.g, self.color.b, self.color.a) end
+                obj:setHighlightColor(self.colorInfo)
             end
         end
     end
@@ -255,6 +256,11 @@ function GroundHightlighter:setColor(r, g, b, a)
     self.color.g = g
     self.color.b = b
     self.color.a = a or 1.0
+    if not self.colorInfo then 
+        self.colorInfo = ColorInfo.new(r, g, b, self.color.a) 
+    else 
+        self.colorInfo:set(r, g, b, self.color.a) 
+    end
     if self.type ~= "none" then
         self:setHightlighted(false)
         self:setHightlighted(true)
