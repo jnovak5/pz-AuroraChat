@@ -36,7 +36,7 @@ end
 function AC.Commands.SetSayColor(args)
     if not args or args == "" then
         AC.Meta.SetSayColor(nil)
-        AC_Utils.addInfoToChat(AC.Meta.GetSayColor() .. "Say color reset to default.")
+        AC_Utils.addInfoToChat("Say color reset to default.")
         return
     end
     local color = AC.GetColor(args)
@@ -49,7 +49,7 @@ end
 function AC.Commands.SetEmoteColor(args)
     if not args or args == "" then
         AC.Meta.SetEmoteColor(nil)
-        AC_Utils.addInfoToChat(AC.Meta.GetEmoteColor() .. "Emote color reset to default.")
+        AC_Utils.addInfoToChat("Emote color reset to default.")
         return
     end
     local color = AC.GetColor(args)
@@ -62,7 +62,7 @@ end
 function AC.Commands.SetOocColor(args)
     if not args or args == "" then
         AC.Meta.SetOocColor(nil)
-        AC_Utils.addInfoToChat(AC.Meta.GetOocColor() .. "OOC color reset to default.")
+        AC_Utils.addInfoToChat("OOC color reset to default.")
         return
     end
     local color = AC.GetColor(args)
