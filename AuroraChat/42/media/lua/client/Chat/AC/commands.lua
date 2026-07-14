@@ -531,7 +531,7 @@ function AC.Commands.Roll(args)
     end
     local mutedRadios = {}
     local player = getPlayer()
-    local radiosOn = ARU_Utils.getPlayerRadios(player, true)
+    local radiosOn = ARU_Utils.getPlayerRadios(player, true, false, true)
     for _, radio in ipairs(radiosOn) do
         if ARU_Utils.isRadioBroadcasting(radio) then
             ARU_Utils.setRadioBroadcastingInstant(player, radio, false)
@@ -561,6 +561,11 @@ function AC.Commands.Trade(args)
 end
 
 function AC.Commands.Injure(args)
+    if not args or args == "" then
+        AC_Utils.addErrorToChat("Usage: /injure bodypart injury")
+        return
+    end
+
     local parts = AC.SplitString(args)
     if #parts ~= 2 then
         AC_Utils.addErrorToChat("Invalid format. Use /injure bodypart injury")
@@ -568,16 +573,16 @@ function AC.Commands.Injure(args)
     end
     local bodyPartStr = parts[1]:gsub("^%s*(.-)%s*$", "%1")
     local injury = parts[2]:gsub("^%s*(.-)%s*$", "%1")
-    local found = false
-    for _,str in ipairs(AC.GetBodyParts()) do
-        if str == bodyPartStr then found = true break end
-    end
-    if not found then
-        AC_Utils.addErrorToChat("Invalid body part. Use /injure bodypart injury")
+    local bodyPartType = BodyPartType.FromString(bodyPartStr)
+
+    if not bodyPartType then
+        AC_Utils.addErrorToChat("Invalid body part.")
         return
     end
-    local bodyPartType = BodyPartType.FromString(bodyPartStr)
-    local bodyPart = getPlayer():getBodyDamage():getBodyPart(bodyPartType)
+
+    local bodyDamage = getPlayer():getBodyDamage()
+    local bodyPart = bodyDamage:getBodyPart(bodyPartType)
+
     if injury == "Bleeding" then bodyPart:setBleedingTime(10)
     elseif injury == "Bullet" then bodyPart:setHaveBullet(true, 0)
     elseif injury == "Burned" then bodyPart:setBurnTime(50)
@@ -595,9 +600,10 @@ function AC.Commands.Injure(args)
         AC_Utils.addErrorToChat("Invalid injury. Use /injure bodypart injury")
         return
     end
-    if isClient() then
-        syncBodyPart(bodyPart, 0xFFFFFFFFFFF)
-    end
+
+    bodyDamage:AddDamage(bodyPartType, 15.0)
+
+    sendClientCommand(getPlayer(), "AC", "Injure", {bodyPartStr, injury})
     AC_Utils.addInfoToChat("<RGB:1.0,0.0,0.0>Injury applied!")
 end
 
@@ -760,7 +766,7 @@ function AC.TabHandlers.Injury(text)
 end
 
 function AC.TabHandlers.RadioFrequencies(text)
-    local radios = ARU_Utils.getPlayerRadios(getPlayer(), true)
+    local radios = ARU_Utils.getPlayerRadios(getPlayer(), true, false, true)
     local frequencies = {}
     for _, radio in ipairs(radios) do
         table.insert(frequencies, tostring(ARU_Utils.getRadioFrequency(radio) / 1000))

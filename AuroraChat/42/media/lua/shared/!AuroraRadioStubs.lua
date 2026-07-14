@@ -20,7 +20,8 @@ end
 
 function ARU_Utils.isRadioBroadcasting(radio)
     local data = radio:getDeviceData()
-    return data:getIsTurnedOn() and not data:getMicIsMuted()
+    if not data then return false end
+    return data:getIsTurnedOn() and data:getIsTwoWay() and not data:getMicIsMuted()
 end
 
 function ARU_Utils.getRadioRange(radio)
@@ -49,30 +50,77 @@ function ARU_Utils.AreAnyRadiosOn(player)
 end
 
 function ARU_Utils.AreAnyRadiosTransmitting(player)
-    local inv = player:getInventory()
-    if not inv then return false end
-    local items = inv:getItems()
-    for i=0,items:size()-1 do
-        local item = items:get(i)
-        if ARU_Utils.isRadio(item) and ARU_Utils.isRadioBroadcasting(item) then
-            return true
-        end
-    end
-    return false
+    local radios = ARU_Utils.getPlayerRadios(player, true, true, true)
+    return #radios > 0
 end
 
-function ARU_Utils.getPlayerRadios(player, onlyOn, onlyTransmitting)
+ARU_Utils.CachedWorldRadios = {}
+ARU_Utils.CachedWorldRadiosTime = 0
+
+function ARU_Utils.getNearbyWorldRadios(player)
+    local currentTime = getTimestampMs()
+    if currentTime - ARU_Utils.CachedWorldRadiosTime < 1000 then
+        return ARU_Utils.CachedWorldRadios
+    end
+    ARU_Utils.CachedWorldRadiosTime = currentTime
+    local radios = {}
+    local playerX = math.floor(player:getX())
+    local playerY = math.floor(player:getY())
+    local playerZ = math.floor(player:getZ())
+    local cell = getCell()
+    for x=playerX-10, playerX+10 do
+        for y=playerY-10, playerY+10 do
+            local square = cell:getGridSquare(x, y, playerZ)
+            if square then
+                local objects = square:getObjects()
+                for i=0,objects:size()-1 do
+                    local object = objects:get(i)
+                    if instanceof(object, "IsoRadio") then
+                        table.insert(radios, object)
+                    end
+                end
+                local movingObjects = square:getMovingObjects()
+                for i=0,movingObjects:size()-1 do
+                    local object = movingObjects:get(i)
+                    if instanceof(object, "BaseVehicle") then
+                        for j=0,object:getPartCount()-1 do
+                            local part = object:getPartByIndex(j)
+                            if part:getDeviceData() then
+                                table.insert(radios, part)
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+    ARU_Utils.CachedWorldRadios = radios
+    return radios
+end
+
+function ARU_Utils.getPlayerRadios(player, onlyOn, onlyTransmitting, includeWorld)
     local radios = {}
     local inv = player:getInventory()
-    if not inv then return radios end
-    local items = inv:getItems()
-    for i=0,items:size()-1 do
-        local item = items:get(i)
-        if ARU_Utils.isRadio(item)
-        and (not onlyOn or ARU_Utils.isRadioOn(item))
-        and (not onlyTransmitting or ARU_Utils.isRadioBroadcasting(item))
-        then
-            table.insert(radios, item)
+    if inv then
+        local items = inv:getItems()
+        for i=0,items:size()-1 do
+            local item = items:get(i)
+            if ARU_Utils.isRadio(item)
+            and (not onlyOn or ARU_Utils.isRadioOn(item))
+            and (not onlyTransmitting or ARU_Utils.isRadioBroadcasting(item))
+            then
+                table.insert(radios, item)
+            end
+        end
+    end
+    if includeWorld then
+        local worldRadios = ARU_Utils.getNearbyWorldRadios(player)
+        for _, radio in ipairs(worldRadios) do
+            if (not onlyOn or ARU_Utils.isRadioOn(radio))
+            and (not onlyTransmitting or ARU_Utils.isRadioBroadcasting(radio))
+            then
+                table.insert(radios, radio)
+            end
         end
     end
     return radios

@@ -47,7 +47,11 @@ function AC.Events.onServerCommand(module, command, args)
         local r = args[2]
         local g = args[3]
         local b = args[4]
-        AC.PlayerColors[player] = {r = r, g = g, b = b}
+        if r and g and b then
+            AC.PlayerColors[player] = {r = r, g = g, b = b}
+        else
+            AC.PlayerColors[player] = nil
+        end
     elseif command == "SetPlayerLanguage" then
         local player = args[1]
         local language = args[2]

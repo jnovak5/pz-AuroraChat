@@ -1,4 +1,4 @@
-﻿
+
 local stories = {}
 
 table.insert(stories, {

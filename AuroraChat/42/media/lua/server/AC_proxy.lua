@@ -158,6 +158,31 @@ local function onACCommand(module, command, sendingPlayer, args)
                 break
             end
         end
+    elseif command == "Injure" then
+        local bodyPartStr = args[1]
+        local injury = args[2]
+        local bodyPartType = BodyPartType.FromString(bodyPartStr)
+        if bodyPartType then
+            local bodyDamage = sendingPlayer:getBodyDamage()
+            local bodyPart = bodyDamage:getBodyPart(bodyPartType)
+            
+            if injury == "Bleeding" then bodyPart:setBleedingTime(10)
+            elseif injury == "Bullet" then bodyPart:setHaveBullet(true, 0)
+            elseif injury == "Burned" then bodyPart:setBurnTime(50)
+            elseif injury == "Deep Wound" then bodyPart:generateDeepWound()
+            elseif injury == "Fracture" then bodyPart:setFractureTime(21)
+            elseif injury == "Glass Shards" then bodyPart:generateDeepShardWound()
+            elseif injury == "Infected" then bodyPart:setWoundInfectionLevel(10)
+            elseif injury == "Scratched" then bodyPart:setScratched(true, true)
+            elseif injury == "Laceration" then bodyPart:setCut(true)
+            elseif injury == "Bite" then
+                bodyPart:SetBitten(true)
+                bodyPart:SetInfected(false)
+                bodyPart:SetFakeInfected(false)
+            end
+            
+            bodyDamage:AddDamage(bodyPartType, 15.0)
+        end
     elseif command == "StaffChat" then
         local color = staffColors[sendingPlayer:getAccessLevel()]
         if not color then color = "<RGB:0.8,0.8,0.8>" end

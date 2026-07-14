@@ -161,7 +161,7 @@ end
 function AC.Recorders.RemoveTape(recorder)
     local md = recorder:getModData()
     md.AC_HasTape = false
-    local tape = InventoryItemFactory.CreateItem("ACRecorderTape")
+    local tape = instanceItem("Base.ACRecorderTape")
     local tapeMd = tape:getModData()
     tapeMd["AC_Processed"] = true
     tapeMd.AC_TapeUsed = md.AC_TapeUsed
@@ -193,15 +193,15 @@ end
 function AC.Recorders.InsertBattery(recorder, battery)
     local md = recorder:getModData()
     md.AC_HasBattery = true
-    md.AC_BatteryLevel = battery:getUsedDelta()
+    md.AC_BatteryLevel = battery:getCurrentUsesFloat()
 end
 
 function AC.Recorders.RemoveBattery(recorder)
     local md = recorder:getModData()
     if not md.AC_HasBattery then return end
     md.AC_HasBattery = false
-    local battery = InventoryItemFactory.CreateItem("Battery")
-    battery:setUsedDelta(md.AC_BatteryLevel)
+    local battery = instanceItem("Base.Battery")
+    if battery then battery:setUsedDelta(md.AC_BatteryLevel) end
     md.AC_BatteryLevel = 0
     return battery
 end

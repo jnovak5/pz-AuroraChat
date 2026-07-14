@@ -157,7 +157,7 @@ function AC.Handlers.CommandEntered(message)
     local isGeneralTab = ISChat.instance.tabs[ISChat.instance.currentTabID].tabID == 0
     local isIntoRadioTab = ISChat.instance.tabs[ISChat.instance.currentTabID].tabID == AC.RadioTabId
     local shouldDisableRadio = not isIntoRadioTab or parsedMessage.language == "asl" or parsedMessage.chatModifier == "alert"
-    local radiosOn = ARU_Utils.getPlayerRadios(player, true, true)
+    local radiosOn = ARU_Utils.getPlayerRadios(player, true, true, true)
     local radiosMuted = {}
     local intoRadioSynced = false
 
@@ -168,14 +168,15 @@ function AC.Handlers.CommandEntered(message)
             if isRadioSync then
                 intoRadioSynced = true
             end
-            if not isIntoRadioTab or not isRadioSync then
+            local shouldMuteThisRadio = parsedMessage.language == "asl" or parsedMessage.chatModifier == "alert" or (not isIntoRadioTab and not isGeneralTab)
+            if shouldMuteThisRadio then
                 ARU_Utils.setRadioBroadcastingInstant(player, radio, false)
                 table.insert(radiosMuted, radio)
             end
         end
     end
 
-    if (isIntoRadioTab or intoRadioSynced) and #radiosOn > 0 then
+    if (isIntoRadioTab or isGeneralTab) and #radiosOn > 0 then
         message = "[radio]" .. message
     end
 
@@ -279,14 +280,17 @@ function AC.Handlers.AddLineInChat(chatMessage, tabID)
         and  lastRadioMessage == rawText
         then parsedMessage.isOwnRadio = false
         else
-            local radios = ARU_Utils.getPlayerRadios(myPlayer, true)
+            local activeRadio = nil
+            local radios = ARU_Utils.getPlayerRadios(myPlayer, true, false, true)
             for _, radio in ipairs(radios) do
                 local channel = ARU_Utils.getRadioFrequency(radio)
                 if channel == parsedMessage.radioFrequency then
                     parsedMessage.isOwnRadio = true
+                    activeRadio = radio
                     break
                 end
             end
+            parsedMessage.activeRadio = activeRadio
             if parsedMessage.isOwnRadio then
                 lastRadioAuthor = parsedMessage.playerUsername
                 lastRadioChannel = parsedMessage.radioFrequency
@@ -295,13 +299,34 @@ function AC.Handlers.AddLineInChat(chatMessage, tabID)
         end
 
         if parsedMessage.isOwnRadio then
-            pcall(function() myPlayer:setSpeaking(false) end)
-            pcall(function() myPlayer:addLineChatElement("", 0, 0, 0, UIFont.Dialogue, 0, "radio") end)
-            pcall(function() myPlayer:addLineChatElement("", 0, 0, 0, UIFont.Dialogue, 0, "radio") end)
-            pcall(function() myPlayer:addLineChatElement("", 0, 0, 0, UIFont.Dialogue, 0, "radio") end)
-            pcall(function() myPlayer:addLineChatElement("", 0, 0, 0, UIFont.Dialogue, 0, "radio") end)
-            pcall(function() myPlayer:addLineChatElement("", 0, 0, 0, UIFont.Dialogue, 0, "radio") end)
-            pcall(function() myPlayer:addLineChatElement("", 0, 0, 0, UIFont.Dialogue, 0, "radio") end)
+            local textToDisplay = ""
+            if parsedMessage.parts then
+                for _, part in ipairs(parsedMessage.parts) do
+                    if part.text then
+                        textToDisplay = textToDisplay .. part.text
+                    end
+                end
+            else
+                textToDisplay = rawText
+            end
+            local colorRGB = AC.ChatTypes[parsedMessage.chatType].colorRGB
+            pcall(function() myPlayer:addLineChatElement(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, AC.ChatTypes[parsedMessage.chatType].xyRange, "radio") end)
+            
+            if parsedMessage.activeRadio then
+                if instanceof(parsedMessage.activeRadio, "IsoRadio") then
+                    local success = pcall(function() parsedMessage.activeRadio:addLineChatElement(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, AC.ChatTypes[parsedMessage.chatType].xyRange, "radio") end)
+                    if not success then success = pcall(function() parsedMessage.activeRadio:getChatElement():addChatLine(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, AC.ChatTypes[parsedMessage.chatType].xyRange, "radio", true, true, true, true, true, true) end) end
+                    if not success then success = pcall(function() parsedMessage.activeRadio:getDeviceData():AddDeviceText(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, "radio", "-1") end) end
+                    if not success then success = pcall(function() parsedMessage.activeRadio:getDeviceData():AddDeviceText(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, "radio", -1) end) end
+                    if not success then success = pcall(function() parsedMessage.activeRadio:AddDeviceText(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, "radio", "-1") end) end
+                    if not success then success = pcall(function() parsedMessage.activeRadio:AddDeviceText(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, "radio", -1) end) end
+                    if not success then pcall(function() myPlayer:addLineChatElement(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, AC.ChatTypes[parsedMessage.chatType].xyRange, "radio") end) end
+                elseif instanceof(parsedMessage.activeRadio, "VehiclePart") then
+                    local success = pcall(function() parsedMessage.activeRadio:getVehicle():getChatElement():addChatLine(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, AC.ChatTypes[parsedMessage.chatType].xyRange, "radio", true, true, true, true, true, true) end)
+                    if not success then success = pcall(function() parsedMessage.activeRadio:getDeviceData():AddDeviceText(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, "radio", "-1") end) end
+                    if not success then success = pcall(function() parsedMessage.activeRadio:getDeviceData():AddDeviceText(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, "radio", -1) end) end
+                end
+            end
         end
     else
         local chatType = AC.ChatTypes[parsedMessage.chatType]
@@ -402,6 +427,11 @@ function AC.Handlers.AddLineInChat(chatMessage, tabID)
         textOnlyMessage = textOnlyMessage:gsub("\r\n", " "):gsub("\n", " "):gsub("\r", " ")
         textOnlyMessage = textOnlyMessage:sub(1,1):upper() .. textOnlyMessage:sub(2)
         local colorRGB = AC.Meta.GetSpeechColorRGB()
+        if parsedMessage.chatModifier == "ooc" then
+            colorRGB = {r = 0.4, g = 0.4, b = 0.4}
+        elseif parsedMessage.chatModifier == "alert" then
+            colorRGB = {r = 1.0, g = 0.4, b = 0.4}
+        end
         pcall(function() chattingPlayer:addLineChatElement(textOnlyMessage, colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, 30.0, "") end)
     end
 
@@ -425,14 +455,9 @@ function AC.Handlers.AddLineInChat(chatMessage, tabID)
     if parsedMessage.chatModifier == "ooc" then
         doInOOC = true
     else
+        doInGeneral = true
         if parsedMessage.isOwnRadio then
             doInRadio = true
-        else
-            doInGeneral = true
-        end
-
-        if radioSync and radioSync == parsedMessage.radioFrequency then
-            doInGeneral = true
         end
 
         if AC.Meta.IsFocusedOn(parsedMessage.playerUsername) or (currentTabId == AC.FocusTabId and isMe) then
@@ -464,8 +489,8 @@ function AC.Handlers.AddLineInChat(chatMessage, tabID)
         AC.Handlers.FixWorldRadios(myPlayer, parsedMessage)
     end
 
-    if currentTabId == AC.RadioTabId and not wasZombieYell and isMe then
-        local radios = ARU_Utils.getPlayerRadios(getPlayer(), true, true)
+    if (currentTabId == AC.RadioTabId or currentTabId == 0) and not wasZombieYell and isMe then
+        local radios = ARU_Utils.getPlayerRadios(getPlayer(), true, true, true)
         for _, radio in ipairs(radios) do
             local channel = ARU_Utils.getRadioFrequency(radio)
             parsedMessage.radioFrequency = channel
@@ -475,22 +500,7 @@ function AC.Handlers.AddLineInChat(chatMessage, tabID)
                 radioChannel = hasRadio and radioChannel or -1,
                 datetimeStr = (pcall(function() return chatMessage:getDatetimeStr() end) and chatMessage:getDatetimeStr()) or "",
             })
-            AC.ISChatOriginal.addLineInChat(radioMessage, AC.RadioTabId)
-        end
-    elseif currentTabId == 0 and radioSync then
-        local radios = ARU_Utils.getPlayerRadios(getPlayer(), true, true)
-        for _, radio in ipairs(radios) do
-            local channel = ARU_Utils.getRadioFrequency(radio)
-            if channel == radioSync then
-                parsedMessage.radioFrequency = channel
-                local radioFormatted = AC.Parsing.FormatMessage(parsedMessage)
-                local radioMessage = AC_FakeMessage:new(radioFormatted, {
-                    author = chatMessage:getAuthor(),
-                    radioChannel = hasRadio and radioChannel or -1,
-                    datetimeStr = (pcall(function() return chatMessage:getDatetimeStr() end) and chatMessage:getDatetimeStr()) or "",
-                })
-                AC.ISChatOriginal.addLineInChat(radioMessage, AC.RadioTabId)
-            end
+            AC.ISChatOriginal.addLineInChat(radioMessage, currentTabId)
         end
     end
 
@@ -526,6 +536,12 @@ function AC.Handlers.AddStaffMessage(otherPlayerUsername, message)
         radioChannel = nil,
     })
     AC.ISChatOriginal.addLineInChat(fakeMessage, AC.StaffTabId)
+    
+    local chattingPlayer = getPlayerFromUsername(otherPlayerUsername)
+    if chattingPlayer then
+        local textOnly = message:gsub("<[^>]+>", "")
+        pcall(function() chattingPlayer:addLineChatElement(textOnly, 0.4, 0.9, 0.4, UIFont.Dialogue, 30.0, "") end)
+    end
 end
 
 function AC.Handlers.AddPrivateMessage(otherPlayerUsername, message)
@@ -631,7 +647,7 @@ function AC.Handlers.DrawRadioPlaceholder(chatInstance)
         message = message .. "No radio is transmitting"
     else
         local frequencies = {}
-        local radios = ARU_Utils.getPlayerRadios(me, true, true)
+        local radios = ARU_Utils.getPlayerRadios(me, true, true, true)
         for _, radio in ipairs(radios) do
             table.insert(frequencies, tostring(ARU_Utils.getRadioFrequency(radio)/1000) .. " MHz")
         end
@@ -673,13 +689,31 @@ function AC.Handlers.DrawGeneralPlaceholder(chatInstance)
     if currentLang and currentLang ~= "en" then
         message = "Speaking " .. AC.Languages[currentLang].name
     end
-    local radioSync = AC.Meta.GetRadioSync()
-    if radioSync then
+
+    local me = getPlayer()
+    local textEntry = chatInstance.textEntry
+    if ARU_Utils.AreAnyRadiosTransmitting(me) then
+        local frequencies = {}
+        local radios = ARU_Utils.getPlayerRadios(me, true, true, true)
+        for _, radio in ipairs(radios) do
+            table.insert(frequencies, tostring(ARU_Utils.getRadioFrequency(radio)/1000) .. " MHz")
+        end
+        local transmitMessage = "TX on: " .. table.concat(frequencies, ", ")
+        local width = getTextManager():MeasureStringX(UIFont.Medium, message .. ", " .. transmitMessage)
+        if width > textEntry:getWidth() then
+            transmitMessage = "TX on " .. #frequencies .. " frequencies"
+        end
         if message ~= "" then message = message .. ", " end
-        message = message .. "Synced with " .. tostring(radioSync/1000) .. " MHz"
+        message = message .. transmitMessage
+    else
+        local radioSync = AC.Meta.GetRadioSync()
+        if radioSync then
+            if message ~= "" then message = message .. ", " end
+            message = message .. "Synced with " .. tostring(radioSync/1000) .. " MHz"
+        end
     end
+
     if message ~= "" then
-        local textEntry = chatInstance.textEntry
         chatInstance:drawText(message, textEntry:getX() + 5, textEntry:getY() + 4, 0.4, 0.4, 1, 0.4, UIFont.Medium)
     end
 end

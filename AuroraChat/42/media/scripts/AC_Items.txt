@@ -1,7 +1,7 @@
 module Base {    
     item ACRecorder
     {
-        Type              = Normal,
+        ItemType = base:normal,
         DisplayCategory   = Electronics,
         Weight            = 0.4,
         DisplayName       = Tape Recorder,
@@ -16,15 +16,23 @@ module Base {
 
     item ACRecorderTape
     {
-        Type             = Normal,
-        DisplayCategory  = Electronics,
-        Weight           = 0.02,
-        DisplayName      = Recordable Tape,
-        Tooltip          = Tooltip_ACRecorderTape,
+        ItemType = base:normal,
+        DisplayCategory = Electronics,
+        Weight = 0.02,
+        DisplayName = Recordable Tape,
+        Tooltip = Tooltip_ACRecorderTape,
         WorldStaticModel = ACRecorderTape,
-        StaticModel      = ACRecorderTape,
-        Icon             = ACRecorderTape,
-        OnCreate         = AC_OnCreateTape,
+        StaticModel = ACRecorderTape,
+        Icon = ACRecorderTape,
+    }
+
+    item ACRecordedTape
+    {
+        ItemType = base:normal,
+        DisplayCategory = Electronics,
+        Weight = 0.02,
+        DisplayName = Recorded Tape,
+        Icon = ACRecorderTape,
     }
 
     model ACRecorder

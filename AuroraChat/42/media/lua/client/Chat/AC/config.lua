@@ -82,7 +82,7 @@ AC.ChatColors["playerDefault"] = { r = 0.8, g = 0.8, b = 0.8 }
 AC.ChatColors["emote"] = "<RGB:0.5,0.5,1>"
 AC.ChatColors["emotemuted"] = "<RGB:0.3,0.3,0.8>"
 AC.ChatColors["environment"] = "<RGB:0.5,1,0.5>"
-AC.ChatColors["ooc"] = "<RGB:0.3,0.3,0.8>"
+AC.ChatColors["ooc"] = "<RGB:0.4,0.4,0.4>"
 AC.ChatColors["alert"] = "<RGB:1,0,0>"
 AC.ChatColors["text"] = "<RGB:0.8,0.8,0.8>"
 AC.ChatColors["textmuted"] = "<RGB:0.5,0.5,0.5>"
