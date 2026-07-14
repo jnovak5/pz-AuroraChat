@@ -401,7 +401,7 @@ function AC.Handlers.AddLineInChat(chatMessage, tabID)
         local textOnlyMessage = AC.Parsing.GetTextOnly(parsedMessage)
         textOnlyMessage = textOnlyMessage:gsub("\r\n", " "):gsub("\n", " "):gsub("\r", " ")
         textOnlyMessage = textOnlyMessage:sub(1,1):upper() .. textOnlyMessage:sub(2)
-        local colorRGB = AC.Meta.GetNameColorRGB(parsedMessage.playerUsername)
+        local colorRGB = AC.Meta.GetSpeechColorRGB()
         pcall(function() chattingPlayer:addLineChatElement(textOnlyMessage, colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, 30.0, "") end)
     end
 

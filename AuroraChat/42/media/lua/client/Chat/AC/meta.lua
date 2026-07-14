@@ -253,6 +253,17 @@ function AC.Meta.GetNameColorRGB(username)
     return c
 end
 
+function AC.Meta.GetSpeechColorRGB()
+    local sayColorStr = AC.Meta.GetSayColor()
+    if sayColorStr and sayColorStr ~= "" then
+        local rStr, gStr, bStr = sayColorStr:match("<RGB:(%d*%.?%d*),(%d*%.?%d*),(%d*%.?%d*)>")
+        if rStr and gStr and bStr then
+            return { r = tonumber(rStr), g = tonumber(gStr), b = tonumber(bStr) }
+        end
+    end
+    return { r = 1, g = 1, b = 1 }
+end
+
 function AC.Meta.GetColor()
     return AC.Meta.GetNameColor(getPlayer():getUsername())
 end
