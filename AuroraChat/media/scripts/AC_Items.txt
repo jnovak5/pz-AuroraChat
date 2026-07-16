@@ -1,0 +1,88 @@
+module Base {    
+    item ACRecorder
+    {
+        ItemType = base:normal,
+        DisplayCategory   = Electronics,
+        Weight            = 0.4,
+        DisplayName       = Tape Recorder,
+        Tooltip           = Tooltip_ACRecorder,
+        WorldStaticModel  = ACRecorder,
+        StaticModel       = ACRecorder,
+        Icon              = ACRecorder,
+        primaryAnimMask   = HoldingUmbrellaRight,
+        secondaryAnimMask = HoldingUmbrellaLeft,
+        
+    }
+
+    item ACRecorderTape
+    {
+        ItemType = base:normal,
+        DisplayCategory = Electronics,
+        Weight = 0.02,
+        DisplayName = Recordable Tape,
+        Tooltip = Tooltip_ACRecorderTape,
+        WorldStaticModel = ACRecorderTape,
+        StaticModel = ACRecorderTape,
+        Icon = ACRecorderTape,
+    }
+
+    item ACRecordedTape
+    {
+        ItemType = base:normal,
+        DisplayCategory = Electronics,
+        Weight = 0.02,
+        DisplayName = Recorded Tape,
+        Icon = ACRecorderTape,
+    }
+
+    model ACRecorder
+    {
+        mesh = ACRecorder,
+        texture = ACRecorder,
+        scale = 1.0,
+    }
+
+    model ACRecorderTape
+    {
+        mesh = ACRecorderTape,
+        texture = ACRecorderTape,
+        scale = 1.0,
+    }
+
+    sound ACRecorderStart
+    {
+        category = World, loop = false, is3D = true,
+        clip {
+            file = media/sound/ACRecorderStart.ogg,
+            distanceMin = 1,
+            distanceMax = 10,
+            reverbFactor = 0.1,
+            volume = 1.0,
+        }
+    }
+
+    sound ACRecorderStop
+    {
+        category = World, loop = false, is3D = true,
+        clip {
+            file = media/sound/ACRecorderStop.ogg,
+            distanceMin = 1,
+            distanceMax = 10,
+            reverbFactor = 0.1,
+            volume = 1.0,
+        }
+    }
+
+    sound ACRecorderWhirr
+    {
+        category = World, loop = true, is3D = true,
+        clip {
+            file = media/sound/ACRecorderWhirr.ogg,
+            distanceMin = 1,
+            distanceMax = 10,
+            reverbFactor = 0.1,
+            volume = 1.0,
+        }
+    }
+
+}
