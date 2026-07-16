@@ -90,7 +90,7 @@ function AC.Handlers.HandlePrivateTabCommand(message)
     })
     AC.ISChatOriginal.addLineInChat(fakeMessage, AC.PrivateTabId)
 
-    message = AC.Parsing.PrependPlayerData(player, message)
+    message = AC.Parsing.PrependPlayerData(player, message, parsedMessage.language)
     sendClientCommand(getPlayer(), 'AC', 'PrivateChat', {AC.Meta.PrivatePartner, message, parsedMessage.language})
     return true
 end
@@ -180,7 +180,7 @@ function AC.Handlers.CommandEntered(message)
         message = "[radio]" .. message
     end
 
-    message = AC.Parsing.PrependPlayerData(player, message)
+    message = AC.Parsing.PrependPlayerData(player, message, parsedMessage.language)
 
     if parsedMessage.chatType == "shout" then
         processShoutMessage(message)

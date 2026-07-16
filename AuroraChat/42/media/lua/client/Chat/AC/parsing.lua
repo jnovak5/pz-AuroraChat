@@ -19,14 +19,16 @@ function AC.Parsing.ParseMessage(message)
 
     local unStart, unEnd, unMatch = message:find("%[UN:([^%]]+)%]")
     local posStart, posEnd, x, y, z = message:find("%[POS:(%d+),(%d+),(%d+)%]")
+    local langStart, langEnd, langMatch = message:find("%[LANG:([^%]]+)%]")
     
     -- Check if metadata exists near the start of the string (within first 50 chars)
-    if (unStart and unStart < 50) or (posStart and posStart < 50) then
+    if (unStart and unStart < 50) or (posStart and posStart < 50) or (langStart and langStart < 50) then
         if unMatch then playerUsername = unMatch end
         if x and y and z then pos = {x = tonumber(x), y = tonumber(y), z = tonumber(z)} end
+        if langMatch then language = langMatch end
         
-        -- The metadata block extends at least up to the last found tag (UN or POS)
-        local cutPos = math.max(unEnd or 0, posEnd or 0)
+        -- The metadata block extends at least up to the last found tag (UN or POS or LANG)
+        local cutPos = math.max(unEnd or 0, posEnd or 0, langEnd or 0)
         
         -- Check for optional subsequent tags, allowing for some static noise between them
         local remainder = message:sub(cutPos + 1)
@@ -188,11 +190,12 @@ function AC.Parsing.GetTextConvertedToOoc(parsedMessage)
     return "/ooc" .. AC.ChatTypes[parsedMessage.chatType].command[1] .. " " .. parsedMessage.parts[2].text
 end
 
-function AC.Parsing.PrependPlayerData(player, message)
+function AC.Parsing.PrependPlayerData(player, message, lang)
     local x = tostring(math.floor(player:getX()))
     local y = tostring(math.floor(player:getY()))
     local z = tostring(math.floor(player:getZ()))
-    return "[UN:" .. player:getUsername() .. "][POS:" .. x .. "," .. y .. "," .. z .. "]" .. message
+    local langTag = lang and ("[LANG:" .. lang .. "]") or ""
+    return "[UN:" .. player:getUsername() .. "][POS:" .. x .. "," .. y .. "," .. z .. "]" .. langTag .. message
 end
 
 function AC.Parsing.GetRandomWordsFromMessage(message, percentChancePerWord)
