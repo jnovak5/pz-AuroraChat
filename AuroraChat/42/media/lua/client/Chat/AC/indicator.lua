@@ -76,13 +76,14 @@ function AC.Indicator.update()
 end
 
 AC.Indicator.IndicatorWidth = getTextManager():MeasureStringX(UIFont.Small, "...")
-AC.Indicator.IndicatorHeight = getTextManager():MeasureStringY(UIFont.Small, "...")
+AC.Indicator.IndicatorHeight = getTextManager():MeasureStringY(UIFont.Small, "...") + 4
 AC.Indicator.UiElements = AC.Indicator.UiElements or {}
 function AC.Indicator.DrawOverheads()
     local zoom = getCore():getZoom(0)
     local me = getPlayer()
     local c = math.floor(getTimestampMs()/1000) % 3
     local typingText = string.rep(".", c + 1)
+    local textWidth = AC.Indicator.IndicatorWidth + 8
     for _,x in pairs(AC.Indicator.UiElements) do x.seen = false end
     for username, _ in pairs(AC.Indicator.players) do
         local player = getPlayerFromUsername(username)
@@ -92,10 +93,11 @@ function AC.Indicator.DrawOverheads()
             y = y - (130 / zoom) - (3*zoom)
             local ele = AC.Indicator.UiElements[username]
             if ele then
-                ele:setX(x - (ele.width / 2))
+                ele:setX(x - (textWidth / 2))
                 ele:setY(y)
+                ele:setWidth(textWidth)
             else
-                ele = ISUIElement:new(x - (AC.Indicator.IndicatorWidth/2), y, AC.Indicator.IndicatorWidth, AC.Indicator.IndicatorHeight)
+                ele = ISUIElement:new(x - (textWidth/2), y, textWidth, AC.Indicator.IndicatorHeight)
                 ele.anchorTop = false
                 ele.anchorBottom = true
                 ele:initialise()
@@ -104,7 +106,9 @@ function AC.Indicator.DrawOverheads()
                 AC.Indicator.UiElements[username] = ele
             end
             ele.seen = true
-            ele:drawTextCentre(typingText, AC.Indicator.IndicatorWidth/2, 0, 1, 1, 1, 1, UIFont.Small)
+            ele:drawRect(0, 0, textWidth, AC.Indicator.IndicatorHeight, 0.7, 0, 0, 0)
+            ele:drawRectBorder(0, 0, textWidth, AC.Indicator.IndicatorHeight, 0.3, 1, 1, 1)
+            ele:drawTextCentre(typingText, textWidth/2, 2, 1, 1, 1, 1, UIFont.Small)
         end
     end
     for k,v in pairs(AC.Indicator.UiElements) do
@@ -119,19 +123,45 @@ local fntSize = getTextManager():getFontFromEnum(UIFont.Small):getLineHeight()
 function AC.Indicator.DrawTypingInChat(chatInstance)
     local typers = {}
     for username, _ in pairs(AC.Indicator.players) do
-        table.insert(typers, AC.Meta.GetName(username))
+        local name = AC.Meta.GetName(username)
+        if name == username then
+            local player = getPlayerFromUsername(username)
+            if not player and getPlayer() and getPlayer():getUsername() == username then
+                player = getPlayer()
+            end
+            if player and player:getDescriptor() then
+                local f = player:getDescriptor():getForename() or ""
+                local s = player:getDescriptor():getSurname() or ""
+                if s ~= "" then
+                    name = f .. " " .. s
+                elseif f ~= "" then
+                    name = f
+                end
+            end
+        end
+        table.insert(typers, name)
     end
 
     if #typers > 0 then
         table.sort(typers)
-        local text = getText("UI_AC_Typing") .. table.concat(typers, ", ")
+        local text = ""
+        if #typers == 1 then
+            text = typers[1] .. " is typing..."
+        elseif #typers == 2 then
+            text = typers[1] .. " and " .. typers[2] .. " are typing..."
+        else
+            text = "Several people are typing..."
+        end
         local textEntry = chatInstance.textEntry
         local x = textEntry:getX() + 2
         local y = textEntry:getY() - fntSize - 2
         local width = getTextManager():MeasureStringX(UIFont.Small, text)
         if width > textEntry:getWidth() then
-            text = getText("UI_AC_ManyTyping")
+            text = "Several people are typing..."
+            width = getTextManager():MeasureStringX(UIFont.Small, text)
         end
+        chatInstance:drawRect(x - 2, y - 2, width + 4, fntSize + 4, 0.7, 0.1, 0.1, 0.1)
+        chatInstance:drawRectBorder(x - 2, y - 2, width + 4, fntSize + 4, 0.4, 1, 1, 1)
         chatInstance:drawText(text, x, y, 1, 1, 1, 1, UIFont.Small)
     end
 end

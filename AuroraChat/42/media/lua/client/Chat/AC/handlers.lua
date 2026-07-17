@@ -309,6 +309,7 @@ function AC.Handlers.AddLineInChat(chatMessage, tabID)
             else
                 textToDisplay = rawText
             end
+            textToDisplay = AC.Parsing.CleanOverheadText(textToDisplay)
             local colorRGB = AC.ChatTypes[parsedMessage.chatType].colorRGB
             pcall(function() myPlayer:addLineChatElement(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, AC.ChatTypes[parsedMessage.chatType].xyRange, "radio") end)
             
@@ -426,6 +427,7 @@ function AC.Handlers.AddLineInChat(chatMessage, tabID)
         local textOnlyMessage = AC.Parsing.GetTextOnly(parsedMessage)
         textOnlyMessage = textOnlyMessage:gsub("\r\n", " "):gsub("\n", " "):gsub("\r", " ")
         textOnlyMessage = textOnlyMessage:sub(1,1):upper() .. textOnlyMessage:sub(2)
+        textOnlyMessage = AC.Parsing.CleanOverheadText(textOnlyMessage)
         local colorRGB = AC.Meta.GetSpeechColorRGB()
         if parsedMessage.chatModifier == "ooc" then
             colorRGB = {r = 0.4, g = 0.4, b = 0.4}
@@ -540,6 +542,7 @@ function AC.Handlers.AddStaffMessage(otherPlayerUsername, message)
     local chattingPlayer = getPlayerFromUsername(otherPlayerUsername)
     if chattingPlayer then
         local textOnly = message:gsub("<[^>]+>", "")
+        textOnly = AC.Parsing.CleanOverheadText(textOnly)
         pcall(function() chattingPlayer:addLineChatElement(textOnly, 0.4, 0.9, 0.4, UIFont.Dialogue, 30.0, "") end)
     end
 end

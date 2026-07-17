@@ -2,6 +2,32 @@ if not isClient() then return end -- only in MP
 AC = AC or {}
 AC.Parsing = AC.Parsing or {}
 
+function AC.Parsing.CapitalizeFirst(text)
+    if not text or text == "" then return text end
+    local firstChar, rest = text:match("^([%z\1-\127\194-\253][\128-\191]*)(.*)")
+    if firstChar then
+        return firstChar:upper() .. rest
+    else
+        return text:sub(1, 1):upper() .. text:sub(2)
+    end
+end
+
+function AC.Parsing.CleanOverheadText(text)
+    if not text or text == "" then return text end
+    text = text:gsub("\226\128\148", "-") -- em dash
+    text = text:gsub("\226\128\147", "-") -- en dash
+    text = text:gsub("\226\128\146", "-") -- figure dash
+    text = text:gsub("\226\128\149", "-") -- horizontal bar
+    text = text:gsub("\226\136\146", "-") -- minus sign
+    
+    text = text:gsub("\226\128\153", "'") -- right single quote
+    text = text:gsub("\226\128\152", "'") -- left single quote
+    text = text:gsub("\226\128\157", '"') -- right double quote
+    text = text:gsub("\226\128\156", '"') -- left double quote
+    text = text:gsub("\226\128\166", "...") -- ellipsis
+    return text
+end
+
 --- @param message string
 --- @return table|nil
 function AC.Parsing.ParseMessage(message)
@@ -349,7 +375,7 @@ function AC.Parsing.FormatMessage(parsedMessage)
     -- Capitalize first letter of first text part
     for i=1, #parsedMessage.parts do
         if parsedMessage.parts[i].type == "text" then
-            parsedMessage.parts[i].text = parsedMessage.parts[i].text:sub(1, 1):upper() .. parsedMessage.parts[i].text:sub(2)
+            parsedMessage.parts[i].text = AC.Parsing.CapitalizeFirst(parsedMessage.parts[i].text)
             break
         end
     end
