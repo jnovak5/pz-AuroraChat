@@ -90,25 +90,33 @@ function AC.Indicator.DrawOverheads()
         if player and me:CanSee(player) then
             local x = isoToScreenX(0, player:getX(), player:getY(), player:getZ())
             local y = isoToScreenY(0, player:getX(), player:getY(), player:getZ())
-            y = y - (130 / zoom) - (3*zoom)
+            local zoom = getCore():getZoom(0)
+            if zoom > 0 then
+                y = y - (130 / zoom) - (2 * zoom) + 4
+            else
+                y = y - 124
+            end
             local ele = AC.Indicator.UiElements[username]
             if ele then
                 ele:setX(x - (textWidth / 2))
                 ele:setY(y)
-                ele:setWidth(textWidth)
+                ele.indicatorText = typingText
             else
-                ele = ISUIElement:new(x - (textWidth/2), y, textWidth, AC.Indicator.IndicatorHeight)
-                ele.anchorTop = false
-                ele.anchorBottom = true
+                ele = ISUIElement:new(x - (textWidth/2), y, textWidth, textHeight)
+                ele.anchorTop = true
+                ele.anchorBottom = false
                 ele:initialise()
                 ele:addToUIManager()
                 ele:backMost()
+                ele.indicatorText = typingText
+                ele.render = function(self)
+                    self:drawRect(0, 0, self.width, self.height, 0.7, 0, 0, 0)
+                    self:drawRectBorder(0, 0, self.width, self.height, 0.3, 1, 1, 1)
+                    self:drawTextCentre(self.indicatorText, self.width/2, 2, 1, 1, 1, 1, UIFont.Small)
+                end
                 AC.Indicator.UiElements[username] = ele
             end
             ele.seen = true
-            ele:drawRect(0, 0, textWidth, AC.Indicator.IndicatorHeight, 0.7, 0, 0, 0)
-            ele:drawRectBorder(0, 0, textWidth, AC.Indicator.IndicatorHeight, 0.3, 1, 1, 1)
-            ele:drawTextCentre(typingText, textWidth/2, 2, 1, 1, 1, 1, UIFont.Small)
         end
     end
     for k,v in pairs(AC.Indicator.UiElements) do

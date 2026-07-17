@@ -33,26 +33,35 @@ function AC.StatusIndicator.ShowStatusIndicatorOnHovered()
         if worldZ == player:getZ() and distSq <= maxDistSq and AC.CanSeePlayer(player, true, 20) and status then
             local x = isoToScreenX(0, player:getX(), player:getY(), player:getZ())
             local y = isoToScreenY(0, player:getX(), player:getY(), player:getZ())
-            y = y - (130 / zoom) - (3*zoom)
-            if AC.Indicator.players[username] then y = y - AC.Indicator.IndicatorHeight - 2 end
-            if AC.Meta.IsAfk(username) then y = y - AC.Afk.IndicatorHeight - 2 end
+            local zoom = getCore():getZoom(0)
+            if zoom > 0 then
+                y = y - (130 / zoom) - (2 * zoom) + 4
+            else
+                y = y - 124
+            end
+            if AC.Indicator.players[username] then y = y + AC.Indicator.IndicatorHeight end
+            if AC.Meta.IsAfk(username) then y = y + AC.Afk.IndicatorHeight end
             local statusWidth = getTextManager():MeasureStringX(UIFont.Small, status)
             local statusHeight = getTextManager():MeasureStringY(UIFont.Small, status)
             local ele = AC.StatusIndicator.OverheadUiElements[username]
             if ele then
                 ele:setX(x - (ele.width / 2))
                 ele:setY(y)
+                ele.statusText = status
             else
                 ele = ISUIElement:new(x - (statusWidth/2), y, statusWidth, statusHeight)
-                ele.anchorTop = false
-                ele.anchorBottom = true
+                ele.anchorTop = true
+                ele.anchorBottom = false
                 ele:initialise()
                 ele:addToUIManager()
                 ele:backMost()
+                ele.statusText = status
+                ele.render = function(self)
+                    self:drawTextCentre(self.statusText, self.width/2, 0, 1.0, 1.0, 1.0, 0.6, UIFont.Small)
+                end
                 AC.StatusIndicator.OverheadUiElements[username] = ele
             end
             ele.seen = true
-            ele:drawTextCentre(status, statusWidth/2, 0, 1.0, 1.0, 1.0, 0.6, UIFont.Small)
         end
     end
     for k,v in pairs(AC.StatusIndicator.OverheadUiElements) do

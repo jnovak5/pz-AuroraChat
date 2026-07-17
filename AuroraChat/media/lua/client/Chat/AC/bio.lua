@@ -26,9 +26,16 @@ function AC.Bio.ShowBioOnPlayers()
             
             local x = isoToScreenX(0, player:getX(), player:getY(), player:getZ())
             local y = isoToScreenY(0, player:getX(), player:getY(), player:getZ())
-            
-            -- Position below the player's name
-            y = y - (130 / zoom) + (18 * zoom)
+            local zoom = getCore():getZoom(0)
+            if zoom > 0 then
+                y = y - (130 / zoom) - (2 * zoom) + 4
+            else
+                y = y - 124
+            end
+            if AC.Indicator.players[username] then y = y + AC.Indicator.IndicatorHeight end
+            if AC.Meta.IsAfk(username) then y = y + AC.Afk.IndicatorHeight end
+            local status = AC.Meta.GetStatus(username)
+            if status then y = y + getTextManager():MeasureStringY(UIFont.Small, status) end
             
             local ele = AC.Bio.OverheadUiElements[username]
             if ele then
@@ -39,8 +46,8 @@ function AC.Bio.ShowBioOnPlayers()
                 ele.bioText = shortBio
             else
                 ele = ISUIElement:new(x - (textWidth/2), y, textWidth, textHeight)
-                ele.anchorTop = false
-                ele.anchorBottom = true
+                ele.anchorTop = true
+                ele.anchorBottom = false
                 ele:initialise()
                 ele:addToUIManager()
                 ele:backMost()
