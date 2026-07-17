@@ -188,3 +188,15 @@ option AuroraChat.EnableAutoCleanup
   page = AuroraChat,
   translation = AuroraChat.EnableAutoCleanup,
 }
+
+option AuroraChat.EnableBioShortDescription
+{
+  type = boolean,
+  default = true,
+
+  page = AuroraChat,
+  translation = AuroraChat.EnableBioShortDescription,
+}
+
+
+

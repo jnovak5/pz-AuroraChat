@@ -132,6 +132,7 @@ function ISChat:render()
     end
 
     AC.Afk.ShowAfkOnPlayers()
+    AC.Bio.ShowBioOnPlayers()
     AC.StatusIndicator.ShowStatusIndicatorOnHovered()
 
     if AC.Meta.GetOverheadTypingIndicator() then

@@ -195,6 +195,11 @@ local function onACCommand(module, command, sendingPlayer, args)
                 sendServerCommand(player, "AC", command, {sendingPlayer:getUsername(), message})
             end
         end
+    elseif command == "BioSave" then
+        PlayerDB.CharacterBioStorage[sendingPlayer:getUsername()] = {description = args[1]}
+        ModData.add("AC_CharacterBioStorage", PlayerDB.CharacterBioStorage)
+    elseif command == "BioLoad" then
+        sendServerCommand(sendingPlayer, module, command, PlayerDB.CharacterBioStorage[args[1]])
     else
         NotifyTyping(sendingPlayer, command, args)
     end
@@ -218,6 +223,8 @@ local function ProcessLastSeenTimes()
             PlayerDB.PlayerNames[username] = nil
             PlayerDB.PlayerAfk[username] = nil
             PlayerDB.PlayerStatus[username] = nil
+            PlayerDB.CharacterBioStorage[username] = nil
+            PlayerDB.CharacterPortraitStorage[username] = nil
         end
     end
     ModData.add("AC_LastSeenTimes", PlayerDB.LastSeenTimes)
@@ -227,6 +234,8 @@ local function ProcessLastSeenTimes()
     ModData.add("AC_PlayerNames", PlayerDB.PlayerNames)
     ModData.add("AC_PlayerAfk", PlayerDB.PlayerAfk)
     ModData.add("AC_PlayerStatus", PlayerDB.PlayerStatus)
+    ModData.add("AC_CharacterBioStorage", PlayerDB.CharacterBioStorage)
+    ModData.add("AC_CharacterPortraitStorage", PlayerDB.CharacterPortraitStorage)
 end
 
 local function OnInitGlobalModData(isNewGame)
@@ -237,6 +246,8 @@ local function OnInitGlobalModData(isNewGame)
     PlayerDB.PlayerNames    = ModData.getOrCreate("AC_PlayerNames")
     PlayerDB.PlayerAfk      = ModData.getOrCreate("AC_PlayerAfk")
     PlayerDB.PlayerStatus   = ModData.getOrCreate("AC_PlayerStatus")
+    PlayerDB.CharacterBioStorage = ModData.getOrCreate("AC_CharacterBioStorage")
+    PlayerDB.CharacterPortraitStorage = ModData.getOrCreate("AC_CharacterPortraitStorage")
 end
 
 Events.EveryDays.Add(ProcessLastSeenTimes)

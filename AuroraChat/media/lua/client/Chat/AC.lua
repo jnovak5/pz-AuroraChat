@@ -2,6 +2,7 @@ if not isClient() then return end -- only in MP
 AC = AC or {}
 
 require "Chat/AC/afk"
+require "Chat/AC/bio"
 require "Chat/AC/buffs"
 require "Chat/AC/commands"
 require "Chat/AC/config"

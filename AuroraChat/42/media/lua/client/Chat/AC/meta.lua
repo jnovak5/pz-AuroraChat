@@ -558,6 +558,19 @@ function AC.Meta.CreateCharacterContext(context, myPlayer)
     local characterContext = context:getNew(context)
     context:addSubMenu(characterOption, characterContext)
 
+    local function openEditBio()
+        local FONT_SCALE = getTextManager():getFontHeight(UIFont.Small) / 14
+        local core = getCore()
+        local width = 400 * FONT_SCALE
+        local height = 600 * FONT_SCALE
+        
+        local ISWriteBio = require "Chat/AC_ISWriteBio"
+        local ui = ISWriteBio:new((core:getScreenWidth() - width)/2, (core:getScreenHeight() - height)/2, width, height, myPlayer, true)
+        ui:initialise()
+        ui:addToUIManager()
+    end
+    characterContext:addOption("Edit Bio", nil, openEditBio)
+
     if SandboxVars.AuroraChat.EnableModCharacter then
         characterContext:addOption("Set Name", nil, AC.MakeShowDialogPrompt("Input your new name", AC.Commands.SetName))
         characterContext:addOption("Grow Hair", nil, AC.Commands.GrowHair)
