@@ -92,9 +92,9 @@ function AC.Indicator.DrawOverheads()
             local y = isoToScreenY(0, player:getX(), player:getY(), player:getZ())
             local zoom = getCore():getZoom(0)
             if zoom > 0 then
-                y = y - (130 / zoom) - (2 * zoom) + 4
+                y = y - (125 / zoom)
             else
-                y = y - 124
+                y = y - 125
             end
             local ele = AC.Indicator.UiElements[username]
             if ele then

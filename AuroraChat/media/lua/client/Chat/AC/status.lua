@@ -35,12 +35,13 @@ function AC.StatusIndicator.ShowStatusIndicatorOnHovered()
             local y = isoToScreenY(0, player:getX(), player:getY(), player:getZ())
             local zoom = getCore():getZoom(0)
             if zoom > 0 then
-                y = y - (130 / zoom) - (2 * zoom) + 4
+                y = y - (125 / zoom)
             else
-                y = y - 124
+                y = y - 125
             end
-            if AC.Indicator.players[username] then y = y + AC.Indicator.IndicatorHeight end
-            if AC.Meta.IsAfk(username) then y = y + AC.Afk.IndicatorHeight end
+            local fontHeight = getTextManager():getFontHeight(UIFont.Small)
+            if AC.Indicator.players[username] then y = y + fontHeight end
+            if AC.Meta.IsAfk(username) then y = y + fontHeight end
             local statusWidth = getTextManager():MeasureStringX(UIFont.Small, status)
             local statusHeight = getTextManager():MeasureStringY(UIFont.Small, status)
             local ele = AC.StatusIndicator.OverheadUiElements[username]
