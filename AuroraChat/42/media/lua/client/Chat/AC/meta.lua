@@ -526,8 +526,8 @@ function AC.Meta.CreateActionsContext(context, myPlayer, players)
 
     local tradingOption = actionsContext:addOption("Trade With", nil, nil)
     if #tradablePlayers > 0 then
-        local tradingContext = context:getNew(context)
-        context:addSubMenu(tradingOption, tradingContext)
+        local tradingContext = actionsContext:getNew(actionsContext)
+        actionsContext:addSubMenu(tradingOption, tradingContext)
         for _, player in ipairs(tradablePlayers) do
             local username = player:getUsername()
             tradingContext:addOption(AC.Meta.GetName(username) .. " (" .. username .. ")", '"' .. username .. '"', AC.Commands.Trade)
@@ -539,8 +539,8 @@ function AC.Meta.CreateActionsContext(context, myPlayer, players)
 
     local medicalOption = actionsContext:addOption("Medical Check", nil, nil)
     if #tradablePlayers > 0 then
-        local medicalContext = context:getNew(context)
-        context:addSubMenu(medicalOption, medicalContext)
+        local medicalContext = actionsContext:getNew(actionsContext)
+        actionsContext:addSubMenu(medicalOption, medicalContext)
         for _, player in ipairs(tradablePlayers) do
             local username = player:getUsername()
             medicalContext:addOption(AC.Meta.GetName(username) .. " (" .. username .. ")", '"' .. username .. '"', AC.Commands.MedicalCheck)
