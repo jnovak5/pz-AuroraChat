@@ -1,0 +1,202 @@
+VERSION = 1,
+
+option AuroraChatLocal.EnablePM
+{
+  type = boolean,
+  default = true,
+
+  page = AuroraChatLocal,
+  translation = AuroraChatLocal.EnablePM,
+}
+
+option AuroraChatLocal.EnableOOC
+{
+  type = boolean,
+  default = true,
+
+  page = AuroraChatLocal,
+  translation = AuroraChatLocal.EnableOOC,
+}
+
+option AuroraChatLocal.EnableAll
+{
+  type = boolean,
+  default = true,
+
+  page = AuroraChatLocal,
+  translation = AuroraChatLocal.EnableAll,
+}
+
+option AuroraChatLocal.EnablePrivate
+{
+  type = boolean,
+  default = true,
+
+  page = AuroraChatLocal,
+  translation = AuroraChatLocal.EnablePrivate,
+}
+
+option AuroraChatLocal.EnableBuffs
+{
+  type = boolean,
+  default = true,
+
+  page = AuroraChatLocal,
+  translation = AuroraChatLocal.EnableBuffs,
+}
+
+option AuroraChatLocal.RangeXYWhisper
+{
+  type = integer, min = 0, max = 100,
+  default = 1,
+
+  page = AuroraChatLocal,
+  translation = AuroraChatLocal.RangeXYWhisper,
+}
+
+option AuroraChatLocal.RangeZWhisper
+{
+  type = integer, min = 0, max = 7,
+  default = 0,
+
+  page = AuroraChatLocal,
+  translation = AuroraChatLocal.RangeZWhisper,
+}
+
+option AuroraChatLocal.RangeXYLow
+{
+  type = integer, min = 0, max = 100,
+  default = 5,
+
+  page = AuroraChatLocal,
+  translation = AuroraChatLocal.RangeXYLow,
+}
+
+option AuroraChatLocal.RangeZLow
+{
+  type = integer, min = 0, max = 7,
+  default = 0,
+
+  page = AuroraChatLocal,
+  translation = AuroraChatLocal.RangeZLow,
+}
+
+option AuroraChatLocal.RangeXYSay
+{
+  type = integer, min = 0, max = 100,
+  default = 10,
+
+  page = AuroraChatLocal,
+  translation = AuroraChatLocal.RangeXYSay,
+}
+
+option AuroraChatLocal.RangeZSay
+{
+  type = integer, min = 0, max = 7,
+  default = 1,
+
+  page = AuroraChatLocal,
+  translation = AuroraChatLocal.RangeZSay,
+}
+
+option AuroraChatLocal.RangeXYLoud
+{
+  type = integer, min = 0, max = 100,
+  default = 20,
+
+  page = AuroraChatLocal,
+  translation = AuroraChatLocal.RangeXYLoud,
+}
+
+option AuroraChatLocal.RangeZLoud
+{
+  type = integer, min = 0, max = 7,
+  default = 4,
+
+  page = AuroraChatLocal,
+  translation = AuroraChatLocal.RangeZLoud,
+}
+
+option AuroraChatLocal.RangeXYShout
+{
+  type = integer, min = 0, max = 100,
+  default = 30,
+
+  page = AuroraChatLocal,
+  translation = AuroraChatLocal.RangeXYShout,
+}
+
+option AuroraChatLocal.RangeZShout
+{
+  type = integer, min = 0, max = 7,
+  default = 7,
+
+  page = AuroraChatLocal,
+  translation = AuroraChatLocal.RangeZShout,
+}
+
+option AuroraChatLocal.EnableHardOfHearing
+{
+  type = boolean,
+  default = false,
+
+  page = AuroraChatLocal,
+  translation = AuroraChatLocal.EnableHardOfHearing,
+}
+
+option AuroraChatLocal.EnableDeaf
+{
+  type = boolean,
+  default = false,
+
+  page = AuroraChatLocal,
+  translation = AuroraChatLocal.EnableDeaf,
+}
+
+option AuroraChatLocal.AllowPlayerCoords
+{
+  type = boolean,
+  default = true,
+
+  page = AuroraChatLocal,
+  translation = AuroraChatLocal.AllowPlayerCoords,
+}
+
+option AuroraChatLocal.EnableModCharacter
+{
+  type = boolean,
+  default = true,
+
+  page = AuroraChatLocal,
+  translation = AuroraChatLocal.EnableModCharacter,
+}
+
+option AuroraChatLocal.EnableSelfInjury
+{
+  type = boolean,
+  default = true,
+
+  page = AuroraChatLocal,
+  translation = AuroraChatLocal.EnableSelfInjury,
+}
+
+option AuroraChatLocal.EnableAutoCleanup
+{
+  type = boolean,
+  default = true,
+
+  page = AuroraChatLocal,
+  translation = AuroraChatLocal.EnableAutoCleanup,
+}
+
+option AuroraChatLocal.EnableBioShortDescription
+{
+  type = boolean,
+  default = true,
+
+  page = AuroraChatLocal,
+  translation = AuroraChatLocal.EnableBioShortDescription,
+}
+
+
+
