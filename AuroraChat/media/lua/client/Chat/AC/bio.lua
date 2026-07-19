@@ -20,7 +20,8 @@ function AC.Bio.ShowBioOnPlayers()
         
         local shortBio = player:getModData()['_CharacterBioShortDescription'] or ""
         
-        if type(shortBio) == "string" and string.len(shortBio) > 1 and AC.CanSeePlayer(player, true, 20) and me:getDistanceSq(player) < 2500 then
+        local sayRange = SandboxVars.AuroraChat.RangeXYSay or 20
+        if type(shortBio) == "string" and string.len(shortBio) > 1 and AC.CanSeePlayer(player, true, sayRange) and me:getDistanceSq(player) < (sayRange * sayRange) then
             local textWidth = getTextManager():MeasureStringX(UIFont.Small, shortBio)
             local textHeight = getTextManager():MeasureStringY(UIFont.Small, shortBio)
             
