@@ -25,3 +25,11 @@ Get-ChildItem -Path "$dest\42\media\lua" -Recurse -Filter "*.lua" | ForEach-Obje
 }
 
 Write-Host "Successfully synced AuroraChatLocal (Development) to AuroraChat (Release)!"
+
+$workshopDest = "$env:USERPROFILE\Zomboid\Workshop\AuroraChat\Contents\mods\AuroraChat"
+if (Test-Path $workshopDest) {
+    Copy-Item -Path "$dest\*" -Destination $workshopDest -Recurse -Force
+    Write-Host "Successfully copied release files to Zomboid Workshop directory for Steam upload!"
+} else {
+    Write-Host "Workshop directory not found, skipping Workshop sync."
+}

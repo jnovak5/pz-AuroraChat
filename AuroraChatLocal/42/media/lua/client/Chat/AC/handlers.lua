@@ -212,6 +212,7 @@ end
 local lastRadioAuthor = nil
 local lastRadioChannel = nil
 local lastRadioMessage = nil
+local lastRadioTime = 0
 
 --- @return boolean
 function AC.Handlers.AddLineInChat(chatMessage, tabID)
@@ -241,7 +242,7 @@ function AC.Handlers.AddLineInChat(chatMessage, tabID)
     if isFromDiscord then
         local myPlayer = getPlayer()
         local radios = ARU_Utils.getPlayerRadios(myPlayer, true, false, true)
-        if #radios == 0 then
+        if #radios == 0 and not AC.Override() then
             pcall(function() chatMessage:setText("") end)
             return true
         end
@@ -309,7 +310,10 @@ function AC.Handlers.AddLineInChat(chatMessage, tabID)
         if   lastRadioAuthor == parsedMessage.playerUsername
         and  lastRadioChannel == parsedMessage.radioFrequency
         and  lastRadioMessage == rawText
-        then parsedMessage.isOwnRadio = false
+        and  (getTimestampMs() - lastRadioTime < 1000)
+        then 
+            pcall(function() chatMessage:setText("") end)
+            return true
         else
             local activeRadio = nil
             local radios = ARU_Utils.getPlayerRadios(myPlayer, true, false, true)
@@ -326,6 +330,7 @@ function AC.Handlers.AddLineInChat(chatMessage, tabID)
                 lastRadioAuthor = parsedMessage.playerUsername
                 lastRadioChannel = parsedMessage.radioFrequency
                 lastRadioMessage = rawText
+                lastRadioTime = getTimestampMs()
             end
         end
 
@@ -360,7 +365,9 @@ function AC.Handlers.AddLineInChat(chatMessage, tabID)
                 end
             end
         end
-    else
+    end
+
+    if not parsedMessage.isOwnRadio then
         local chatType = AC.ChatTypes[parsedMessage.chatType]
         local pos
 
@@ -491,7 +498,7 @@ function AC.Handlers.AddLineInChat(chatMessage, tabID)
         doInOOC = true
     else
         doInGeneral = true
-        if parsedMessage.isOwnRadio then
+        if parsedMessage.isOwnRadio or (parsedMessage.radioFrequency and AC.Override()) then
             doInRadio = true
         end
 

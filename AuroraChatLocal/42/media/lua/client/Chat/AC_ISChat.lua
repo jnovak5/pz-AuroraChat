@@ -132,12 +132,14 @@ function ISChat:render()
         end
     end
 
-    AC.Afk.ShowAfkOnPlayers()
-    AC.Bio.ShowBioOnPlayers()
-    AC.StatusIndicator.ShowStatusIndicatorOnHovered()
+    if not (ISWorldMap_instance and ISWorldMap_instance:isVisible()) then
+        AC.Afk.ShowAfkOnPlayers()
+        AC.Bio.ShowBioOnPlayers()
+        AC.StatusIndicator.ShowStatusIndicatorOnHovered()
 
-    if AC.Meta.GetOverheadTypingIndicator() then
-        AC.Indicator.DrawOverheads(self)
+        if AC.Meta.GetOverheadTypingIndicator() then
+            AC.Indicator.DrawOverheads(self)
+        end
     end
 
     AC.Indicator.DrawTypingInChat(self)
