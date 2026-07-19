@@ -49,7 +49,8 @@ function AC.Handlers.SpecialCommand(message)
                 end
             end
 
-            if command == "/all" and not SandboxVars.AuroraChat.EnableAll and not AC.Override(true) then
+            local sandbox = SandboxVars.AuroraChat or {}
+            if command == "/all" and not sandbox.EnableAll and not AC.Override(true) then
                 AC_Utils.addErrorToChat("All chat is disabled")
                 return true
             end
@@ -111,7 +112,8 @@ function AC.Handlers.CommandEntered(message)
         return false
     end
 
-    if parsedMessage.chatModifier == "ooc" and not SandboxVars.AuroraChat.EnableOOC and not AC.Override(true) then
+    local sandbox = SandboxVars.AuroraChat or {}
+    if parsedMessage.chatModifier == "ooc" and not sandbox.EnableOOC and not AC.Override(true) then
         AC_Utils.addErrorToChat("OOC chat is disabled")
         return true
     end
@@ -417,7 +419,8 @@ function AC.Handlers.AddLineInChat(chatMessage, tabID)
             return true
         end
 
-        if AC.Meta.CanUnderstand(parsedMessage.language) and safeHasTrait(myPlayer, "HardOfHearing") and SandboxVars.AuroraChat.EnableHardOfHearing and not isMe then
+        local sandbox = SandboxVars.AuroraChat or {}
+        if AC.Meta.CanUnderstand(parsedMessage.language) and safeHasTrait(myPlayer, "HardOfHearing") and sandbox.EnableHardOfHearing and not isMe then
             local xyRange = chatType.xyRange + 0.99
             local xDist = myPlayer:getX() - pos.x
             local yDist = myPlayer:getY() - pos.y
@@ -431,7 +434,8 @@ function AC.Handlers.AddLineInChat(chatMessage, tabID)
         return true
     end
 
-    if safeHasTrait(myPlayer, "Deaf") and SandboxVars.AuroraChat.EnableDeaf and (not isMe or parsedMessage.fromRecorder) then
+    local sandbox = SandboxVars.AuroraChat or {}
+    if safeHasTrait(myPlayer, "Deaf") and sandbox.EnableDeaf and (not isMe or parsedMessage.fromRecorder) then
         AC.Parsing.AdjustForDeaf(parsedMessage)
     elseif not AC.Meta.CanUnderstand(parsedMessage.language) then
         AC.Parsing.AdjustForUnknownLanguage(parsedMessage)
@@ -595,7 +599,8 @@ function AC.Handlers.AddPrivateMessage(otherPlayerUsername, message)
     if not parsedMessage.language then
         parsedMessage.language = AC.Meta.GetCurrentLanguage(parsedMessage.playerUsername)
     end
-    if AC.Meta.CanUnderstand(parsedMessage.language) and safeHasTrait(myPlayer, "HardOfHearing") and SandboxVars.AuroraChat.EnableHardOfHearing then
+    local sandbox = SandboxVars.AuroraChat or {}
+    if AC.Meta.CanUnderstand(parsedMessage.language) and safeHasTrait(myPlayer, "HardOfHearing") and sandbox.EnableHardOfHearing then
         local chatType = AC.ChatTypes[parsedMessage.chatType]
         local xyRange = chatType.xyRange + 0.99
         local xDist = myPlayer:getX() - chattingPlayer:getX()
@@ -603,7 +608,7 @@ function AC.Handlers.AddPrivateMessage(otherPlayerUsername, message)
         local xyDistSq = xDist * xDist + yDist * yDist
         local rangeRatio = xyDistSq / (xyRange * xyRange)
         AC.Parsing.AdjustForHardOfHearing(parsedMessage, rangeRatio)
-    elseif safeHasTrait(myPlayer, "Deaf") and SandboxVars.AuroraChat.EnableDeaf then
+    elseif safeHasTrait(myPlayer, "Deaf") and sandbox.EnableDeaf then
         AC.Parsing.AdjustForDeaf(parsedMessage)
     elseif not AC.Meta.CanUnderstand(parsedMessage.language) then
         AC.Parsing.AdjustForUnknownLanguage(parsedMessage)

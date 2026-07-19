@@ -550,7 +550,8 @@ function AC.Meta.CreateActionsContext(context, myPlayer, players)
         medicalOption.notAvailable = true
     end
 
-    if SandboxVars.AuroraChat.EnablePrivate then
+    local sandbox = SandboxVars.AuroraChat or {}
+    if sandbox.EnablePrivate then
         if AC.Meta.HasPrivate(true) then
             actionsContext:addOption("Close Private Chat", nil, AC.Commands.StopPrivateChat)
         else
@@ -584,7 +585,8 @@ function AC.Meta.CreateCharacterContext(context, myPlayer)
     end
     characterContext:addOption("Edit Bio", nil, openEditBio)
 
-    if SandboxVars.AuroraChat.EnableModCharacter then
+    local sandbox = SandboxVars.AuroraChat or {}
+    if sandbox.EnableModCharacter then
         characterContext:addOption("Set Name", nil, AC.MakeShowDialogPrompt("Input your new name", AC.Commands.SetName))
         characterContext:addOption("Grow Hair", nil, AC.Commands.GrowHair)
         characterContext:addOption("Set Hair Color", nil, AC.MakeColorDialogPrompt("Set Hair Color", AC.Commands.SetHairColor))
@@ -594,7 +596,8 @@ function AC.Meta.CreateCharacterContext(context, myPlayer)
         end
     end
 
-    if SandboxVars.AuroraChat.EnableSelfInjury then
+    local sandbox = SandboxVars.AuroraChat or {}
+    if sandbox.EnableSelfInjury then
         local injureSelfOption = characterContext:addOption("Add Injury", nil, nil)
         local injureSelfContext = characterContext:getNew(characterContext)
         characterContext:addSubMenu(injureSelfOption, injureSelfContext)

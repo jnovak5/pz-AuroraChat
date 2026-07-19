@@ -73,7 +73,8 @@ end
 function ISWriteBio:onSave(button, x, y)
   sendClientCommand("AC", "BioSave", {self.entry:getText()})
   processSayMessage(getPlayer():getDescriptor():getForename().." updated their description.")
-  if SandboxVars.AuroraChat.EnableBioShortDescription then
+  local sandbox = SandboxVars.AuroraChat or {}
+  if sandbox.EnableBioShortDescription then
     getPlayer():addLineChatElement("Remember to always re-save your description after setting your /name!", 1, 0, 0);
     local function lines(str)
       local result = {}

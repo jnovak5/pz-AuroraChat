@@ -3,7 +3,8 @@ AC.Bio = AC.Bio or {}
 AC.Bio.OverheadUiElements = AC.Bio.OverheadUiElements or {}
 
 function AC.Bio.ShowBioOnPlayers()
-    if not SandboxVars.AuroraChat.EnableBioShortDescription then return end
+    local sandbox = SandboxVars.AuroraChat or {}
+    if not sandbox.EnableBioShortDescription then return end
     
     local zoom = getCore():getZoom(0)
     for _,x in pairs(AC.Bio.OverheadUiElements) do x.seen = false end

@@ -48,7 +48,8 @@ function AC.Buffs.ApplyRpBuffs()
         AC.Buffs.CleanClothing()
     end
 
-    if not SandboxVars.AuroraChat.EnableBuffs then
+    local sandbox = SandboxVars.AuroraChat or {}
+    if not sandbox.EnableBuffs then
         return
     end
 

@@ -316,7 +316,8 @@ function AC.Commands.Help()
 end
 
 function AC.Commands.SendPM(args)
-    if not SandboxVars.AuroraChat.EnablePM and not AC.Override(true) then
+    local sandbox = SandboxVars.AuroraChat or {}
+    if not sandbox.EnablePM and not AC.Override(true) then
         AC_Utils.addErrorToChat("Private messages are disabled.")
         return
     end
@@ -670,7 +671,8 @@ function AC.Commands.SetStatus(args)
 end
 
 function AC.Commands.PrivateChat(args)
-    if not SandboxVars.AuroraChat.EnablePrivate then
+    local sandbox = SandboxVars.AuroraChat or {}
+    if not sandbox.EnablePrivate then
         AC_Utils.addErrorToChat("Private chat is disabled.")
         return
     end
@@ -700,7 +702,8 @@ function AC.Commands.StopPrivateChat()
 end
 
 function AC.Commands.Coords()
-    if not SandboxVars.AuroraChat.AllowPlayerCoords and not AC.Override() then
+    local sandbox = SandboxVars.AuroraChat or {}
+    if not sandbox.AllowPlayerCoords and not AC.Override() then
         AC_Utils.addErrorToChat("Coordinates are disabled.")
         return
     end
