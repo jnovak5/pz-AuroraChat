@@ -53,3 +53,5 @@ AC.Languages["yi"] = { name = "Yiddish", canPartiallyUnderstand = {} }
 AC.Languages["la"] = { name = "Latin", canPartiallyUnderstand = {} }
 AC.Languages["ga"] = { name = "Gaelic", canPartiallyUnderstand = {} }
 AC.Languages["hw"] = { name = "Hawaiian", canPartiallyUnderstand = {} }
+AC.Languages["nt"] = { name = "Noren Tala", canPartiallyUnderstand = {} }
+AC.Languages["fil"] = { name = "Filipino", canPartiallyUnderstand = {} }

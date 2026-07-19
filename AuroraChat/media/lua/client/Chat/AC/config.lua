@@ -241,6 +241,13 @@ AC.SpecialCommands["/trade"] = {
     help = "Trade with a player.",
     adminOnly = false,
 }
+AC.SpecialCommands["/med"] = {
+    handler = "MedicalCheck",
+    tabHandlers = {"UsernameNotSelf"},
+    usage = '/med "User Name"',
+    help = "Perform a medical check on a player.",
+    adminOnly = false,
+}
 AC.SpecialCommands["/injure"] = {
     handler = "Injure",
     tabHandlers = {"BodyPart", "InjuryType"},

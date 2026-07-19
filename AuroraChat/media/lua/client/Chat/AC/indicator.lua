@@ -76,14 +76,14 @@ function AC.Indicator.update()
 end
 
 AC.Indicator.IndicatorWidth = getTextManager():MeasureStringX(UIFont.Small, "...")
-AC.Indicator.IndicatorHeight = getTextManager():MeasureStringY(UIFont.Small, "...") + 4
+AC.Indicator.IndicatorHeight = getTextManager():MeasureStringY(UIFont.Small, "...") + 8
 AC.Indicator.UiElements = AC.Indicator.UiElements or {}
 function AC.Indicator.DrawOverheads()
     local zoom = getCore():getZoom(0)
     local me = getPlayer()
     local c = math.floor(getTimestampMs()/1000) % 3
     local typingText = string.rep(".", c + 1)
-    local textWidth = AC.Indicator.IndicatorWidth + 8
+    local textWidth = AC.Indicator.IndicatorWidth + 16
     for _,x in pairs(AC.Indicator.UiElements) do x.seen = false end
     for username, _ in pairs(AC.Indicator.players) do
         local player = getPlayerFromUsername(username)
@@ -92,7 +92,7 @@ function AC.Indicator.DrawOverheads()
             local y = isoToScreenY(0, player:getX(), player:getY(), player:getZ())
             local zoom = getCore():getZoom(0)
             if zoom > 0 then
-                y = y - (125 / zoom)
+                y = y - (125 * zoom)
             else
                 y = y - 125
             end
@@ -102,7 +102,7 @@ function AC.Indicator.DrawOverheads()
                 ele:setY(y)
                 ele.indicatorText = typingText
             else
-                ele = ISUIElement:new(x - (textWidth/2), y, textWidth, textHeight)
+                ele = ISUIElement:new(x - (textWidth/2), y, textWidth, AC.Indicator.IndicatorHeight)
                 ele.anchorTop = true
                 ele.anchorBottom = false
                 ele:initialise()
@@ -110,9 +110,9 @@ function AC.Indicator.DrawOverheads()
                 ele:backMost()
                 ele.indicatorText = typingText
                 ele.render = function(self)
-                    self:drawRect(0, 0, self.width, self.height, 0.7, 0, 0, 0)
-                    self:drawRectBorder(0, 0, self.width, self.height, 0.3, 1, 1, 1)
-                    self:drawTextCentre(self.indicatorText, self.width/2, 2, 1, 1, 1, 1, UIFont.Small)
+                    self:drawRect(0, 0, self.width, self.height, 0.8, 0.15, 0.15, 0.15)
+                    self:drawRectBorder(0, 0, self.width, self.height, 0.9, 1, 1, 1)
+                    self:drawTextCentre(self.indicatorText, self.width/2, 4, 1, 1, 1, 1, UIFont.Small)
                 end
                 AC.Indicator.UiElements[username] = ele
             end

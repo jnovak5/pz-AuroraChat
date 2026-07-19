@@ -16,6 +16,7 @@ function ISChat:initialise()
 
     self.panel.render = AC.ISTabPanel.render
     self.panel.getTabIndexAtX = AC.ISTabPanel.getTabIndexAtX
+    self.panel.getWidthOfAllTabs = AC.ISTabPanel.getWidthOfAllTabs
 
     local nextStreamId = #ISChat.allChatStreams+1
     AC.FocusTabId = 90
@@ -249,7 +250,7 @@ end
 AC.ISChatOriginal.unfocus = AC.ISChatOriginal.unfocus or ISChat.unfocus
 function ISChat:unfocus()
     AC.ISChatOriginal.unfocus(self)
-    AC.Indicator.onCleared()
+    AC.Indicator.onCleared(true)
 end
 
 AC.ISChatOriginal.focus = AC.ISChatOriginal.focus or ISChat.focus
@@ -645,6 +646,26 @@ function AC.ISTabPanel:getTabIndexAtX(x, scrollX)
         end
     end
     return -1
+end
+
+function AC.ISTabPanel:getWidthOfAllTabs()
+    local showFocused = AC.Meta.HasFocus()
+    local showRadio = ARU_Utils.AreAnyRadiosOn(getPlayer())
+    local showPrivate = AC.Meta.HasPrivate(true)
+    local showStaff = AC_Utils.isStaff(getPlayer())
+
+    local w = 0
+    local gap = 1
+    for _,viewObject in ipairs(self.viewList) do
+        if  (showFocused or viewObject.name ~= "Focused")
+        and (showRadio or viewObject.name ~= "Radio")
+        and (showPrivate or viewObject.name ~= "Private")
+        and (showStaff or viewObject.name ~= "Staff")
+        then
+            w = w + (self.equalTabWidth and self.maxLength or viewObject.tabWidth) + gap
+        end
+    end
+    return w
 end
 
 -- *** Dialog helpers ***

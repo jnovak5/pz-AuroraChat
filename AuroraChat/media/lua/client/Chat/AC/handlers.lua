@@ -233,6 +233,35 @@ function AC.Handlers.AddLineInChat(chatMessage, tabID)
         hasText, rawText = pcall(function() return chatMessage:getTextWithPrefix() end)
     end
     if not hasText or not rawText then return false end
+
+    local isFromDiscord = false
+    pcall(function() isFromDiscord = chatMessage:isFromDiscord() end)
+    if isFromDiscord then
+        local myPlayer = getPlayer()
+        local radios = ARU_Utils.getPlayerRadios(myPlayer, true, false, true)
+        if #radios == 0 then
+            pcall(function() chatMessage:setText("") end)
+            return true
+        end
+        
+        local textOnly = rawText
+        local colonPos = textOnly:find(":")
+        if colonPos and colonPos < 30 then
+            textOnly = textOnly:sub(colonPos + 1):gsub("^%s+", "")
+        end
+        
+        local formattedMessage = "<RGB:0.6,0.6,0.8>[Discord Radio] " .. textOnly
+        local fakeMessage = AC_FakeMessage:new(formattedMessage, {
+            author = "Radio",
+            radioChannel = -1,
+            datetimeStr = (pcall(function() return chatMessage:getDatetimeStr() end) and chatMessage:getDatetimeStr()) or "",
+        })
+        AC.ISChatOriginal.addLineInChat(fakeMessage, 0)
+        AC.ISChatOriginal.addLineInChat(fakeMessage, AC.RadioTabId)
+        pcall(function() chatMessage:setText("") end)
+        return true
+    end
+
     print("AC DEBUG: rawText = " .. tostring(rawText)); local parsedMessage = AC.Parsing.ParseMessage(rawText)
     if not parsedMessage then
         return false

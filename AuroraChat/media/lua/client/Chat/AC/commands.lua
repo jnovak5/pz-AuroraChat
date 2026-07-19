@@ -560,6 +560,28 @@ function AC.Commands.Trade(args)
     ISWorldObjectContextMenu.onTrade(nil, player, target)
 end
 
+function AC.Commands.MedicalCheck(args)
+    local parts = AC.SplitString(args)
+    if #parts ~= 1 then
+        AC_Utils.addErrorToChat("Invalid format. Use /med username")
+        return
+    end
+    local username = parts[1]:gsub("^%s*(.-)%s*$", "%1")
+    local player = getPlayer()
+    local target = getPlayerFromUsername(username)
+    if not target or not AC.CanSeePlayer(target) then
+        AC_Utils.addErrorToChat("Player not found or too far. Use /med username")
+        return
+    end
+    if ISWorldObjectContextMenu.onMedicalCheck then
+        ISWorldObjectContextMenu.onMedicalCheck(nil, player, target)
+    else
+        if luautils.walkAdj(player, target:getSquare()) then
+            ISTimedActionQueue.add(ISMedicalCheckAction:new(player, target))
+        end
+    end
+end
+
 function AC.Commands.Injure(args)
     if not args or args == "" then
         AC_Utils.addErrorToChat("Usage: /injure bodypart injury")

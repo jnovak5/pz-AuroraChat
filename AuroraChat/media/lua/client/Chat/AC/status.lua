@@ -35,7 +35,7 @@ function AC.StatusIndicator.ShowStatusIndicatorOnHovered()
             local y = isoToScreenY(0, player:getX(), player:getY(), player:getZ())
             local zoom = getCore():getZoom(0)
             if zoom > 0 then
-                y = y - (125 / zoom)
+                y = y - (125 * zoom)
             else
                 y = y - 125
             end

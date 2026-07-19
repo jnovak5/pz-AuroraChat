@@ -537,6 +537,19 @@ function AC.Meta.CreateActionsContext(context, myPlayer, players)
         tradingOption.notAvailable = true
     end
 
+    local medicalOption = actionsContext:addOption("Medical Check", nil, nil)
+    if #tradablePlayers > 0 then
+        local medicalContext = context:getNew(context)
+        context:addSubMenu(medicalOption, medicalContext)
+        for _, player in ipairs(tradablePlayers) do
+            local username = player:getUsername()
+            medicalContext:addOption(AC.Meta.GetName(username) .. " (" .. username .. ")", '"' .. username .. '"', AC.Commands.MedicalCheck)
+        end
+        medicalOption.notAvailable = false
+    else
+        medicalOption.notAvailable = true
+    end
+
     if SandboxVars.AuroraChat.EnablePrivate then
         if AC.Meta.HasPrivate(true) then
             actionsContext:addOption("Close Private Chat", nil, AC.Commands.StopPrivateChat)

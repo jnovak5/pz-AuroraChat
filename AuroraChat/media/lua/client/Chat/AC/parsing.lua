@@ -166,6 +166,7 @@ function AC.Parsing.ParseMessage(message)
         else
             local currentPart = {type = AC.ChatModifiers[chatModifier].type, text = ""}
             local inQuotes = false
+            local inAsterisks = false
             local i = 1
             while i <= message:len() do
                 local char = message:sub(i, i)
@@ -178,7 +179,25 @@ function AC.Parsing.ParseMessage(message)
                 if char == "\"" then
                     inQuotes = not inQuotes
                     table.insert(parts, currentPart)
-                    currentPart = {type = inQuotes and "text" or AC.ChatModifiers[chatModifier].type, text = ""}
+                    local newType = "text"
+                    if inAsterisks then newType = "emote"
+                    elseif not inQuotes then newType = AC.ChatModifiers[chatModifier].type end
+                    currentPart = {type = newType, text = ""}
+                elseif char == "*" then
+                    inAsterisks = not inAsterisks
+                    if not inAsterisks then
+                        currentPart.text = currentPart.text .. "*"
+                        table.insert(parts, currentPart)
+                        local newType = "text"
+                        if inAsterisks then newType = "emote"
+                        elseif not inQuotes then newType = AC.ChatModifiers[chatModifier].type end
+                        currentPart = {type = newType, text = ""}
+                    else
+                        if currentPart.text ~= "" then
+                            table.insert(parts, currentPart)
+                        end
+                        currentPart = {type = "emote", text = "*"}
+                    end
                 else
                     currentPart.text = currentPart.text .. char
                 end
@@ -193,7 +212,32 @@ function AC.Parsing.ParseMessage(message)
             message = message:sub(2, message:len() - 1)
         end
         table.insert(parts, {type = "emote", text = AC.Parsing.DeterminePrefix(type, message) .. " "})
-        table.insert(parts, {type = "text", text = message})
+        
+        local currentPart = {type = "text", text = ""}
+        local inEmote = false
+        local i = 1
+        while i <= message:len() do
+            local char = message:sub(i, i)
+            if char == "*" then
+                inEmote = not inEmote
+                if not inEmote then
+                    currentPart.text = currentPart.text .. "*"
+                    table.insert(parts, currentPart)
+                    currentPart = {type = "text", text = ""}
+                else
+                    if currentPart.text ~= "" then
+                        table.insert(parts, currentPart)
+                    end
+                    currentPart = {type = "emote", text = "*"}
+                end
+            else
+                currentPart.text = currentPart.text .. char
+            end
+            i = i + 1
+        end
+        if currentPart.text ~= "" then
+            table.insert(parts, currentPart)
+        end
     end
 
     if #parts == 0 then return nil end
