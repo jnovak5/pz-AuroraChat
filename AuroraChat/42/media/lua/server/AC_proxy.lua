@@ -199,7 +199,7 @@ local function onACCommand(module, command, sendingPlayer, args)
         PlayerDB.CharacterBioStorage[sendingPlayer:getUsername()] = {description = args[1]}
         ModData.add("AC_CharacterBioStorage", PlayerDB.CharacterBioStorage)
     elseif command == "BioLoad" then
-        sendServerCommand(sendingPlayer, module, command, PlayerDB.CharacterBioStorage[args[1]])
+        sendServerCommand(sendingPlayer, module, command, PlayerDB.CharacterBioStorage[args[1]] or {})
     else
         NotifyTyping(sendingPlayer, command, args)
     end

@@ -177,13 +177,23 @@ function AC.Parsing.ParseMessage(message)
                     end
                 end
                 if char == "\"" then
-                    currentPart.text = currentPart.text .. "\""
                     inQuotes = not inQuotes
-                    table.insert(parts, currentPart)
-                    local baseType = inQuotes and "text" or AC.ChatModifiers[chatModifier].type
-                    local newType = baseType
-                    if inAsterisks then newType = (baseType == "emote") and "text" or "emote" end
-                    currentPart = {type = newType, text = ""}
+                    if inQuotes then
+                        if currentPart.text ~= "" then
+                            table.insert(parts, currentPart)
+                        end
+                        local baseType = "text"
+                        local newType = baseType
+                        if inAsterisks then newType = (baseType == "emote") and "text" or "emote" end
+                        currentPart = {type = newType, text = "\""}
+                    else
+                        currentPart.text = currentPart.text .. "\""
+                        table.insert(parts, currentPart)
+                        local baseType = AC.ChatModifiers[chatModifier].type
+                        local newType = baseType
+                        if inAsterisks then newType = (baseType == "emote") and "text" or "emote" end
+                        currentPart = {type = newType, text = ""}
+                    end
                 elseif char == "*" then
                     inAsterisks = not inAsterisks
                     if not inAsterisks then
