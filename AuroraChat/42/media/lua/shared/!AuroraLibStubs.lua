@@ -75,6 +75,15 @@ function AC_Utils.addFakeMessageToChatWindow(message)
     end
     chatText.text = newText
     table.insert(chatText.chatMessages, message)
+    if #chatText.chatMessages > ISChat.maxLine then
+        local newMessages = {}
+        for i,v in ipairs(chatText.chatMessages) do
+            if i ~= 1 then
+                table.insert(newMessages, v)
+            end
+        end
+        chatText.chatMessages = newMessages
+    end
     chatText:paginate()
     if scrolledToBottom then
         chatText:setYScroll(-100000)

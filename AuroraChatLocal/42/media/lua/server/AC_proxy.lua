@@ -207,11 +207,12 @@ end
 
 local function ProcessLastSeenTimes()
     local allPlayers = getOnlinePlayers()
-    if allPlayers:size() == 0 then return end
-    for i=0, allPlayers:size()-1 do
-        local player = allPlayers:get(i)
-        local username = player:getUsername()
-        PlayerDB.LastSeenTimes[username] = getTimestamp()
+    if allPlayers and allPlayers:size() > 0 then
+        for i=0, allPlayers:size()-1 do
+            local player = allPlayers:get(i)
+            local username = player:getUsername()
+            PlayerDB.LastSeenTimes[username] = getTimestamp()
+        end
     end
     for username, lastSeenTime in pairs(PlayerDB.LastSeenTimes) do
         -- 30 days

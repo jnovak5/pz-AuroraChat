@@ -107,6 +107,7 @@ end
 function ISWriteBio:close()
   self:setVisible(false)
   self:removeFromUIManager()
+  Events.OnServerCommand.Remove(OnServerCommand)
   ISWriteBio.instance = nil
 end
 
