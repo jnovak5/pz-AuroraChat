@@ -27,10 +27,12 @@ end
 
 local function OnServerCommand(module, command, args)
   if module == "AC" and command == "BioLoad" then
-    Events.OnServerCommand.Remove(OnServerCommand)
-    ISWriteBio.onLoad(args)
+    if ISWriteBio.instance then
+      ISWriteBio.onLoad(args)
+    end
   end
 end
+Events.OnServerCommand.Add(OnServerCommand)
 
 function ISWriteBio:createChildren()
   local btnWid = 150 * FONT_SCALE
@@ -46,7 +48,6 @@ function ISWriteBio:createChildren()
   self.entry:setMultipleLine(true)
   self.entry.javaObject:setMaxLines(35)
   self:addChild(self.entry)
-  Events.OnServerCommand.Add(OnServerCommand)
   sendClientCommand("AC", "BioLoad", {self.targetPlayerUsername})
 
 
@@ -96,7 +97,7 @@ function ISWriteBio:onSave(button, x, y)
     end
     getPlayer():getModData()['_CharacterBioShortDescription'] = shortDescription
   end
-  sendPlayerStatsChange(getPlayer())
+  getPlayer():transmitModData()
   self:close()
 end
 
@@ -107,7 +108,6 @@ end
 function ISWriteBio:close()
   self:setVisible(false)
   self:removeFromUIManager()
-  Events.OnServerCommand.Remove(OnServerCommand)
   ISWriteBio.instance = nil
 end
 

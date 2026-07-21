@@ -206,26 +206,54 @@ local function onACCommand(module, command, sendingPlayer, args)
 end
 
 local function ProcessLastSeenTimes()
+    local allUsernames = {}
+    local function collectUsernames(dbTable)
+        if type(dbTable) == "table" then
+            for k, _ in pairs(dbTable) do
+                allUsernames[k] = true
+            end
+        end
+    end
+    
+    collectUsernames(PlayerDB.LastSeenTimes)
+    collectUsernames(PlayerDB.PlayerColors)
+    collectUsernames(PlayerDB.PlayerLanguages)
+    collectUsernames(PlayerDB.PlayerModifiers)
+    collectUsernames(PlayerDB.PlayerNames)
+    collectUsernames(PlayerDB.PlayerAfk)
+    collectUsernames(PlayerDB.PlayerStatus)
+    collectUsernames(PlayerDB.CharacterBioStorage)
+    collectUsernames(PlayerDB.CharacterPortraitStorage)
+
+    local now = getTimestamp()
+
     local allPlayers = getOnlinePlayers()
     if allPlayers and allPlayers:size() > 0 then
         for i=0, allPlayers:size()-1 do
             local player = allPlayers:get(i)
             local username = player:getUsername()
-            PlayerDB.LastSeenTimes[username] = getTimestamp()
+            PlayerDB.LastSeenTimes[username] = now
+            allUsernames[username] = true
         end
     end
-    for username, lastSeenTime in pairs(PlayerDB.LastSeenTimes) do
+
+    for username, _ in pairs(allUsernames) do
+        local lastSeenTime = PlayerDB.LastSeenTimes[username]
+        if not lastSeenTime then
+            PlayerDB.LastSeenTimes[username] = now
+            lastSeenTime = now
+        end
         -- 30 days
-        if lastSeenTime < getTimestamp() - 30*24*60*60 then
+        if lastSeenTime < now - 30*24*60*60 then
             PlayerDB.LastSeenTimes[username] = nil
-            PlayerDB.PlayerColors[username] = nil
-            PlayerDB.PlayerLanguages[username] = nil
-            PlayerDB.PlayerModifiers[username] = nil
-            PlayerDB.PlayerNames[username] = nil
-            PlayerDB.PlayerAfk[username] = nil
-            PlayerDB.PlayerStatus[username] = nil
-            PlayerDB.CharacterBioStorage[username] = nil
-            PlayerDB.CharacterPortraitStorage[username] = nil
+            if PlayerDB.PlayerColors then PlayerDB.PlayerColors[username] = nil end
+            if PlayerDB.PlayerLanguages then PlayerDB.PlayerLanguages[username] = nil end
+            if PlayerDB.PlayerModifiers then PlayerDB.PlayerModifiers[username] = nil end
+            if PlayerDB.PlayerNames then PlayerDB.PlayerNames[username] = nil end
+            if PlayerDB.PlayerAfk then PlayerDB.PlayerAfk[username] = nil end
+            if PlayerDB.PlayerStatus then PlayerDB.PlayerStatus[username] = nil end
+            if PlayerDB.CharacterBioStorage then PlayerDB.CharacterBioStorage[username] = nil end
+            if PlayerDB.CharacterPortraitStorage then PlayerDB.CharacterPortraitStorage[username] = nil end
         end
     end
     ModData.add("AC_LastSeenTimes", PlayerDB.LastSeenTimes)

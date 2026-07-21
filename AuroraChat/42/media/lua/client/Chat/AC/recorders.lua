@@ -28,8 +28,10 @@ function AC.Recorders.CheckRecorders()
 end
 
 function AC.Recorders.CheckRecorder(player, recorder)
-    local isInHand = player:getPrimaryHandItem() == recorder or player:getSecondaryHandItem() == recorder
-    if not isInHand then
+    local isValid, isInHand = pcall(function() 
+        return not player:isDead() and (player:getPrimaryHandItem() == recorder or player:getSecondaryHandItem() == recorder)
+    end)
+    if not isValid or not isInHand then
         AC.Recorders.StopRecording(player, recorder)
     end
 end
@@ -57,10 +59,10 @@ function AC.Recorders.StartRecording(player, recorder)
 end
 
 function AC.Recorders.StopRecording(player, recorder)
-    player:playSound("ACRecorderStop")
+    pcall(function() player:playSound("ACRecorderStop") end)
     for i = #AC.Recorders.RunningRecorders, 1, -1 do
         if AC.Recorders.RunningRecorders[i].recorder == recorder then
-            player:stopOrTriggerSound(AC.Recorders.RunningRecorders[i].sound)
+            pcall(function() player:stopOrTriggerSound(AC.Recorders.RunningRecorders[i].sound) end)
             table.remove(AC.Recorders.RunningRecorders, i)
         end
     end
