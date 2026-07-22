@@ -27,7 +27,7 @@ function AC.StatusIndicator.ShowStatusIndicatorOnHovered()
         local username = player:getUsername()
         local distSq = AC.StatusIndicator.GetDistanceSq(worldX, worldY, player)
         local status = AC.Meta.GetStatus(username)
-        if worldZ == player:getZ() and distSq <= maxDistSq and AC.CanSeePlayer(player, true, 20) and status then
+        if worldZ == player:getZ() and distSq <= maxDistSq and AC.CanSeePlayer(player, true, 20) and type(status) == "string" and status:match("%S") then
             local x = isoToScreenX(0, player:getX(), player:getY(), player:getZ() + 0.65)
             local y = isoToScreenY(0, player:getX(), player:getY(), player:getZ() + 0.65)
             y = y - 5

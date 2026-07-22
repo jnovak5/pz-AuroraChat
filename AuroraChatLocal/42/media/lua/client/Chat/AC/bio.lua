@@ -32,8 +32,18 @@ function AC.Bio.ShowBioOnPlayers()
             
             local fontHeight = getTextManager():getFontHeight(UIFont.Small) - 2
             if AC.Meta.IsAfk(username) then y = y + fontHeight end
+            
             local status = AC.Meta.GetStatus(username)
-            if status then y = y + fontHeight end
+            if status and type(status) == "string" and status:match("%S") then
+                local worldX = screenToIsoX(0, getMouseX(), getMouseY(), me:getZ())
+                local worldY = screenToIsoY(0, getMouseX(), getMouseY(), me:getZ())
+                local dx = worldX - player:getX()
+                local dy = worldY - player:getY()
+                local distSq = dx*dx + dy*dy
+                if me:getZ() == player:getZ() and distSq <= 2.25 then
+                    y = y + fontHeight
+                end
+            end
             
             getTextManager():DrawStringCentre(UIFont.Small, x, y, shortBio, 1.0, 1.0, 1.0, 1.0)
         end
