@@ -249,6 +249,12 @@ function AC.Parsing.ParseMessage(message)
         if currentPart.text ~= "" then
             table.insert(parts, currentPart)
         end
+        
+        for _, part in ipairs(parts) do
+            if part.type == "text" then
+                part.text = '"' .. part.text .. '"'
+            end
+        end
     end
 
     if #parts == 0 then return nil end
@@ -303,7 +309,7 @@ function AC.Parsing.AdjustForDeaf(parsedMessage)
         if part.type == "text" then
             local newText = ""
             for c in part.text:gmatch(".") do
-                if c == " " or c == "." or c == "," or c == "!" or c == "?" or c == ";" or c == ":" then
+                if c == " " or c == "." or c == "," or c == "!" or c == "?" or c == ";" or c == ":" or c == '"' then
                     newText = newText .. c
                 else
                     newText = newText .. "-"
@@ -324,7 +330,7 @@ function AC.Parsing.AdjustForHardOfHearing(parsedMessage, rangeRatio)
         if part.type == "text" then
             local newText = ""
             for c in part.text:gmatch(".") do
-                if ZombRand(100) > failChance or c == " " or c == "." or c == "," or c == "!" or c == "?" or c == ";" or c == ":" then
+                if ZombRand(100) > failChance or c == " " or c == "." or c == "," or c == "!" or c == "?" or c == ";" or c == ":" or c == '"' then
                     newText = newText .. c
                 else
                     newText = newText .. "-"
@@ -353,7 +359,7 @@ function AC.Parsing.AdjustForUnknownLanguage(parsedMessage)
                 end
                 local langName = AC.Languages[parsedMessage.language].name
                 local unknownText = len > 100 and ("a lot of " .. langName) or (len > 50 and ("some " .. langName) or ("a little " .. langName))
-                parsedMessage.parts[i] = { type = "textmuted", text = unknownText }
+                parsedMessage.parts[i] = { type = "textmuted", text = '"' .. unknownText .. '"' }
                 if understoodText then
                     parsedMessage.parts[i].text = parsedMessage.parts[i].text .. understoodText
                 end
