@@ -185,6 +185,18 @@ end
 function AC_FakeMessage:getDatetimeStr()
     return self.datetimeStr
 end
+function AC_FakeMessage:isFromDiscord()
+    return false
+end
+function AC_FakeMessage:isShowAuthor()
+    return true
+end
+function AC_FakeMessage:isServerAuthor()
+    return false
+end
+function AC_FakeMessage:getCustomTag()
+    return ""
+end
 function AC_FakeMessage:setOverHeadSpeech() end
 function AC_FakeMessage:setShouldAttractZombies() end
 

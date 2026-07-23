@@ -28,6 +28,7 @@ end
 
 function AC.Buffs.IsPlayersNearby()
     local players = getOnlinePlayers()
+    if not players then return false end
     for i=0,players:size()-1 do
         local otherPlayer = players:get(i)
         if AC.CanSeePlayer(otherPlayer, false, 15) then

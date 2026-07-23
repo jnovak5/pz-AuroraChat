@@ -1,3 +1,5 @@
+if not isClient() then return end -- only in MP
+AC = AC or {}
 AC.Bio = AC.Bio or {}
 
 AC.Bio.OverheadUiElements = AC.Bio.OverheadUiElements or {}

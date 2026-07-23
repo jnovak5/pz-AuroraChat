@@ -47,7 +47,7 @@ end
 
 function AC.Recorders.CanRecord(recorder)
     local md = recorder:getModData()
-    return md.AC_HasTape and md.AC_HasBattery and md.AC_TapeUsed < 30
+    return md.AC_HasTape and AC.Recorders.HasBattery(recorder) and (md.AC_TapeUsed or 0) < 30
 end
 
 function AC.Recorders.StartRecording(player, recorder)
@@ -70,7 +70,7 @@ end
 
 function AC.Recorders.SaveToRecorder(player, recorder, message)
     local md = recorder:getModData()
-    local ind = md.AC_TapeUsed + 1
+    local ind = (md.AC_TapeUsed or 0) + 1
 
     if message:sub(1, 10) == "[Recorder]" then
         local newMessage = ""
@@ -108,12 +108,12 @@ end
 
 function AC.Recorders.CanPlay(recorder)
     local md = recorder:getModData()
-    return md.AC_HasTape and md.AC_HasBattery and md.AC_TapeUsed > 0
+    return md.AC_HasTape and AC.Recorders.HasBattery(recorder) and (md.AC_TapeUsed or 0) > 0
 end
 
 function AC.Recorders.GetRecorderMessages(recorder)
     local md = recorder:getModData()
-    return md.AC_TapeUsed
+    return md.AC_TapeUsed or 0
 end
 
 function AC.Recorders.PlayRecorderMessage(player, recorder, index)
@@ -166,8 +166,9 @@ function AC.Recorders.RemoveTape(recorder)
     local tape = instanceItem("Base.ACRecorderTape")
     local tapeMd = tape:getModData()
     tapeMd["AC_Processed"] = true
-    tapeMd.AC_TapeUsed = md.AC_TapeUsed
-    for i = 1, md.AC_TapeUsed do
+    local tapeUsed = md.AC_TapeUsed or 0
+    tapeMd.AC_TapeUsed = tapeUsed
+    for i = 1, tapeUsed do
         tapeMd["AC_Message" .. i] = md["AC_Message" .. i]
     end
     if md.AC_TapeName then
@@ -189,7 +190,7 @@ end
 
 function AC.Recorders.HasBattery(recorder)
     local md = recorder:getModData()
-    return md.AC_HasBattery and md.AC_BatteryLevel > 0
+    return md.AC_HasBattery and (md.AC_BatteryLevel or 0) > 0
 end
 
 function AC.Recorders.InsertBattery(recorder, battery)

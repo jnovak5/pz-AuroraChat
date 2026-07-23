@@ -4,18 +4,21 @@ if getActivatedMods():contains("WastelandRadioUtilities") then return end
 ARU_Utils = ARU_Utils or {}
 
 -- Known "radio" devices which are not actually radios
-local knownRadios = ArrayList.new()
-knownRadios:add("Tsarcraft.TCWalkman")
-knownRadios:add("Tsarcraft.TCBoombox")
+local knownRadios = {
+    ["Tsarcraft.TCWalkman"] = true,
+    ["Tsarcraft.TCBoombox"] = true,
+}
 
 function ARU_Utils.isRadio(item)
     if not item then return false end
-    if knownRadios:contains(item:getFullType()) then return false end
+    if knownRadios[item:getFullType()] then return false end
     return instanceof(item, "Radio")
 end
 
 function ARU_Utils.isRadioOn(radio)
-    return radio:getDeviceData():getIsTurnedOn()
+    local data = radio and radio:getDeviceData()
+    if not data then return false end
+    return data:getIsTurnedOn()
 end
 
 function ARU_Utils.isRadioBroadcasting(radio)
@@ -29,7 +32,9 @@ function ARU_Utils.getRadioRange(radio)
 end
 
 function ARU_Utils.getRadioFrequency(radio)
-    return radio:getDeviceData():getChannel()
+    local data = radio and radio:getDeviceData()
+    if not data then return 0 end
+    return data:getChannel()
 end
 
 function ARU_Utils.getRadioFrequencyString(radio)

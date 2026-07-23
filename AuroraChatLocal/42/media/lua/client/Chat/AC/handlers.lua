@@ -259,6 +259,37 @@ function AC.Handlers.AddLineInChat(chatMessage, tabID)
             radioChannel = -1,
             datetimeStr = (pcall(function() return chatMessage:getDatetimeStr() end) and chatMessage:getDatetimeStr()) or "",
         })
+        
+        local textToDisplay = "[Discord Radio] " .. textOnly
+        local colorRGB = {r = 0.6, g = 0.6, b = 0.8}
+        local activeRadio = radios[1]
+        
+        if activeRadio then
+            if instanceof(activeRadio, "IsoRadio") then
+                local success = pcall(function() activeRadio:addLineChatElement(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, AC.ChatTypes["say"].xyRange, "radio") end)
+                if not success then success = pcall(function() activeRadio:getChatElement():addChatLine(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, AC.ChatTypes["say"].xyRange, "radio", true, true, true, true, true, true) end) end
+                if not success then success = pcall(function() activeRadio:getDeviceData():AddDeviceText(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, "radio", "-1", 30) end) end
+                if not success then success = pcall(function() activeRadio:getDeviceData():AddDeviceText(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, "radio", -1, 30) end) end
+                if not success then success = pcall(function() activeRadio:AddDeviceText(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, "radio", "-1", 30) end) end
+                if not success then success = pcall(function() activeRadio:AddDeviceText(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, "radio", -1, 30) end) end
+                if not success then success = pcall(function() activeRadio:getDeviceData():AddDeviceText(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, "radio", "-1") end) end
+                if not success then success = pcall(function() activeRadio:getDeviceData():AddDeviceText(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, "radio", -1) end) end
+                if not success then success = pcall(function() activeRadio:AddDeviceText(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, "radio", "-1") end) end
+                if not success then success = pcall(function() activeRadio:AddDeviceText(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, "radio", -1) end) end
+                if not success then pcall(function() myPlayer:addLineChatElement(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, AC.ChatTypes["say"].xyRange, "radio") end) end
+            elseif instanceof(activeRadio, "VehiclePart") then
+                local success = pcall(function() activeRadio:getVehicle():getChatElement():addChatLine(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, AC.ChatTypes["say"].xyRange, "radio", true, true, true, true, true, true) end)
+                if not success then success = pcall(function() activeRadio:getDeviceData():AddDeviceText(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, "radio", "-1", 30) end) end
+                if not success then success = pcall(function() activeRadio:getDeviceData():AddDeviceText(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, "radio", -1, 30) end) end
+                if not success then success = pcall(function() activeRadio:getDeviceData():AddDeviceText(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, "radio", "-1") end) end
+                if not success then success = pcall(function() activeRadio:getDeviceData():AddDeviceText(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, "radio", -1) end) end
+            else
+                pcall(function() myPlayer:addLineChatElement(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, AC.ChatTypes["say"].xyRange, "radio") end)
+            end
+        else
+            pcall(function() myPlayer:addLineChatElement(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, AC.ChatTypes["say"].xyRange, "radio") end)
+        end
+
         AC.ISChatOriginal.addLineInChat(fakeMessage, 0)
         AC.ISChatOriginal.addLineInChat(fakeMessage, AC.RadioTabId)
         pcall(function() chatMessage:setText("") end)
@@ -353,13 +384,18 @@ function AC.Handlers.AddLineInChat(chatMessage, tabID)
                 if instanceof(parsedMessage.activeRadio, "IsoRadio") then
                     local success = pcall(function() parsedMessage.activeRadio:addLineChatElement(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, AC.ChatTypes[parsedMessage.chatType].xyRange, "radio") end)
                     if not success then success = pcall(function() parsedMessage.activeRadio:getChatElement():addChatLine(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, AC.ChatTypes[parsedMessage.chatType].xyRange, "radio", true, true, true, true, true, true) end) end
+                    if not success then success = pcall(function() parsedMessage.activeRadio:getDeviceData():AddDeviceText(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, "radio", "-1", 30) end) end
+                    if not success then success = pcall(function() parsedMessage.activeRadio:getDeviceData():AddDeviceText(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, "radio", -1, 30) end) end
+                    if not success then success = pcall(function() parsedMessage.activeRadio:AddDeviceText(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, "radio", "-1", 30) end) end
+                    if not success then success = pcall(function() parsedMessage.activeRadio:AddDeviceText(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, "radio", -1, 30) end) end
                     if not success then success = pcall(function() parsedMessage.activeRadio:getDeviceData():AddDeviceText(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, "radio", "-1") end) end
                     if not success then success = pcall(function() parsedMessage.activeRadio:getDeviceData():AddDeviceText(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, "radio", -1) end) end
                     if not success then success = pcall(function() parsedMessage.activeRadio:AddDeviceText(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, "radio", "-1") end) end
                     if not success then success = pcall(function() parsedMessage.activeRadio:AddDeviceText(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, "radio", -1) end) end
-                    if not success then pcall(function() myPlayer:addLineChatElement(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, AC.ChatTypes[parsedMessage.chatType].xyRange, "radio") end) end
                 elseif instanceof(parsedMessage.activeRadio, "VehiclePart") then
                     local success = pcall(function() parsedMessage.activeRadio:getVehicle():getChatElement():addChatLine(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, AC.ChatTypes[parsedMessage.chatType].xyRange, "radio", true, true, true, true, true, true) end)
+                    if not success then success = pcall(function() parsedMessage.activeRadio:getDeviceData():AddDeviceText(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, "radio", "-1", 30) end) end
+                    if not success then success = pcall(function() parsedMessage.activeRadio:getDeviceData():AddDeviceText(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, "radio", -1, 30) end) end
                     if not success then success = pcall(function() parsedMessage.activeRadio:getDeviceData():AddDeviceText(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, "radio", "-1") end) end
                     if not success then success = pcall(function() parsedMessage.activeRadio:getDeviceData():AddDeviceText(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, "radio", -1) end) end
                 end
@@ -645,12 +681,20 @@ function AC.Handlers.FixWorldRadios(myPlayer, parsedMessage)
                     if ARU_Utils.isRadioOn(object) then
                         local channel = ARU_Utils.getRadioFrequency(object)
                         if channel == parsedMessage.radioFrequency then
-                            object:AddDeviceText("", 0, 0, 0, "", "", 30)
-                            object:AddDeviceText("", 0, 0, 0, "", "", 30)
-                            object:AddDeviceText("", 0, 0, 0, "", "", 30)
-                            object:AddDeviceText("", 0, 0, 0, "", "", 30)
-                            object:AddDeviceText("", 0, 0, 0, "", "", 30)
-                            object:AddDeviceText(AC.Meta.GetName(parsedMessage.playerUsername) .. " " .. AC.Parsing.GetTextOnly(parsedMessage), 0.7, 0.7, 0.7, "", "", 30)
+                            local txt = AC.Meta.GetName(parsedMessage.playerUsername) .. " " .. AC.Parsing.GetTextOnly(parsedMessage)
+                            local function addTextSafe(t)
+                                local s = pcall(function() object:AddDeviceText(t, 0.7, 0.7, 0.7, "", "", 30) end)
+                                if not s then s = pcall(function() object:getDeviceData():AddDeviceText(t, 0.7, 0.7, 0.7, "radio", "-1", 30) end) end
+                                if not s then s = pcall(function() object:getDeviceData():AddDeviceText(t, 0.7, 0.7, 0.7, "radio", -1, 30) end) end
+                                if not s then s = pcall(function() object:getDeviceData():AddDeviceText(t, 0.7, 0.7, 0.7, "radio", "-1") end) end
+                                if not s then pcall(function() object:getDeviceData():AddDeviceText(t, 0.7, 0.7, 0.7, "radio", -1) end) end
+                            end
+                            addTextSafe("")
+                            addTextSafe("")
+                            addTextSafe("")
+                            addTextSafe("")
+                            addTextSafe("")
+                            addTextSafe(txt)
                         end
                     end
                 end
@@ -664,12 +708,20 @@ function AC.Handlers.FixWorldRadios(myPlayer, parsedMessage)
                         local part = movingObject:getPartByIndex(j)
                         local data = part:getDeviceData()
                         if data and data:getIsTurnedOn() and data:getChannel() == parsedMessage.radioFrequency then
-                            part:AddDeviceText("", 0, 0, 0, "", "", 30)
-                            part:AddDeviceText("", 0, 0, 0, "", "", 30)
-                            part:AddDeviceText("", 0, 0, 0, "", "", 30)
-                            part:AddDeviceText("", 0, 0, 0, "", "", 30)
-                            part:AddDeviceText("", 0, 0, 0, "", "", 30)
-                            part:AddDeviceText(AC.Meta.GetName(parsedMessage.playerUsername) .. " " .. AC.Parsing.GetTextOnly(parsedMessage), 0.7, 0.7, 0.7, "", "", 30)
+                            local txt = AC.Meta.GetName(parsedMessage.playerUsername) .. " " .. AC.Parsing.GetTextOnly(parsedMessage)
+                            local function addTextSafe(t)
+                                local s = pcall(function() part:getVehicle():getChatElement():addChatLine(t, 0.7, 0.7, 0.7, UIFont.Dialogue, 30, "radio", true, true, true, true, true, true) end)
+                                if not s then s = pcall(function() data:AddDeviceText(t, 0.7, 0.7, 0.7, "radio", "-1", 30) end) end
+                                if not s then s = pcall(function() data:AddDeviceText(t, 0.7, 0.7, 0.7, "radio", -1, 30) end) end
+                                if not s then s = pcall(function() data:AddDeviceText(t, 0.7, 0.7, 0.7, "radio", "-1") end) end
+                                if not s then pcall(function() data:AddDeviceText(t, 0.7, 0.7, 0.7, "radio", -1) end) end
+                            end
+                            addTextSafe("")
+                            addTextSafe("")
+                            addTextSafe("")
+                            addTextSafe("")
+                            addTextSafe("")
+                            addTextSafe(txt)
                         end
                     end
                 end
