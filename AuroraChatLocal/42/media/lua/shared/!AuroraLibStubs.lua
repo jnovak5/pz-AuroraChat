@@ -3,7 +3,7 @@
 if getActivatedMods():contains("WastelandLib") then return end
 
 AC_Utils = {}
-AC_Utils.MagicSpace = " <SPACE> "
+AC_Utils.MagicSpace = " "
 
 --- Returns true if the player has any staff access level (Admin, Moderator, Overseer, GM or Observer)
 --- @param player IsoPlayer
