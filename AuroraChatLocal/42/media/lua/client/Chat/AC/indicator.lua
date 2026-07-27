@@ -87,13 +87,20 @@ function AC.Indicator.DrawOverheads()
     
     for username, _ in pairs(AC.Indicator.players) do
         local player = getPlayerFromUsername(username)
-        if player and me:CanSee(player) then
-            local x = isoToScreenX(0, player:getX(), player:getY(), player:getZ() + 0.65)
-            local y = isoToScreenY(0, player:getX(), player:getY(), player:getZ() + 0.65)
-            y = y - 40
-            
-            local formattedText = "[ " .. typingText .. " ]"
-            getTextManager():DrawStringCentre(UIFont.Small, x, y, formattedText, 1.0, 1.0, 0.2, 1.0)
+        if username == me:getUsername() then player = me end
+        if player and (player == me or me:CanSee(player)) then
+            local alpha = AC.Visibility.GetPlayerAlpha(player)
+            if alpha > 0.01 then
+                local playerNum = getPlayer():getPlayerNum() or 0
+                local x = math.floor(isoToScreenX(playerNum, player:getX(), player:getY(), player:getZ()))
+                local y = AC.Visibility.GetYOffsets(player).indicator or math.floor(isoToScreenY(playerNum, player:getX(), player:getY(), player:getZ()) - 185)
+                
+                local formattedText = "[ " .. typingText .. " ]"
+                local textWidth = getTextManager():MeasureStringX(UIFont.Small, formattedText)
+                
+                -- We must apply AC.Visibility.GetPlayerAlpha here if they want custom rendering, but indicator uses UI.
+                AC.Visibility.DrawTextCentre(UIFont.Small, x, y, formattedText, 1.0, 1.0, 0.2, alpha)
+            end
         end
     end
     for k,v in pairs(AC.Indicator.UiElements) do

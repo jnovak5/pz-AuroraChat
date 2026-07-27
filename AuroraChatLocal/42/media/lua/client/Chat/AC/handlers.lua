@@ -266,7 +266,7 @@ function AC.Handlers.AddLineInChat(chatMessage, tabID)
         
         if activeRadio then
             if instanceof(activeRadio, "IsoRadio") then
-                local success = pcall(function() activeRadio:addLineChatElement(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, AC.ChatTypes["say"].xyRange, "radio") end)
+                local success = pcall(function() activeRadio:addLineChatElement(textToDisplay .. "", colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, AC.ChatTypes["say"].xyRange, "radio") end)
                 if not success then success = pcall(function() activeRadio:getChatElement():addChatLine(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, AC.ChatTypes["say"].xyRange, "radio", true, true, true, true, true, true) end) end
                 if not success then success = pcall(function() activeRadio:getDeviceData():AddDeviceText(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, "radio", "-1", 30) end) end
                 if not success then success = pcall(function() activeRadio:getDeviceData():AddDeviceText(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, "radio", -1, 30) end) end
@@ -276,7 +276,7 @@ function AC.Handlers.AddLineInChat(chatMessage, tabID)
                 if not success then success = pcall(function() activeRadio:getDeviceData():AddDeviceText(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, "radio", -1) end) end
                 if not success then success = pcall(function() activeRadio:AddDeviceText(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, "radio", "-1") end) end
                 if not success then success = pcall(function() activeRadio:AddDeviceText(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, "radio", -1) end) end
-                if not success then pcall(function() myPlayer:addLineChatElement(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, AC.ChatTypes["say"].xyRange, "radio") end) end
+                if not success then pcall(function() myPlayer:addLineChatElement(textToDisplay .. "", colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, AC.ChatTypes["say"].xyRange, "radio") end) end
             elseif instanceof(activeRadio, "VehiclePart") then
                 local success = pcall(function() activeRadio:getVehicle():getChatElement():addChatLine(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, AC.ChatTypes["say"].xyRange, "radio", true, true, true, true, true, true) end)
                 if not success then success = pcall(function() activeRadio:getDeviceData():AddDeviceText(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, "radio", "-1", 30) end) end
@@ -284,10 +284,10 @@ function AC.Handlers.AddLineInChat(chatMessage, tabID)
                 if not success then success = pcall(function() activeRadio:getDeviceData():AddDeviceText(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, "radio", "-1") end) end
                 if not success then success = pcall(function() activeRadio:getDeviceData():AddDeviceText(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, "radio", -1) end) end
             else
-                pcall(function() myPlayer:addLineChatElement(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, AC.ChatTypes["say"].xyRange, "radio") end)
+                pcall(function() myPlayer:addLineChatElement(textToDisplay .. "", colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, AC.ChatTypes["say"].xyRange, "radio") end)
             end
         else
-            pcall(function() myPlayer:addLineChatElement(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, AC.ChatTypes["say"].xyRange, "radio") end)
+            pcall(function() myPlayer:addLineChatElement(textToDisplay .. "", colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, AC.ChatTypes["say"].xyRange, "radio") end)
         end
 
         AC.ISChatOriginal.addLineInChat(fakeMessage, 0)
@@ -378,11 +378,11 @@ function AC.Handlers.AddLineInChat(chatMessage, tabID)
             end
             textToDisplay = AC.Parsing.CleanOverheadText(textToDisplay)
             local colorRGB = AC.ChatTypes[parsedMessage.chatType].colorRGB
-            pcall(function() myPlayer:addLineChatElement(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, AC.ChatTypes[parsedMessage.chatType].xyRange, "radio") end)
+            pcall(function() myPlayer:addLineChatElement(textToDisplay .. "", colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, AC.ChatTypes[parsedMessage.chatType].xyRange, "radio") end)
             
             if parsedMessage.activeRadio then
                 if instanceof(parsedMessage.activeRadio, "IsoRadio") then
-                    local success = pcall(function() parsedMessage.activeRadio:addLineChatElement(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, AC.ChatTypes[parsedMessage.chatType].xyRange, "radio") end)
+                    local success = pcall(function() parsedMessage.activeRadio:addLineChatElement(textToDisplay .. "", colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, AC.ChatTypes[parsedMessage.chatType].xyRange, "radio") end)
                     if not success then success = pcall(function() parsedMessage.activeRadio:getChatElement():addChatLine(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, AC.ChatTypes[parsedMessage.chatType].xyRange, "radio", true, true, true, true, true, true) end) end
                     if not success then success = pcall(function() parsedMessage.activeRadio:getDeviceData():AddDeviceText(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, "radio", "-1", 30) end) end
                     if not success then success = pcall(function() parsedMessage.activeRadio:getDeviceData():AddDeviceText(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, "radio", -1, 30) end) end
@@ -427,23 +427,23 @@ function AC.Handlers.AddLineInChat(chatMessage, tabID)
                     if parsedMessage.chatType == "whisper" and AC.CanSeePlayer(chattingPlayer, false, AC.ChatTypes["say"].xyRange) then
                         local colorRGB = AC.Meta.GetNameColorRGB(parsedMessage.playerUsername)
                         if parsedMessage.onRadio then
-                            pcall(function() chattingPlayer:addLineChatElement("Whispered into a walkie", colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, AC.ChatTypes["say"].xyRange, "") end)
+                            if not AC.PlayerChatTimes then AC.PlayerChatTimes = {} end; AC.PlayerChatTimes[chattingPlayer:getUsername()] = getTimeInMillis(); pcall(function() chattingPlayer:addLineChatElement("Whispered into a walkie", colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, AC.ChatTypes["say"].xyRange, "") end)
                         else
-                            pcall(function() chattingPlayer:addLineChatElement("Whispered", colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, AC.ChatTypes["say"].xyRange, "") end)
+                            if not AC.PlayerChatTimes then AC.PlayerChatTimes = {} end; AC.PlayerChatTimes[chattingPlayer:getUsername()] = getTimeInMillis(); pcall(function() chattingPlayer:addLineChatElement("Whispered", colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, AC.ChatTypes["say"].xyRange, "") end)
                         end
                     elseif parsedMessage.chatType == "low" and AC.CanSeePlayer(chattingPlayer, false, AC.ChatTypes["say"].xyRange) then
                         local colorRGB = AC.Meta.GetNameColorRGB(parsedMessage.playerUsername)
                         if parsedMessage.onRadio then
-                            pcall(function() chattingPlayer:addLineChatElement("Spoke Quietly into a walkie", colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, AC.ChatTypes["say"].xyRange, "") end)
+                            if not AC.PlayerChatTimes then AC.PlayerChatTimes = {} end; AC.PlayerChatTimes[chattingPlayer:getUsername()] = getTimeInMillis(); pcall(function() chattingPlayer:addLineChatElement("Spoke Quietly into a walkie", colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, AC.ChatTypes["say"].xyRange, "") end)
                         else
-                            pcall(function() chattingPlayer:addLineChatElement("Spoke Quietly", colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, AC.ChatTypes["say"].xyRange, "") end)
+                            if not AC.PlayerChatTimes then AC.PlayerChatTimes = {} end; AC.PlayerChatTimes[chattingPlayer:getUsername()] = getTimeInMillis(); pcall(function() chattingPlayer:addLineChatElement("Spoke Quietly", colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, AC.ChatTypes["say"].xyRange, "") end)
                         end
                     elseif parsedMessage.chatType == "say" and AC.CanSeePlayer(chattingPlayer, false, AC.ChatTypes["loud"].xyRange) then
                         local colorRGB = AC.Meta.GetNameColorRGB(parsedMessage.playerUsername)
                         if parsedMessage.onRadio then
-                            pcall(function() chattingPlayer:addLineChatElement("Spoke into a walkie", colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, AC.ChatTypes["loud"].xyRange, "") end)
+                            if not AC.PlayerChatTimes then AC.PlayerChatTimes = {} end; AC.PlayerChatTimes[chattingPlayer:getUsername()] = getTimeInMillis(); pcall(function() chattingPlayer:addLineChatElement("Spoke into a walkie", colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, AC.ChatTypes["loud"].xyRange, "") end)
                         else
-                            pcall(function() chattingPlayer:addLineChatElement("Spoke", colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, AC.ChatTypes["loud"].xyRange, "") end)
+                            if not AC.PlayerChatTimes then AC.PlayerChatTimes = {} end; AC.PlayerChatTimes[chattingPlayer:getUsername()] = getTimeInMillis(); pcall(function() chattingPlayer:addLineChatElement("Spoke", colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, AC.ChatTypes["loud"].xyRange, "") end)
                         end
                     end
                 end
@@ -460,6 +460,17 @@ function AC.Handlers.AddLineInChat(chatMessage, tabID)
         else
             pcall(function() chatMessage:setText("") end)
             return true
+        end
+
+        if not isMe then
+            local xDist = myPlayer:getX() - pos.x
+            local yDist = myPlayer:getY() - pos.y
+            local distance = math.sqrt(xDist * xDist + yDist * yDist)
+            for _, part in ipairs(parsedMessage.parts) do
+                if part.text then
+                    part.text = AC.Parsing.ScrambleTextByDistance(part.text, distance, chatType.xyRange + 0.99)
+                end
+            end
         end
 
         local sandbox = SandboxVars.AuroraChatLocal or {}
@@ -510,7 +521,7 @@ function AC.Handlers.AddLineInChat(chatMessage, tabID)
         elseif parsedMessage.chatModifier == "alert" then
             colorRGB = {r = 1.0, g = 0.4, b = 0.4}
         end
-        pcall(function() chattingPlayer:addLineChatElement(textOnlyMessage, colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, 30.0, "") end)
+        if not AC.PlayerChatTimes then AC.PlayerChatTimes = {} end; AC.PlayerChatTimes[chattingPlayer:getUsername()] = getTimeInMillis(); pcall(function() chattingPlayer:addLineChatElement(textOnlyMessage .. "", colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, 30.0, "") end)
     end
 
     if parsedMessage.chatModifier == "alert" then
@@ -619,7 +630,7 @@ function AC.Handlers.AddStaffMessage(otherPlayerUsername, message)
     if chattingPlayer then
         local textOnly = message:gsub("<[^>]+>", "")
         textOnly = AC.Parsing.CleanOverheadText(textOnly)
-        pcall(function() chattingPlayer:addLineChatElement(textOnly, 0.4, 0.9, 0.4, UIFont.Dialogue, 30.0, "") end)
+        if not AC.PlayerChatTimes then AC.PlayerChatTimes = {} end; AC.PlayerChatTimes[chattingPlayer:getUsername()] = getTimeInMillis(); pcall(function() chattingPlayer:addLineChatElement(textOnly .. "", 0.4, 0.9, 0.4, UIFont.Dialogue, 30.0, "") end)
     end
 end
 

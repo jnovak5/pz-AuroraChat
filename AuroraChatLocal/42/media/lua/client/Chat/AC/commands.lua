@@ -137,6 +137,22 @@ function AC.Commands.SetShoutVolumeColor(args)
     AC_Utils.addInfoToChat(rgbString .. "Shout color has been updated!")
 end
 
+function AC.Commands.ToggleOverheads(args)
+    if not (isClient() and (getPlayer():getAccessLevel() ~= "None" or isCoopHost())) then
+        AC_Utils.addErrorToChat("You do not have permission to use this command.")
+        return
+    end
+    
+    local current = AC.Meta.GetAdminHideOverheads()
+    AC.Meta.SetAdminHideOverheads(not current)
+    
+    if not current then
+        AC_Utils.addInfoToChat("Admin Overhead Hiding is now ON. Overheads are hidden for you.")
+    else
+        AC_Utils.addInfoToChat("Admin Overhead Hiding is now OFF. Overheads are visible based on lighting.")
+    end
+end
+
 function AC.Commands.SetLang(args)
     local lang = args:gsub("^%s*(.-)%s*$", "%1")
     if lang == nil or lang == "" then
@@ -619,6 +635,8 @@ function AC.Commands.Injure(args)
         bodyPart:SetBitten(true)
         bodyPart:SetInfected(false)
         bodyPart:SetFakeInfected(false)
+    elseif injury == "Cold" then bodyDamage:setColdStrength(100.0)
+    elseif injury == "Sickness" then bodyDamage:setFoodSicknessLevel(100.0)
     else
         AC_Utils.addErrorToChat("Invalid injury. Use /injure bodypart injury")
         return
@@ -628,6 +646,29 @@ function AC.Commands.Injure(args)
 
     sendClientCommand(getPlayer(), "AC", "Injure", {bodyPartStr, injury})
     AC_Utils.addInfoToChat("<RGB:1.0,0.0,0.0>Injury applied!")
+end
+
+function AC.Commands.Ailment(args)
+    if not args or args == "" then
+        AC_Utils.addErrorToChat("Usage: /ailment <type>")
+        return
+    end
+
+    local ailment = args:gsub("^%s*(.-)%s*$", "%1")
+    local bodyDamage = getPlayer():getBodyDamage()
+    
+    if ailment == "Cold" then
+        bodyDamage:setColdStrength(100.0)
+        bodyDamage:setHasACold(true)
+    elseif ailment == "Sickness" then
+        getPlayer():getStats():set(CharacterStat.FOOD_SICKNESS, 40.0)
+    else
+        AC_Utils.addErrorToChat("Invalid ailment. Use /ailment <type>")
+        return
+    end
+
+    sendClientCommand(getPlayer(), "AC", "Ailment", {ailment})
+    AC_Utils.addInfoToChat("<RGB:1.0,0.0,0.0>Ailment applied!")
 end
 
 function AC.Commands.RadioSync(args)
@@ -786,8 +827,12 @@ function AC.TabHandlers.BodyPart(text)
     return AC.TabListHandler(AC.GetBodyParts(), text)
 end
 
-function AC.TabHandlers.Injury(text)
+function AC.TabHandlers.InjuryType(text)
     return AC.TabListHandler(AC.GetInjuries(), text)
+end
+
+function AC.TabHandlers.AilmentType(text)
+    return AC.TabListHandler(AC.GetAilments(), text)
 end
 
 function AC.TabHandlers.RadioFrequencies(text)

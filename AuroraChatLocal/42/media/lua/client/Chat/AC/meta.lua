@@ -455,6 +455,14 @@ function AC.Meta.SetOverheadTypingIndicator(enabled)
     writeChatPref("OverheadTypingIndicator", enabled)
 end
 
+function AC.Meta.GetAdminHideOverheads()
+    return getChatPref("AdminHideOverheads") == true
+end
+
+function AC.Meta.SetAdminHideOverheads(enabled)
+    writeChatPref("AdminHideOverheads", enabled)
+end
+
 local radioSyncOption = nil
 function AC.Meta.GetRadioSync()
     return radioSyncOption
@@ -602,15 +610,37 @@ function AC.Meta.CreateCharacterContext(context, myPlayer)
         local injureSelfContext = characterContext:getNew(characterContext)
         characterContext:addSubMenu(injureSelfOption, injureSelfContext)
 
-        for _, bodyPartStr in ipairs(AC.GetBodyParts()) do
-            local bodyPart = BodyPartType.FromString(bodyPartStr)
-            local bodyPartOption = injureSelfContext:addOption(BodyPartType.getDisplayName(bodyPart), nil, nil)
-            local bodyPartContext = injureSelfContext:getNew(injureSelfContext)
-            injureSelfContext:addSubMenu(bodyPartOption, bodyPartContext)
+        local bodyPartGroups = {
+            {name = "Head & Neck", parts = {"Head", "Neck"}},
+            {name = "Torso", parts = {"Torso_Upper", "Torso_Lower", "Groin"}},
+            {name = "Left Arm", parts = {"UpperArm_L", "ForeArm_L", "Hand_L"}},
+            {name = "Right Arm", parts = {"UpperArm_R", "ForeArm_R", "Hand_R"}},
+            {name = "Left Leg", parts = {"UpperLeg_L", "LowerLeg_L", "Foot_L"}},
+            {name = "Right Leg", parts = {"UpperLeg_R", "LowerLeg_R", "Foot_R"}},
+        }
 
-            for _, injury in ipairs(AC.GetInjuries()) do
-                bodyPartContext:addOption(injury, '"' .. bodyPartStr .. '" "' .. injury .. '"', AC.Commands.Injure)
+        for _, group in ipairs(bodyPartGroups) do
+            local groupOption = injureSelfContext:addOption(group.name, nil, nil)
+            local groupContext = injureSelfContext:getNew(injureSelfContext)
+            injureSelfContext:addSubMenu(groupOption, groupContext)
+
+            for _, bodyPartStr in ipairs(group.parts) do
+                local bodyPart = BodyPartType.FromString(bodyPartStr)
+                local bodyPartOption = groupContext:addOption(BodyPartType.getDisplayName(bodyPart), nil, nil)
+                local bodyPartContext = groupContext:getNew(groupContext)
+                groupContext:addSubMenu(bodyPartOption, bodyPartContext)
+
+                for _, injury in ipairs(AC.GetInjuries()) do
+                    bodyPartContext:addOption(injury, '"' .. bodyPartStr .. '" "' .. injury .. '"', AC.Commands.Injure)
+                end
             end
+        end
+
+        local ailmentOption = injureSelfContext:addOption("Ailments", nil, nil)
+        local ailmentContext = injureSelfContext:getNew(injureSelfContext)
+        injureSelfContext:addSubMenu(ailmentOption, ailmentContext)
+        for _, ailment in ipairs(AC.GetAilments()) do
+            ailmentContext:addOption(ailment, ailment, AC.Commands.Ailment)
         end
     end
 end
@@ -684,6 +714,12 @@ function AC.Meta.CreateAdminContext(context, myPlayer, players)
         adminContext:addOption("Enable Admin Chat Override", "on", AC.Commands.Override)
     else
         adminContext:addOption("Disable Admin Chat Override", "off", AC.Commands.Override)
+    end
+    
+    if AC.Meta.GetAdminHideOverheads() then
+        adminContext:addOption("Show Player Overheads", nil, AC.Commands.ToggleOverheads)
+    else
+        adminContext:addOption("Hide Player Overheads", nil, AC.Commands.ToggleOverheads)
     end
 
     local usernames = {}

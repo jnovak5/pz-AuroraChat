@@ -12,6 +12,26 @@ function AC.Parsing.CapitalizeFirst(text)
     end
 end
 
+function AC.Parsing.ScrambleTextByDistance(text, distance, maxRange)
+    if not text or text == "" or distance <= maxRange * 0.6 then
+        return text
+    end
+    
+    local scrambleFactor = (distance - (maxRange * 0.6)) / (maxRange * 0.4)
+    if scrambleFactor > 0.9 then scrambleFactor = 0.9 end
+    
+    local scrambledText = ""
+    for i = 1, #text do
+        local c = text:sub(i, i)
+        if c:match("[%w]") and ZombRandFloat(0.0, 1.0) < scrambleFactor then
+            scrambledText = scrambledText .. "."
+        else
+            scrambledText = scrambledText .. c
+        end
+    end
+    return scrambledText
+end
+
 function AC.Parsing.CleanOverheadText(text)
     if not text or text == "" then return text end
     text = text:gsub("\226\128\148", "-") -- em dash
@@ -43,7 +63,7 @@ function AC.Parsing.ParseMessage(message)
     local onRadio = false
     local isNpc = false
 
-    local unStart, unEnd, unMatch = message:find("%[UN:([^%]]+)%]")
+    local unStart, unEnd, unMatch = message:find("%[UN:([^%]]*)%]")
     local posStart, posEnd, x, y, z = message:find("%[POS:(%d+),(%d+),(%d+)%]")
     local langStart, langEnd, langMatch = message:find("%[LANG:([^%]]+)%]")
     
