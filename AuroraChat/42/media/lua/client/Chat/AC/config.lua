@@ -256,6 +256,13 @@ AC.SpecialCommands["/injure"] = {
     help = "Injure a body part.",
     adminOnly = false,
 }
+AC.SpecialCommands["/ailment"] = {
+    handler = "Ailment",
+    tabHandlers = {"AilmentType"},
+    usage = "/ailment <ailment type>",
+    help = "Add a general ailment.",
+    adminOnly = false,
+}
 AC.SpecialCommands["/status"] = {
     handler = "SetStatus",
     tabHandlers = {},

@@ -25,17 +25,19 @@ function AC.StatusIndicator.ShowStatusIndicatorOnHovered()
     for i=0,allPlayers:size()-1 do
         local player = allPlayers:get(i)
         local username = player:getUsername()
+        if username == ownPlayer:getUsername() then player = ownPlayer end
+        
         local distSq = AC.StatusIndicator.GetDistanceSq(worldX, worldY, player)
         local status = AC.Meta.GetStatus(username)
-        if worldZ == player:getZ() and distSq <= maxDistSq and AC.CanSeePlayer(player, true, 20) and type(status) == "string" and status:match("%S") then
-            local x = isoToScreenX(0, player:getX(), player:getY(), player:getZ() + 0.65)
-            local y = isoToScreenY(0, player:getX(), player:getY(), player:getZ() + 0.65)
-            y = y - 5
-            
-            local fontHeight = getTextManager():getFontHeight(UIFont.Small) - 2
-            if AC.Meta.IsAfk(username) then y = y + fontHeight end
-            
-            getTextManager():DrawStringCentre(UIFont.Small, x, y, status, 1.0, 1.0, 1.0, 0.6)
+        if (worldZ == player:getZ() and distSq <= maxDistSq and AC.CanSeePlayer(player, true, 20)) and type(status) == "string" and status:match("%S") then
+            local alpha = AC.Visibility.GetPlayerAlpha(player)
+            if alpha > 0.01 then
+                local playerNum = getPlayer():getPlayerNum() or 0
+                local x = math.floor(isoToScreenX(playerNum, player:getX(), player:getY(), player:getZ()))
+                local y = AC.Visibility.GetYOffsets(player).status or math.floor(isoToScreenY(playerNum, player:getX(), player:getY(), player:getZ()) - 140)
+                
+                AC.Visibility.DrawTextCentre(UIFont.Small, x, y, status, 0.8, 0.8, 0.8, alpha)
+            end
         end
     end
 end

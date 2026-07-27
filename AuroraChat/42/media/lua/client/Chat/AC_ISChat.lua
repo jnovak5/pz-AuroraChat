@@ -136,6 +136,7 @@ function ISChat:render()
         AC.Afk.ShowAfkOnPlayers()
         AC.Bio.ShowBioOnPlayers()
         AC.StatusIndicator.ShowStatusIndicatorOnHovered()
+        AC.Name.ShowNamesOnPlayers()
 
         if AC.Meta.GetOverheadTypingIndicator() then
             AC.Indicator.DrawOverheads(self)
@@ -251,6 +252,9 @@ end
 
 AC.ISChatOriginal.unfocus = AC.ISChatOriginal.unfocus or ISChat.unfocus
 function ISChat:unfocus()
+    if self.textEntry and self.textEntry:getText() ~= "" then
+        self.chatDraft = self.textEntry:getText()
+    end
     AC.ISChatOriginal.unfocus(self)
     AC.Indicator.onCleared(true)
 end
@@ -258,10 +262,14 @@ end
 AC.ISChatOriginal.focus = AC.ISChatOriginal.focus or ISChat.focus
 function ISChat:focus()
     AC.ISChatOriginal.focus(self)
-    if ISChat.instance.currentTabID == 5 then
-        self.textEntry:setText(AC.Meta.IsSaveLastChatEnabled() and AC.Meta.LastOoc or "/ooc ")
-    elseif ISChat.instance.currentTabID < 7 then
-        self.textEntry:setText(AC.Meta.IsSaveLastChatEnabled() and AC.Meta.LastChat or "")
+    if self.chatDraft and self.chatDraft ~= "" then
+        self.textEntry:setText(self.chatDraft)
+    else
+        if ISChat.instance.currentTabID == 5 then
+            self.textEntry:setText(AC.Meta.IsSaveLastChatEnabled() and AC.Meta.LastOoc or "/ooc ")
+        elseif ISChat.instance.currentTabID < 7 then
+            self.textEntry:setText(AC.Meta.IsSaveLastChatEnabled() and AC.Meta.LastChat or "")
+        end
     end
 end
 
@@ -278,12 +286,14 @@ function ISChat:onCommandEntered()
     if AC.Handlers.SpecialCommand(text) or AC.Handlers.CommandEntered(text) or AC.Handlers.IsOutdated(text) then
         ISChat.instance:logChatCommand(text)
         ISChat.instance:unfocus()
+        ISChat.instance.chatDraft = ""
         doKeyPress(false)
         ISChat.instance.timerTextEntry = 20
         return
     end
 
     AC.ISChatOriginal.onCommandEntered(self or ISChat.instance)
+    ISChat.instance.chatDraft = ""
 end
 
 function ISChat:onMuteTypingButtonClick()

@@ -108,6 +108,13 @@ function AC.GetInjuries()
     }
 end
 
+function AC.GetAilments()
+    return {
+        "Cold",
+        "Sickness",
+    }
+end
+
 --- @param message string
 --- @return number,number the xyRange and zRange
 function AC.GetRangeFromMessage(message)

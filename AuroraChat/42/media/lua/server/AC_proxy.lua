@@ -179,9 +179,32 @@ local function onACCommand(module, command, sendingPlayer, args)
                 bodyPart:SetBitten(true)
                 bodyPart:SetInfected(false)
                 bodyPart:SetFakeInfected(false)
+            elseif injury == "Cold" then bodyDamage:setColdStrength(100.0)
+            elseif injury == "Sickness" then bodyDamage:setFoodSicknessLevel(100.0)
             end
             
             bodyDamage:AddDamage(bodyPartType, 15.0)
+        end
+    elseif command == "Ailment" then
+        local ailment = args[1]
+        local bodyDamage = sendingPlayer:getBodyDamage()
+        if ailment == "Cold" then
+            bodyDamage:setColdStrength(100.0)
+            bodyDamage:setHasACold(true)
+        elseif ailment == "Sickness" then
+            sendingPlayer:getStats():set(CharacterStat.FOOD_SICKNESS, 40.0)
+        end
+    elseif command == "Override" then
+        local color = staffColors[sendingPlayer:getAccessLevel()]
+        if not color then color = "<RGB:0.8,0.8,0.8>" end
+        local message = color .. "[" .. sendingPlayer:getUsername() .. "]" .. AC_Utils.MagicSpace .. "<RGB:1,1,1>" .. args[1]
+        local allPlayers = getOnlinePlayers()
+        if allPlayers:size() == 0 then return end
+        for i=0, allPlayers:size()-1 do
+            local player = allPlayers:get(i)
+            if AC_Utils.isStaff(player) then
+                sendServerCommand(player, "AC", command, {sendingPlayer:getUsername(), message})
+            end
         end
     elseif command == "StaffChat" then
         local color = staffColors[sendingPlayer:getAccessLevel()]
