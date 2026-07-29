@@ -174,6 +174,11 @@ function AC_FakeMessage:getTextWithPrefix()
     if ISChat.instance.chatFont then
         message = "<SIZE:" .. ISChat.instance.chatFont .. ">" .. message
     end
+
+    -- FIX: B42 ISRichTextPanel swallows spaces adjacent to tags because it skips empty tokens.
+    -- The <SPACE> tag is explicitly provided by the B42 engine to force an advance in X coordinates.
+    message = message:gsub(" ", " <SPACE> ")
+
     return message
 end
 function AC_FakeMessage:isOverHeadSpeech()
