@@ -93,7 +93,10 @@ function AC.Indicator.DrawOverheads()
             if alpha > 0.01 then
                 local playerNum = getPlayer():getPlayerNum() or 0
                 local x = math.floor(isoToScreenX(playerNum, player:getX(), player:getY(), player:getZ()))
-                local y = AC.Visibility.GetYOffsets(player).indicator or math.floor(isoToScreenY(playerNum, player:getX(), player:getY(), player:getZ()) - 185)
+                local zoom = getCore():getZoom(playerNum)
+                local fallbackOffset = 185
+                if zoom > 0 then fallbackOffset = fallbackOffset / zoom end
+                local y = AC.Visibility.GetYOffsets(player).indicator or math.floor(isoToScreenY(playerNum, player:getX(), player:getY(), player:getZ()) - fallbackOffset)
                 
                 local formattedText = "[ " .. typingText .. " ]"
                 local textWidth = getTextManager():MeasureStringX(UIFont.Small, formattedText)

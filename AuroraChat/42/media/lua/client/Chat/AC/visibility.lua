@@ -63,12 +63,12 @@ function AC.Visibility.GetYOffsets(player)
     if not AC.PlayerChatTimes then AC.PlayerChatTimes = {} end
     local lastChatTime = AC.PlayerChatTimes[username] or 0
     local hasChat = (getTimeInMillis() - lastChatTime < 5000) -- chat bubbles typically last ~5s
-    if hasChat then 
+    if hasChat or player:getVehicle() ~= nil then 
         offsets.bio = -9999
         offsets.status = -9999
         offsets.afk = -9999
         offsets.name = -9999
-        offsets.typing = -9999
+        offsets.indicator = -9999
         return offsets 
     end
     

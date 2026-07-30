@@ -7,6 +7,11 @@ if (Test-Path $dest) {
 
 Copy-Item -Path $source -Destination $dest -Recurse
 
+# Remove development files from the release folder
+$devExtensions = @("*.fbx", "*.blend", "*.psd", "*.kra", "*.pdn", "*.code-workspace", ".gitignore", ".git", ".vscode")
+foreach ($ext in $devExtensions) {
+    Get-ChildItem -Path $dest -Recurse -Filter $ext | Remove-Item -Force
+}
 # Update mod.info
 $modInfo = "$dest\common\mod.info"
 (Get-Content $modInfo) -replace 'id=AuroraChatLocal$', 'id=AuroraChat' -replace 'name=AuroraChatLocal', 'name=Aurora Chat' | Set-Content $modInfo

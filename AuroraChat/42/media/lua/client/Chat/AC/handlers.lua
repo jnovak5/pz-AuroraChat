@@ -194,12 +194,20 @@ function AC.Handlers.CommandEntered(message)
         ARU_Utils.setRadioBroadcastingInstant(player, radio, true)
     end
 
-    if parsedMessage.chatModifier == nil or parsedMessage.chatModifier == "me" then
+    if parsedMessage.chatModifier == nil then
         if AC.Meta.IsSaveLastChatEnabled() then
-            AC.Meta.LastChat = "/" .. (parsedMessage.chatModifier or "") .. parsedMessage.chatType .. " "
+            if parsedMessage.chatType == "say" then
+                AC.Meta.LastChat = ""
+            else
+                AC.Meta.LastChat = "/" .. parsedMessage.chatType .. " "
+            end
+        end
+    elseif parsedMessage.chatModifier == "me" then
+        if AC.Meta.IsSaveLastChatEnabled() then
+            AC.Meta.LastChat = "/me "
         end
     elseif parsedMessage.chatModifier == "ooc" and AC.Meta.IsSaveLastChatEnabled() then
-        AC.Meta.LastChat = "/ooc" .. parsedMessage.chatType .. " "
+        AC.Meta.LastOoc = "/ooc "
     end
 
     for _, callback in ipairs(AC.CustomChatCallbacks) do
@@ -414,7 +422,7 @@ function AC.Handlers.AddLineInChat(chatMessage, tabID)
                 pcall(function() chatMessage:setText("") end)
                 return true
             end
-            if not AC.Meta.IsInRange(myPlayer, recPlayer, chatType.xyRange, chatType.zRange) then
+            if not AC.Meta.IsInRange(myPlayer, recPlayer, chatType.xyRange * 1.5, chatType.zRange) then
                 pcall(function() chatMessage:setText("") end)
                 return true
             end
@@ -422,7 +430,7 @@ function AC.Handlers.AddLineInChat(chatMessage, tabID)
         elseif parsedMessage.isNpc then
             pos = {x = myPlayer:getX(), y = myPlayer:getY(), z = myPlayer:getZ()}
         elseif chattingPlayer then
-            if not AC.Meta.IsInRange(myPlayer, chattingPlayer, chatType.xyRange, chatType.zRange) then
+            if not AC.Meta.IsInRange(myPlayer, chattingPlayer, chatType.xyRange * 1.5, chatType.zRange) then
                 if myPlayer:getZ() == chattingPlayer:getZ() then
                     if parsedMessage.chatType == "whisper" and AC.CanSeePlayer(chattingPlayer, false, AC.ChatTypes["say"].xyRange) then
                         local colorRGB = AC.Meta.GetNameColorRGB(parsedMessage.playerUsername)
@@ -452,7 +460,7 @@ function AC.Handlers.AddLineInChat(chatMessage, tabID)
             end
             pos = {x = chattingPlayer:getX(), y = chattingPlayer:getY()}
         elseif parsedMessage.pos then
-            if not AC.Meta.IsInPosRange(myPlayer, parsedMessage.pos, chatType.xyRange, chatType.zRange) then
+            if not AC.Meta.IsInPosRange(myPlayer, parsedMessage.pos, chatType.xyRange * 1.5, chatType.zRange) then
                 pcall(function() chatMessage:setText("") end)
                 return true
             end
@@ -462,19 +470,19 @@ function AC.Handlers.AddLineInChat(chatMessage, tabID)
             return true
         end
 
-        if not isMe then
+        if not isMe and parsedMessage.chatModifier ~= "ooc" then
             local xDist = myPlayer:getX() - pos.x
             local yDist = myPlayer:getY() - pos.y
             local distance = math.sqrt(xDist * xDist + yDist * yDist)
             for _, part in ipairs(parsedMessage.parts) do
                 if part.text then
-                    part.text = AC.Parsing.ScrambleTextByDistance(part.text, distance, chatType.xyRange + 0.99)
+                    part.text = AC.Parsing.ScrambleTextByDistance(part.text, distance, chatType.xyRange + 0.99, (chatType.xyRange * 1.5) + 0.99)
                 end
             end
         end
 
         local sandbox = SandboxVars.AuroraChat or {}
-        if AC.Meta.CanUnderstand(parsedMessage.language) and safeHasTrait(myPlayer, "HardOfHearing") and sandbox.EnableHardOfHearing and not isMe then
+        if parsedMessage.chatModifier ~= "ooc" and AC.Meta.CanUnderstand(parsedMessage.language) and safeHasTrait(myPlayer, "HardOfHearing") and sandbox.EnableHardOfHearing and not isMe then
             local xyRange = chatType.xyRange + 0.99
             local xDist = myPlayer:getX() - pos.x
             local yDist = myPlayer:getY() - pos.y
@@ -489,9 +497,9 @@ function AC.Handlers.AddLineInChat(chatMessage, tabID)
     end
 
     local sandbox = SandboxVars.AuroraChat or {}
-    if safeHasTrait(myPlayer, "Deaf") and sandbox.EnableDeaf and (not isMe or parsedMessage.fromRecorder) then
+    if parsedMessage.chatModifier ~= "ooc" and safeHasTrait(myPlayer, "Deaf") and sandbox.EnableDeaf and (not isMe or parsedMessage.fromRecorder) then
         AC.Parsing.AdjustForDeaf(parsedMessage)
-    elseif not AC.Meta.CanUnderstand(parsedMessage.language) then
+    elseif parsedMessage.chatModifier ~= "ooc" and not AC.Meta.CanUnderstand(parsedMessage.language) then
         AC.Parsing.AdjustForUnknownLanguage(parsedMessage)
     end
 

@@ -12,12 +12,12 @@ function AC.Parsing.CapitalizeFirst(text)
     end
 end
 
-function AC.Parsing.ScrambleTextByDistance(text, distance, maxRange)
-    if not text or text == "" or distance <= maxRange * 0.6 then
+function AC.Parsing.ScrambleTextByDistance(text, distance, clearRange, maxRange)
+    if not text or text == "" or distance <= clearRange then
         return text
     end
     
-    local scrambleFactor = (distance - (maxRange * 0.6)) / (maxRange * 0.4)
+    local scrambleFactor = (distance - clearRange) / (maxRange - clearRange)
     if scrambleFactor > 0.9 then scrambleFactor = 0.9 end
     
     local scrambledText = ""
@@ -290,11 +290,12 @@ function AC.Parsing.ParseMessage(message)
     parsedMessage.isEmote = emote
     parsedMessage.onRadio = onRadio
     parsedMessage.isNpc = isNpc
+    parsedMessage.rawText = message
     return parsedMessage
 end
 
 function AC.Parsing.GetTextConvertedToOoc(parsedMessage)
-    return "/ooc" .. AC.ChatTypes[parsedMessage.chatType].command[1] .. " " .. parsedMessage.parts[2].text
+    return "/ooc" .. AC.ChatTypes[parsedMessage.chatType].command[1] .. " " .. parsedMessage.rawText
 end
 
 function AC.Parsing.PrependPlayerData(player, message, lang)
