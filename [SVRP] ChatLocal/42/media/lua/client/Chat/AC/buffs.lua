@@ -7,7 +7,7 @@ AC.Buffs.AmountsPerMessage = {
     hunger = 0.001,
     thirst = 0.001,
     stressSmokes = 0.002,
-    unhappyness = 0.002
+    unhappyness = 2
 }
 AC.Buffs.DelayBetweenBuffs = 30 -- seconds
 AC.Buffs.LastApplied = 0

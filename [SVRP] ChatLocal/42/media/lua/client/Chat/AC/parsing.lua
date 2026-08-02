@@ -214,10 +214,10 @@ function AC.Parsing.ParseMessage(message)
                         if inAsterisks then newType = (baseType == "emote") and "text" or "emote" end
                         currentPart = {type = newType, text = ""}
                     end
-                elseif char == "*" then
+                elseif char == "*" or char == "/" then
                     inAsterisks = not inAsterisks
                     if not inAsterisks then
-                        currentPart.text = currentPart.text .. "*"
+                        currentPart.text = currentPart.text .. char
                         table.insert(parts, currentPart)
                         local baseType = inQuotes and "text" or AC.ChatModifiers[chatModifier].type
                         currentPart = {type = baseType, text = ""}
@@ -227,7 +227,7 @@ function AC.Parsing.ParseMessage(message)
                         end
                         local baseType = inQuotes and "text" or AC.ChatModifiers[chatModifier].type
                         local newType = (baseType == "emote") and "text" or "emote"
-                        currentPart = {type = newType, text = "*"}
+                        currentPart = {type = newType, text = char}
                     end
                 else
                     currentPart.text = currentPart.text .. char
@@ -249,17 +249,17 @@ function AC.Parsing.ParseMessage(message)
         local i = 1
         while i <= message:len() do
             local char = message:sub(i, i)
-            if char == "*" then
+            if char == "*" or char == "/" then
                 inEmote = not inEmote
                 if not inEmote then
-                    currentPart.text = currentPart.text .. "*"
+                    currentPart.text = currentPart.text .. char
                     table.insert(parts, currentPart)
                     currentPart = {type = "text", text = ""}
                 else
                     if currentPart.text ~= "" then
                         table.insert(parts, currentPart)
                     end
-                    currentPart = {type = "emote", text = "*"}
+                    currentPart = {type = "emote", text = char}
                 end
             else
                 currentPart.text = currentPart.text .. char
