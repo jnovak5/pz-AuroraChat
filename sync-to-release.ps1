@@ -33,7 +33,7 @@ Write-Host "Successfully synced [SVRP] ChatLocal (Development) to [SVRP] Chat (R
 
 $workshopDest = "$env:USERPROFILE\Zomboid\Workshop\[SVRP] Chat\Contents\mods\[SVRP] Chat"
 if (Test-Path -LiteralPath $workshopDest) {
-    Copy-Item -LiteralPath "$dest\*" -Destination $workshopDest -Recurse -Force
+    Get-ChildItem -LiteralPath $dest | Copy-Item -Destination $workshopDest -Recurse -Force
     Write-Host "Successfully copied release files to Zomboid Workshop directory for Steam upload!"
 } else {
     Write-Host "Workshop directory not found, skipping Workshop sync."
