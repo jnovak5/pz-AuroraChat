@@ -137,6 +137,7 @@ function ISChat:render()
         AC.Bio.ShowBioOnPlayers()
         AC.StatusIndicator.ShowStatusIndicatorOnHovered()
         AC.Name.ShowNamesOnPlayers()
+        AC.Pvp.ShowPvpOnPlayers()
 
         if AC.Meta.GetOverheadTypingIndicator() then
             AC.Indicator.DrawOverheads(self)
