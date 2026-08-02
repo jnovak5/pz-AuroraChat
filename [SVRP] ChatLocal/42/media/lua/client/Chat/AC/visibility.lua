@@ -117,8 +117,8 @@ function AC.Visibility.GetYOffsets(player)
     local isPvp = false
     local safety = player:getSafety()
     if safety and tostring(safety) ~= "null" then
-        local success, isCurrent = pcall(function() return safety:isCurrent() end)
-        if success and not isCurrent then
+        local success, isEnabled = pcall(function() return safety:isEnabled() end)
+        if success and not isEnabled then
             isPvp = true
         end
     end
