@@ -1,16 +1,16 @@
 $source = "c:\MyApps\PZ Mods\[SVRP] Chat\[SVRP] ChatLocal"
 $dest = "c:\MyApps\PZ Mods\[SVRP] Chat\[SVRP] Chat"
 
-if (Test-Path $dest) {
-    Remove-Item -Path $dest -Recurse -Force
+if (Test-Path -LiteralPath $dest) {
+    Remove-Item -LiteralPath $dest -Recurse -Force
 }
 
-Copy-Item -Path $source -Destination $dest -Recurse
+Copy-Item -LiteralPath $source -Destination $dest -Recurse
 
 # Remove development files from the release folder
 $devExtensions = @("*.fbx", "*.blend", "*.psd", "*.kra", "*.pdn", "*.code-workspace", ".gitignore", ".git", ".vscode")
 foreach ($ext in $devExtensions) {
-    Get-ChildItem -Path $dest -Recurse -Filter $ext | Remove-Item -Force
+    Get-ChildItem -LiteralPath $dest -Recurse -Filter $ext | Remove-Item -Force
 }
 # Update mod.info
 $modInfo = "$dest\common\mod.info"

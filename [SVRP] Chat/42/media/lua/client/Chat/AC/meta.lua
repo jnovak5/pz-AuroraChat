@@ -558,7 +558,7 @@ function AC.Meta.CreateActionsContext(context, myPlayer, players)
         medicalOption.notAvailable = true
     end
 
-    local sandbox = SandboxVars.SVRPChat or {}
+    local sandbox = SandboxVars.SVRPChatLocal or {}
     if sandbox.EnablePrivate then
         if AC.Meta.HasPrivate(true) then
             actionsContext:addOption("Close Private Chat", nil, AC.Commands.StopPrivateChat)
@@ -593,7 +593,7 @@ function AC.Meta.CreateCharacterContext(context, myPlayer)
     end
     characterContext:addOption("Edit Bio", nil, openEditBio)
 
-    local sandbox = SandboxVars.SVRPChat or {}
+    local sandbox = SandboxVars.SVRPChatLocal or {}
     if sandbox.EnableModCharacter then
         characterContext:addOption("Set Name", nil, AC.MakeShowDialogPrompt("Input your new name", AC.Commands.SetName))
         characterContext:addOption("Grow Hair", nil, AC.Commands.GrowHair)
@@ -604,7 +604,7 @@ function AC.Meta.CreateCharacterContext(context, myPlayer)
         end
     end
 
-    local sandbox = SandboxVars.SVRPChat or {}
+    local sandbox = SandboxVars.SVRPChatLocal or {}
     if sandbox.EnableSelfInjury then
         local injureSelfOption = characterContext:addOption("Add Injury", nil, nil)
         local injureSelfContext = characterContext:getNew(characterContext)

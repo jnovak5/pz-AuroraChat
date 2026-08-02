@@ -137,6 +137,7 @@ function ISChat:render()
         AC.Bio.ShowBioOnPlayers()
         AC.StatusIndicator.ShowStatusIndicatorOnHovered()
         AC.Name.ShowNamesOnPlayers()
+        AC.Pvp.ShowPvpOnPlayers()
 
         if AC.Meta.GetOverheadTypingIndicator() then
             AC.Indicator.DrawOverheads(self)
@@ -252,7 +253,7 @@ end
 
 AC.ISChatOriginal.unfocus = AC.ISChatOriginal.unfocus or ISChat.unfocus
 function ISChat:unfocus()
-    if self.textEntry and self.textEntry:getText() ~= "" then
+    if self.textEntry then
         self.chatDraft = self.textEntry:getText()
     end
     AC.ISChatOriginal.unfocus(self)
@@ -264,6 +265,7 @@ function ISChat:focus()
     AC.ISChatOriginal.focus(self)
     if self.chatDraft and self.chatDraft ~= "" then
         self.textEntry:setText(self.chatDraft)
+        ISChat.onTextChange()
     else
         if ISChat.instance.currentTabID == 5 then
             self.textEntry:setText(AC.Meta.IsSaveLastChatEnabled() and AC.Meta.LastOoc or "/ooc ")

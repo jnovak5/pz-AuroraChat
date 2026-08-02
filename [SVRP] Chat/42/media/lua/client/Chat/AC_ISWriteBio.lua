@@ -74,7 +74,7 @@ end
 function ISWriteBio:onSave(button, x, y)
   sendClientCommand("AC", "BioSave", {self.entry:getText()})
   AC.Handlers.CommandEntered("/me updated their description.")
-  local sandbox = SandboxVars.SVRPChat or {}
+  local sandbox = SandboxVars.SVRPChatLocal or {}
   if sandbox.EnableBioShortDescription then
     getPlayer():addLineChatElement("Remember to always re-save your description after setting your /name!", 1, 0, 0);
     local function lines(str)

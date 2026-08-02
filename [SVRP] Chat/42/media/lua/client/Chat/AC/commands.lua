@@ -332,7 +332,7 @@ function AC.Commands.Help()
 end
 
 function AC.Commands.SendPM(args)
-    local sandbox = SandboxVars.SVRPChat or {}
+    local sandbox = SandboxVars.SVRPChatLocal or {}
     if not sandbox.EnablePM and not AC.Override(true) then
         AC_Utils.addErrorToChat("Private messages are disabled.")
         return
@@ -712,7 +712,7 @@ function AC.Commands.SetStatus(args)
 end
 
 function AC.Commands.PrivateChat(args)
-    local sandbox = SandboxVars.SVRPChat or {}
+    local sandbox = SandboxVars.SVRPChatLocal or {}
     if not sandbox.EnablePrivate then
         AC_Utils.addErrorToChat("Private chat is disabled.")
         return
@@ -743,7 +743,7 @@ function AC.Commands.StopPrivateChat()
 end
 
 function AC.Commands.Coords()
-    local sandbox = SandboxVars.SVRPChat or {}
+    local sandbox = SandboxVars.SVRPChatLocal or {}
     if not sandbox.AllowPlayerCoords and not AC.Override() then
         AC_Utils.addErrorToChat("Coordinates are disabled.")
         return

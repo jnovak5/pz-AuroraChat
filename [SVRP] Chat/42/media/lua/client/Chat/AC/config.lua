@@ -1,6 +1,6 @@
 if not isClient() then return end -- only in MP
 AC = AC or {}
-local sandbox = (SandboxVars and SandboxVars.SVRPChat) or {}
+local sandbox = (SandboxVars and SandboxVars.SVRPChatLocal) or {}
 
 -- Define chat types
 AC.ChatTypes = {}

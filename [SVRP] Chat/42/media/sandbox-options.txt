@@ -1,201 +1,201 @@
 VERSION = 1,
 
-option SVRPChat.EnablePM
+option SVRPChatLocal.EnablePM
 {
   type = boolean,
   default = true,
 
-  page = SVRPChat,
-  translation = SVRPChat.EnablePM,
+  page = SVRPChatLocal,
+  translation = SVRPChatLocal.EnablePM,
 }
 
-option SVRPChat.EnableOOC
+option SVRPChatLocal.EnableOOC
 {
   type = boolean,
   default = true,
 
-  page = SVRPChat,
-  translation = SVRPChat.EnableOOC,
+  page = SVRPChatLocal,
+  translation = SVRPChatLocal.EnableOOC,
 }
 
-option SVRPChat.EnableAll
+option SVRPChatLocal.EnableAll
 {
   type = boolean,
   default = true,
 
-  page = SVRPChat,
-  translation = SVRPChat.EnableAll,
+  page = SVRPChatLocal,
+  translation = SVRPChatLocal.EnableAll,
 }
 
-option SVRPChat.EnablePrivate
+option SVRPChatLocal.EnablePrivate
 {
   type = boolean,
   default = true,
 
-  page = SVRPChat,
-  translation = SVRPChat.EnablePrivate,
+  page = SVRPChatLocal,
+  translation = SVRPChatLocal.EnablePrivate,
 }
 
-option SVRPChat.EnableBuffs
+option SVRPChatLocal.EnableBuffs
 {
   type = boolean,
   default = true,
 
-  page = SVRPChat,
-  translation = SVRPChat.EnableBuffs,
+  page = SVRPChatLocal,
+  translation = SVRPChatLocal.EnableBuffs,
 }
 
-option SVRPChat.RangeXYWhisper
+option SVRPChatLocal.RangeXYWhisper
 {
   type = integer, min = 0, max = 100,
   default = 1,
 
-  page = SVRPChat,
-  translation = SVRPChat.RangeXYWhisper,
+  page = SVRPChatLocal,
+  translation = SVRPChatLocal.RangeXYWhisper,
 }
 
-option SVRPChat.RangeZWhisper
+option SVRPChatLocal.RangeZWhisper
 {
   type = integer, min = 0, max = 7,
   default = 0,
 
-  page = SVRPChat,
-  translation = SVRPChat.RangeZWhisper,
+  page = SVRPChatLocal,
+  translation = SVRPChatLocal.RangeZWhisper,
 }
 
-option SVRPChat.RangeXYLow
+option SVRPChatLocal.RangeXYLow
 {
   type = integer, min = 0, max = 100,
   default = 5,
 
-  page = SVRPChat,
-  translation = SVRPChat.RangeXYLow,
+  page = SVRPChatLocal,
+  translation = SVRPChatLocal.RangeXYLow,
 }
 
-option SVRPChat.RangeZLow
+option SVRPChatLocal.RangeZLow
 {
   type = integer, min = 0, max = 7,
   default = 0,
 
-  page = SVRPChat,
-  translation = SVRPChat.RangeZLow,
+  page = SVRPChatLocal,
+  translation = SVRPChatLocal.RangeZLow,
 }
 
-option SVRPChat.RangeXYSay
+option SVRPChatLocal.RangeXYSay
 {
   type = integer, min = 0, max = 100,
   default = 10,
 
-  page = SVRPChat,
-  translation = SVRPChat.RangeXYSay,
+  page = SVRPChatLocal,
+  translation = SVRPChatLocal.RangeXYSay,
 }
 
-option SVRPChat.RangeZSay
+option SVRPChatLocal.RangeZSay
 {
   type = integer, min = 0, max = 7,
   default = 1,
 
-  page = SVRPChat,
-  translation = SVRPChat.RangeZSay,
+  page = SVRPChatLocal,
+  translation = SVRPChatLocal.RangeZSay,
 }
 
-option SVRPChat.RangeXYLoud
+option SVRPChatLocal.RangeXYLoud
 {
   type = integer, min = 0, max = 100,
   default = 20,
 
-  page = SVRPChat,
-  translation = SVRPChat.RangeXYLoud,
+  page = SVRPChatLocal,
+  translation = SVRPChatLocal.RangeXYLoud,
 }
 
-option SVRPChat.RangeZLoud
+option SVRPChatLocal.RangeZLoud
 {
   type = integer, min = 0, max = 7,
   default = 4,
 
-  page = SVRPChat,
-  translation = SVRPChat.RangeZLoud,
+  page = SVRPChatLocal,
+  translation = SVRPChatLocal.RangeZLoud,
 }
 
-option SVRPChat.RangeXYShout
+option SVRPChatLocal.RangeXYShout
 {
   type = integer, min = 0, max = 100,
   default = 30,
 
-  page = SVRPChat,
-  translation = SVRPChat.RangeXYShout,
+  page = SVRPChatLocal,
+  translation = SVRPChatLocal.RangeXYShout,
 }
 
-option SVRPChat.RangeZShout
+option SVRPChatLocal.RangeZShout
 {
   type = integer, min = 0, max = 7,
   default = 7,
 
-  page = SVRPChat,
-  translation = SVRPChat.RangeZShout,
+  page = SVRPChatLocal,
+  translation = SVRPChatLocal.RangeZShout,
 }
 
-option SVRPChat.EnableHardOfHearing
+option SVRPChatLocal.EnableHardOfHearing
 {
   type = boolean,
   default = false,
 
-  page = SVRPChat,
-  translation = SVRPChat.EnableHardOfHearing,
+  page = SVRPChatLocal,
+  translation = SVRPChatLocal.EnableHardOfHearing,
 }
 
-option SVRPChat.EnableDeaf
+option SVRPChatLocal.EnableDeaf
 {
   type = boolean,
   default = false,
 
-  page = SVRPChat,
-  translation = SVRPChat.EnableDeaf,
+  page = SVRPChatLocal,
+  translation = SVRPChatLocal.EnableDeaf,
 }
 
-option SVRPChat.AllowPlayerCoords
+option SVRPChatLocal.AllowPlayerCoords
 {
   type = boolean,
   default = true,
 
-  page = SVRPChat,
-  translation = SVRPChat.AllowPlayerCoords,
+  page = SVRPChatLocal,
+  translation = SVRPChatLocal.AllowPlayerCoords,
 }
 
-option SVRPChat.EnableModCharacter
+option SVRPChatLocal.EnableModCharacter
 {
   type = boolean,
   default = true,
 
-  page = SVRPChat,
-  translation = SVRPChat.EnableModCharacter,
+  page = SVRPChatLocal,
+  translation = SVRPChatLocal.EnableModCharacter,
 }
 
-option SVRPChat.EnableSelfInjury
+option SVRPChatLocal.EnableSelfInjury
 {
   type = boolean,
   default = true,
 
-  page = SVRPChat,
-  translation = SVRPChat.EnableSelfInjury,
+  page = SVRPChatLocal,
+  translation = SVRPChatLocal.EnableSelfInjury,
 }
 
-option SVRPChat.EnableAutoCleanup
+option SVRPChatLocal.EnableAutoCleanup
 {
   type = boolean,
   default = true,
 
-  page = SVRPChat,
-  translation = SVRPChat.EnableAutoCleanup,
+  page = SVRPChatLocal,
+  translation = SVRPChatLocal.EnableAutoCleanup,
 }
 
-option SVRPChat.EnableBioShortDescription
+option SVRPChatLocal.EnableBioShortDescription
 {
   type = boolean,
   default = true,
 
-  page = SVRPChat,
-  translation = SVRPChat.EnableBioShortDescription,
+  page = SVRPChatLocal,
+  translation = SVRPChatLocal.EnableBioShortDescription,
 }
 
 

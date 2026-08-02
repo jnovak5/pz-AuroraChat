@@ -7,7 +7,7 @@ AC.Buffs.AmountsPerMessage = {
     hunger = 0.001,
     thirst = 0.001,
     stressSmokes = 0.002,
-    unhappyness = 0.002
+    unhappyness = 2
 }
 AC.Buffs.DelayBetweenBuffs = 30 -- seconds
 AC.Buffs.LastApplied = 0
@@ -49,7 +49,7 @@ function AC.Buffs.ApplyRpBuffs()
         AC.Buffs.CleanClothing()
     end
 
-    local sandbox = SandboxVars.SVRPChat or {}
+    local sandbox = SandboxVars.SVRPChatLocal or {}
     if not sandbox.EnableBuffs then
         return
     end

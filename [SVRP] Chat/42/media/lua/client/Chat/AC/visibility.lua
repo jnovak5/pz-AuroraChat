@@ -112,7 +112,7 @@ function AC.Visibility.GetYOffsets(player)
         offsets.afk = math.floor(baseY - currentStack)
         currentStack = currentStack + 15
     end
-    
+
     -- 4. Nameplate
     if AC.Name.ShowNamesOnPlayers then
         offsets.name = math.floor(baseY - currentStack)

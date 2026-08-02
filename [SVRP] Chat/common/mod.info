@@ -1,5 +1,5 @@
-name=[SVRP]  Chat
-id=SVRPChat
+name=[SVRP] Chat
+id=SVRPChatLocal
 poster=poster.png
 pzversion=42.20
 description=[SVRP] RP Chat - a feature-rich RP chat system for Project Zomboid servers. Consistent, persistent, and reliable. Integrates logging, typing indicator, languages, proximity volumes, radio sync, and more.
