@@ -26,18 +26,27 @@ AC.Afk.IndicatorHeight = getTextManager():MeasureStringY(UIFont.Small, "AFK")
 AC.Afk.OverheadUiElements = AC.Afk.OverheadUiElements or {}
 function AC.Afk.ShowAfkOnPlayers()
     local zoom = getCore():getZoom(0)
-    local allPlayers = getOnlinePlayers()
-    if not allPlayers then return end
     local me = getPlayer()
-    for i=0,allPlayers:size()-1 do
-        local player = allPlayers:get(i)
+    if not me then return end
+    
+    local playersToProcess = {me}
+    
+    local allPlayers = getOnlinePlayers()
+    if allPlayers then
+        for i=0,allPlayers:size()-1 do
+            local player = allPlayers:get(i)
+            if player:getUsername() ~= me:getUsername() then
+                table.insert(playersToProcess, player)
+            end
+        end
+    end
+    
+    for _, player in ipairs(playersToProcess) do
         local username = player:getUsername()
-        if username == me:getUsername() then player = me end
-        
         if AC.Meta.IsAfk(username) and (player == me or (AC.CanSeePlayer(player, true, 20) and me:getDistanceSq(player) < 2500)) then
             local alpha = AC.Visibility.GetPlayerAlpha(player)
             if alpha > 0.01 then
-                local playerNum = getPlayer():getPlayerNum() or 0
+                local playerNum = me:getPlayerNum() or 0
                 local x = math.floor(isoToScreenX(playerNum, player:getX(), player:getY(), player:getZ()))
                 local y = AC.Visibility.GetYOffsets(player).afk or math.floor(isoToScreenY(playerNum, player:getX(), player:getY(), player:getZ()) - 170)
                 

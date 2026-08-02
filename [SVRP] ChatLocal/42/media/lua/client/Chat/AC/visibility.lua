@@ -112,21 +112,7 @@ function AC.Visibility.GetYOffsets(player)
         offsets.afk = math.floor(baseY - currentStack)
         currentStack = currentStack + 15
     end
-    
-    -- 3.5 PVP
-    local isPvp = false
-    local safety = player:getSafety()
-    if safety and tostring(safety) ~= "null" then
-        local success, isEnabled = pcall(function() return safety:isEnabled() end)
-        if success and not isEnabled then
-            isPvp = true
-        end
-    end
-    if isPvp then
-        offsets.pvp = math.floor(baseY - currentStack)
-        currentStack = currentStack + 15
-    end
-    
+
     -- 4. Nameplate
     if AC.Name.ShowNamesOnPlayers then
         offsets.name = math.floor(baseY - currentStack)
