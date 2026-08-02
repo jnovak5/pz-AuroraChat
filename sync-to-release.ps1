@@ -14,7 +14,7 @@ foreach ($ext in $devExtensions) {
 }
 # Update mod.info
 $modInfo = "$dest\common\mod.info"
-(Get-Content -LiteralPath $modInfo) -replace 'id=\[SVRP\] ChatLocal$', 'id=[SVRP] Chat' -replace 'name=\[SVRP\] ChatLocal', 'name=[SVRP] Chat' | Set-Content -LiteralPath $modInfo
+(Get-Content -LiteralPath $modInfo) -replace 'id=SVRPChatLocal', 'id=SVRPChat' -replace 'name=\[SVRP\] ChatLocal', 'name=[SVRP] Chat' | Set-Content -LiteralPath $modInfo
 
 # Update sandbox options
 $sandboxOptions = "$dest\42\media\sandbox-options.txt"

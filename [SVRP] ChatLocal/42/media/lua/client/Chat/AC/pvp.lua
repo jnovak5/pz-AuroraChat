@@ -4,13 +4,25 @@ AC.Pvp = AC.Pvp or {}
 
 function AC.Pvp.IsPvpEnabled(player)
     if not player then return false end
-    local safety = player:getSafety()
-    if safety and tostring(safety) ~= "null" then
-        local success, isEnabled = pcall(function() return safety:isEnabled() end)
-        if success and not isEnabled then
+
+    local serverOptions = getServerOptions()
+    if serverOptions then
+        if serverOptions:getBoolean("PVP") == false then
+            return false
+        end
+        if serverOptions:getBoolean("SafetySystem") == false then
             return true
         end
     end
+
+    local safety = player:getSafety()
+    if safety and tostring(safety) ~= "null" then
+        local success, isSafe = pcall(function() return safety:isCurrent() end)
+        if success then
+            return not isSafe
+        end
+    end
+    
     return false
 end
 
@@ -47,10 +59,16 @@ function AC.Pvp.ShowPvpOnPlayers()
                     
                     local iconX = x + (nameWidth / 2) + 5
                     
-                    if not AC.Pvp.SkullTexture then
-                        AC.Pvp.SkullTexture = getTexture("media/ui/Skull.png")
+                    -- getTexture returns a dummy object if missing, skipping the text fallback.
+                    -- Only use texture if it has explicitly been marked as available, otherwise fallback to text.
+                    local useTexture = false 
+                    if useTexture then
+                        if not AC.Pvp.SkullTexture then
+                            AC.Pvp.SkullTexture = getTexture("media/ui/Skull.png")
+                        end
                     end
-                    if AC.Pvp.SkullTexture then
+                    
+                    if useTexture and AC.Pvp.SkullTexture then
                         local w = AC.Pvp.SkullTexture:getWidth()
                         local h = AC.Pvp.SkullTexture:getHeight()
                         -- Center texture vertically relative to text
