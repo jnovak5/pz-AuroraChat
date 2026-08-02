@@ -12,8 +12,17 @@ function AC.Pvp.ShowPvpOnPlayers()
         local username = player:getUsername()
         if username == me:getUsername() then player = me end
         
-        -- Check if player has safety turned off (meaning PVP is ON)
-        if player:getSafety() ~= nil and not player:getSafety():isCurrent() then
+        -- Safely check if player has safety turned off (meaning PVP is ON)
+        local isPvp = false
+        local safety = player:getSafety()
+        if safety and tostring(safety) ~= "null" then
+            local success, isCurrent = pcall(function() return safety:isCurrent() end)
+            if success and not isCurrent then
+                isPvp = true
+            end
+        end
+
+        if isPvp then
             if player == me or (AC.CanSeePlayer(player, true, 20) and me:getDistanceSq(player) < 2500) then
                 local alpha = AC.Visibility.GetPlayerAlpha(player)
                 if alpha > 0.01 then

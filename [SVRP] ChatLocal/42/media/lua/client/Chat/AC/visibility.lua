@@ -114,7 +114,15 @@ function AC.Visibility.GetYOffsets(player)
     end
     
     -- 3.5 PVP
-    if player:getSafety() ~= nil and not player:getSafety():isCurrent() then
+    local isPvp = false
+    local safety = player:getSafety()
+    if safety and tostring(safety) ~= "null" then
+        local success, isCurrent = pcall(function() return safety:isCurrent() end)
+        if success and not isCurrent then
+            isPvp = true
+        end
+    end
+    if isPvp then
         offsets.pvp = math.floor(baseY - currentStack)
         currentStack = currentStack + 15
     end
