@@ -104,6 +104,7 @@ local staffColors = {
 
 local function onACCommand(module, command, sendingPlayer, args)
     if module ~= "AC" then return end
+    args = args or {}
 
     if command == "doLog" then
         doLog(sendingPlayer, args)
