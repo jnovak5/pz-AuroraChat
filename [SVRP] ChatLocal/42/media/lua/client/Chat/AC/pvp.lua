@@ -21,7 +21,16 @@ function AC.Pvp.ShowPvpOnPlayers()
                     local x = math.floor(isoToScreenX(playerNum, player:getX(), player:getY(), player:getZ()))
                     local y = AC.Visibility.GetYOffsets(player).pvp or math.floor(isoToScreenY(playerNum, player:getX(), player:getY(), player:getZ()) - 155)
                     
-                    AC.Visibility.DrawTextCentre(UIFont.Small, x, y, "[PVP]", 1.0, 0.2, 0.2, alpha)
+                    if not AC.Pvp.SkullTexture then
+                        AC.Pvp.SkullTexture = getTexture("media/ui/Skull.png")
+                    end
+                    if AC.Pvp.SkullTexture then
+                        local w = AC.Pvp.SkullTexture:getWidth()
+                        local h = AC.Pvp.SkullTexture:getHeight()
+                        AC.Pvp.SkullTexture:render(x - w/2, y, w, h, 1.0, 1.0, 1.0, alpha, nil)
+                    else
+                        AC.Visibility.DrawTextCentre(UIFont.Small, x, y, "[PVP]", 1.0, 0.2, 0.2, alpha)
+                    end
                 end
             end
         end
