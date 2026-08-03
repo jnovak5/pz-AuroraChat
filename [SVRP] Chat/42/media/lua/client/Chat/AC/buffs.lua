@@ -66,27 +66,13 @@ function AC.Buffs.ApplyRpBuffs()
     local apm = AC.Buffs.AmountsPerMessage
     local multiplier = getGameTime():getMultiplier()
 
-    -- B42 API: use CharacterStat enums with stats:remove(stat, amount)
-    -- remove() decreases the stat value (reduces boredom, hunger, etc.)
-    if stats:get(CharacterStat.BOREDOM) > apm.boredom then
-        stats:remove(CharacterStat.BOREDOM, apm.boredom * multiplier)
-    end
-
-    if stats:get(CharacterStat.HUNGER) > apm.hunger then
-        stats:remove(CharacterStat.HUNGER, apm.hunger * multiplier)
-    end
-
-    if stats:get(CharacterStat.THIRST) > apm.thirst then
-        stats:remove(CharacterStat.THIRST, apm.thirst * multiplier)
-    end
-
-    if stats:get(CharacterStat.STRESS) > apm.stressSmokes then
-        stats:remove(CharacterStat.STRESS, apm.stressSmokes * multiplier)
-    end
-
-    if stats:get(CharacterStat.UNHAPPINESS) > apm.unhappyness then
-        stats:remove(CharacterStat.UNHAPPINESS, apm.unhappyness * multiplier)
-    end
+    sendClientCommand(player, "AC", "ApplyRpBuffs", {
+        boredom = apm.boredom * multiplier,
+        hunger = apm.hunger * multiplier,
+        thirst = apm.thirst * multiplier,
+        stressSmokes = apm.stressSmokes * multiplier,
+        unhappyness = apm.unhappyness * multiplier
+    })
 end
 
 function AC.Buffs.CleanCharacter()

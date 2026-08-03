@@ -224,6 +224,23 @@ local function onACCommand(module, command, sendingPlayer, args)
         ModData.add("AC_CharacterBioStorage", PlayerDB.CharacterBioStorage)
     elseif command == "BioLoad" then
         sendServerCommand(sendingPlayer, module, command, PlayerDB.CharacterBioStorage[args[1]] or {})
+    elseif command == "ApplyRpBuffs" then
+        local stats = sendingPlayer:getStats()
+        if args.boredom and stats:get(CharacterStat.BOREDOM) > args.boredom then
+            stats:remove(CharacterStat.BOREDOM, args.boredom)
+        end
+        if args.hunger and stats:get(CharacterStat.HUNGER) > args.hunger then
+            stats:remove(CharacterStat.HUNGER, args.hunger)
+        end
+        if args.thirst and stats:get(CharacterStat.THIRST) > args.thirst then
+            stats:remove(CharacterStat.THIRST, args.thirst)
+        end
+        if args.stressSmokes and stats:get(CharacterStat.STRESS) > args.stressSmokes then
+            stats:remove(CharacterStat.STRESS, args.stressSmokes)
+        end
+        if args.unhappyness and stats:get(CharacterStat.UNHAPPINESS) > args.unhappyness then
+            stats:remove(CharacterStat.UNHAPPINESS, args.unhappyness)
+        end
     else
         NotifyTyping(sendingPlayer, command, args)
     end

@@ -619,30 +619,10 @@ function AC.Commands.Injure(args)
         return
     end
 
-    local bodyDamage = getPlayer():getBodyDamage()
-    local bodyPart = bodyDamage:getBodyPart(bodyPartType)
-
-    if injury == "Bleeding" then bodyPart:setBleedingTime(10)
-    elseif injury == "Bullet" then bodyPart:setHaveBullet(true, 0)
-    elseif injury == "Burned" then bodyPart:setBurnTime(50)
-    elseif injury == "Deep Wound" then bodyPart:generateDeepWound()
-    elseif injury == "Fracture" then bodyPart:setFractureTime(21)
-    elseif injury == "Glass Shards" then bodyPart:generateDeepShardWound()
-    elseif injury == "Infected" then bodyPart:setWoundInfectionLevel(10)
-    elseif injury == "Scratched" then bodyPart:setScratched(true, true)
-    elseif injury == "Laceration" then bodyPart:setCut(true)
-    elseif injury == "Bite" then
-        bodyPart:SetBitten(true)
-        bodyPart:SetInfected(false)
-        bodyPart:SetFakeInfected(false)
-    elseif injury == "Cold" then bodyDamage:setColdStrength(100.0)
-    elseif injury == "Sickness" then bodyDamage:setFoodSicknessLevel(100.0)
-    else
+    if injury ~= "Bleeding" and injury ~= "Bullet" and injury ~= "Burned" and injury ~= "Deep Wound" and injury ~= "Fracture" and injury ~= "Glass Shards" and injury ~= "Infected" and injury ~= "Scratched" and injury ~= "Laceration" and injury ~= "Bite" and injury ~= "Cold" and injury ~= "Sickness" then
         AC_Utils.addErrorToChat("Invalid injury. Use /injure bodypart injury")
         return
     end
-
-    bodyDamage:AddDamage(bodyPartType, 15.0)
 
     sendClientCommand(getPlayer(), "AC", "Injure", {bodyPartStr, injury})
     AC_Utils.addInfoToChat("<RGB:1.0,0.0,0.0>Injury applied!")
@@ -655,14 +635,7 @@ function AC.Commands.Ailment(args)
     end
 
     local ailment = args:gsub("^%s*(.-)%s*$", "%1")
-    local bodyDamage = getPlayer():getBodyDamage()
-    
-    if ailment == "Cold" then
-        bodyDamage:setColdStrength(100.0)
-        bodyDamage:setHasACold(true)
-    elseif ailment == "Sickness" then
-        getPlayer():getStats():set(CharacterStat.FOOD_SICKNESS, 40.0)
-    else
+    if ailment ~= "Cold" and ailment ~= "Sickness" then
         AC_Utils.addErrorToChat("Invalid ailment. Use /ailment <type>")
         return
     end
