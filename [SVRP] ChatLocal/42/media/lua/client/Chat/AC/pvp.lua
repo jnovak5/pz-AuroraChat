@@ -17,9 +17,11 @@ function AC.Pvp.IsPvpEnabled(player)
 
     local safety = player:getSafety()
     if safety and tostring(safety) ~= "null" then
-        local success, isSafe = pcall(function() return safety:isCurrent() end)
-        if success then
-            return not isSafe
+        if safety.isEnabled then
+            local success, isSafe = pcall(function() return safety:isEnabled() end)
+            if success then
+                return not isSafe
+            end
         end
     end
     
