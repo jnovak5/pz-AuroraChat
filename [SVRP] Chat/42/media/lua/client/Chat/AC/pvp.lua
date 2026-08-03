@@ -61,7 +61,7 @@ function AC.Pvp.ShowPvpOnPlayers()
                     
                     -- getTexture returns a dummy object if missing, skipping the text fallback.
                     -- Only use texture if it has explicitly been marked as available, otherwise fallback to text.
-                    local useTexture = false 
+                    local useTexture = true 
                     if useTexture then
                         if not AC.Pvp.SkullTexture then
                             AC.Pvp.SkullTexture = getTexture("media/ui/Skull.png")
