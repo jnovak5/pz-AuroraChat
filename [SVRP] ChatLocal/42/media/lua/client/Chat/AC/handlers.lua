@@ -460,19 +460,24 @@ function AC.Handlers.AddLineInChat(chatMessage, tabID)
             end
             pos = {x = chattingPlayer:getX(), y = chattingPlayer:getY()}
         elseif parsedMessage.pos then
-            if not AC.Meta.IsInPosRange(myPlayer, parsedMessage.pos, chatType.xyRange * 1.5, chatType.zRange) then
+            local isHearAll = myPlayer.isHearAll and myPlayer:isHearAll() or false
+            if not isHearAll and not AC.Meta.IsInPosRange(myPlayer, parsedMessage.pos, chatType.xyRange * 1.5, chatType.zRange) then
                 pcall(function() chatMessage:setText("") end)
                 return true
             end
             pos = parsedMessage.pos
         else
-            pcall(function() chatMessage:setText("") end)
-            return true
+            local isHearAll = myPlayer.isHearAll and myPlayer:isHearAll() or false
+            if not isHearAll then
+                pcall(function() chatMessage:setText("") end)
+                return true
+            end
         end
 
-        if not isMe and parsedMessage.chatModifier ~= "ooc" then
-            local xDist = myPlayer:getX() - pos.x
-            local yDist = myPlayer:getY() - pos.y
+        local isHearAll = myPlayer.isHearAll and myPlayer:isHearAll() or false
+        if not isMe and parsedMessage.chatModifier ~= "ooc" and not isHearAll then
+            local xDist = myPlayer:getX() - (pos and pos.x or myPlayer:getX())
+            local yDist = myPlayer:getY() - (pos and pos.y or myPlayer:getY())
             local distance = math.sqrt(xDist * xDist + yDist * yDist)
             for _, part in ipairs(parsedMessage.parts) do
                 if part.text then
@@ -482,10 +487,11 @@ function AC.Handlers.AddLineInChat(chatMessage, tabID)
         end
 
         local sandbox = SandboxVars.SVRPChatLocal or {}
-        if parsedMessage.chatModifier ~= "ooc" and AC.Meta.CanUnderstand(parsedMessage.language) and safeHasTrait(myPlayer, "HardOfHearing") and sandbox.EnableHardOfHearing and not isMe then
+        local isHearAll = myPlayer.isHearAll and myPlayer:isHearAll() or false
+        if parsedMessage.chatModifier ~= "ooc" and AC.Meta.CanUnderstand(parsedMessage.language) and safeHasTrait(myPlayer, "HardOfHearing") and sandbox.EnableHardOfHearing and not isMe and not isHearAll then
             local xyRange = chatType.xyRange + 0.99
-            local xDist = myPlayer:getX() - pos.x
-            local yDist = myPlayer:getY() - pos.y
+            local xDist = myPlayer:getX() - (pos and pos.x or myPlayer:getX())
+            local yDist = myPlayer:getY() - (pos and pos.y or myPlayer:getY())
             local xyDistSq = xDist * xDist + yDist * yDist
             local rangeRatio = xyDistSq / (xyRange * xyRange)
             AC.Parsing.AdjustForHardOfHearing(parsedMessage, rangeRatio)
@@ -496,10 +502,11 @@ function AC.Handlers.AddLineInChat(chatMessage, tabID)
         return true
     end
 
+    local isHearAll = myPlayer.isHearAll and myPlayer:isHearAll() or false
     local sandbox = SandboxVars.SVRPChatLocal or {}
-    if parsedMessage.chatModifier ~= "ooc" and safeHasTrait(myPlayer, "Deaf") and sandbox.EnableDeaf and (not isMe or parsedMessage.fromRecorder) then
+    if parsedMessage.chatModifier ~= "ooc" and safeHasTrait(myPlayer, "Deaf") and sandbox.EnableDeaf and (not isMe or parsedMessage.fromRecorder) and not isHearAll then
         AC.Parsing.AdjustForDeaf(parsedMessage)
-    elseif parsedMessage.chatModifier ~= "ooc" and not AC.Meta.CanUnderstand(parsedMessage.language) then
+    elseif parsedMessage.chatModifier ~= "ooc" and not AC.Meta.CanUnderstand(parsedMessage.language) and not isHearAll then
         AC.Parsing.AdjustForUnknownLanguage(parsedMessage)
     end
 
@@ -662,7 +669,10 @@ function AC.Handlers.AddPrivateMessage(otherPlayerUsername, message)
         parsedMessage.language = AC.Meta.GetCurrentLanguage(parsedMessage.playerUsername)
     end
     local sandbox = SandboxVars.SVRPChatLocal or {}
-    if AC.Meta.CanUnderstand(parsedMessage.language) and safeHasTrait(myPlayer, "HardOfHearing") and sandbox.EnableHardOfHearing then
+    local isHearAll = myPlayer.isHearAll and myPlayer:isHearAll() or false
+    if isHearAll then
+        -- Skip all hard of hearing, deaf, and language checks
+    elseif AC.Meta.CanUnderstand(parsedMessage.language) and safeHasTrait(myPlayer, "HardOfHearing") and sandbox.EnableHardOfHearing then
         local chatType = AC.ChatTypes[parsedMessage.chatType]
         local xyRange = chatType.xyRange + 0.99
         local xDist = myPlayer:getX() - chattingPlayer:getX()
