@@ -89,7 +89,7 @@ function ISWriteBio:onSave(button, x, y)
     local newLine = "";
     if lines(string.sub(txt,1,50))[1] == nil then txt = " "; end
     local shortDescription = lines(string.sub(txt,1,50))[1];
-    if string.len(shortDescription) > 29 and not luautils.stringEnds(shortDescription, " ") and not luautils.stringEnds(shortDescription, ".") then
+    if string.len(shortDescription) > 29 and string.sub(shortDescription, -1) ~= " " and string.sub(shortDescription, -1) ~= "." then
       shortDescription = shortDescription.."...";
     end
     if string.len(shortDescription) > 2 then
