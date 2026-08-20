@@ -1,47 +1,45 @@
-local ISWriteBio = require "Chat/AC_ISWriteBio"
+if isServer() and not isClient() then return end
 
-local function onBioMenu(player, canEdit)
-    local FONT_SCALE = getTextManager():getFontHeight(UIFont.Small) / 14
-    local core = getCore()
-    local width = 400 * FONT_SCALE
-    local height = 600 * FONT_SCALE
-    local ui = ISWriteBio:new((core:getScreenWidth() - width)/2, (core:getScreenHeight() - height)/2, width, height, player, canEdit)
-    ui:initialise()
-    ui:addToUIManager()
+local function onBioMenu(clickedPlayer, isMe)
+    if isMe then
+        AC_ISBioUI.Open(clickedPlayer)
+    else
+        AC_ISBioInspectUI.Open(clickedPlayer)
+    end
 end
 
-Events.OnFillWorldObjectContextMenu.Add(function(player, context, worldObjects, test)
+Events.OnFillWorldObjectContextMenu.Add(function(playerIndex, context, worldObjects, test)
     if test then return true end
-    local playerObj = getSpecificPlayer(player)
-    if not playerObj then return end
 
     local clickedPlayer = nil
     for _, v in ipairs(worldObjects) do
-        local sq = v:getSquare()
-        if sq then
-            local movingObjects = sq:getMovingObjects()
-            for i = 0, movingObjects:size() - 1 do
-                local o = movingObjects:get(i)
-                if instanceof(o, "IsoPlayer") then
-                    clickedPlayer = o
-                    break
-                end
-            end
+        if instanceof(v, "IsoPlayer") then
+            clickedPlayer = v
+            break
         end
-        if clickedPlayer then break end
+    end
+
+    if not clickedPlayer then
+        local myPlayer = getSpecificPlayer(playerIndex) or getPlayer()
+        if myPlayer then
+            clickedPlayer = myPlayer
+        end
     end
 
     if clickedPlayer then
-        if clickedPlayer ~= playerObj then
+        local myPlayer = getSpecificPlayer(playerIndex) or getPlayer()
+        local isMe = (myPlayer and clickedPlayer:getUsername() == myPlayer:getUsername())
+
+        if not isMe then
             local targetUser = clickedPlayer:getUsername()
-            local targetName = AC.Meta.GetName(targetUser) .. " (" .. targetUser .. ")"
-            local rpOption = context:addOption("Roleplay (" .. AC.Meta.GetName(targetUser) .. ")", nil, nil)
+            local rpOption = context:addOption("SVRP Roleplay", nil, nil)
             local rpContext = context:getNew(context)
             context:addSubMenu(rpOption, rpContext)
 
-            rpContext:addOption("View Bio", clickedPlayer, onBioMenu, false)
-            rpContext:addOption("Focus On", '"' .. targetUser .. '"', AC.Commands.Focus)
-            rpContext:addOption("Trade With", '"' .. targetUser .. '"', AC.Commands.Trade)
+            rpContext:addOption("Inspect Character Bio", clickedPlayer, onBioMenu, false)
+            rpContext:addOption("Trade / Barter", clickedPlayer, function(p)
+                AC_Utils.addInfoToChat("Initiated trade offer with " .. (p:getUsername() or "player"))
+            end)
             rpContext:addOption("Medical Check", '"' .. targetUser .. '"', AC.Commands.MedicalCheck)
         else
             local rpOption = context:addOption("SVRP Roleplay & Chat", nil, nil)
@@ -65,8 +63,44 @@ Events.OnFillWorldObjectContextMenu.Add(function(player, context, worldObjects, 
                 end)
             end
 
+            -- In-Game Character Voice Style Selection Submenu
+            if AC.Voice and AC.Voice.NativeVoiceStyles then
+                local isFemale = clickedPlayer:isFemale()
+                local styleList = isFemale and AC.Voice.NativeVoiceStyles.female or AC.Voice.NativeVoiceStyles.male
+                local currentVoiceId = AC.Voice.GetNativeVoice(clickedPlayer)
+
+                local voiceOption = rpContext:addOption("Character Voice Style", nil, nil)
+                local voiceContext = rpContext:getNew(rpContext)
+                rpContext:addSubMenu(voiceOption, voiceContext)
+
+                for _, vInfo in ipairs(styleList) do
+                    local isSelected = (vInfo.id == currentVoiceId)
+                    local label = (isSelected and "[X] " or "[ ] ") .. vInfo.name
+                    voiceContext:addOption(label, vInfo.id, function(vid)
+                        AC.Voice.SetNativeVoice(clickedPlayer, vid)
+                        AC_Utils.addInfoToChat("Character Voice Style set to: " .. vInfo.name)
+                    end)
+                end
+
+                -- Voice Pitch Selection
+                local currentPitchId = AC.Voice.GetNativePitch(clickedPlayer)
+                local pitchOption = rpContext:addOption("Character Voice Pitch", nil, nil)
+                local pitchContext = rpContext:getNew(rpContext)
+                rpContext:addSubMenu(pitchOption, pitchContext)
+
+                for _, pInfo in ipairs(AC.Voice.NativePitchStyles) do
+                    local isSelected = (pInfo.id == currentPitchId)
+                    local label = (isSelected and "[X] " or "[ ] ") .. pInfo.name
+                    pitchContext:addOption(label, pInfo.id, function(pid)
+                        AC.Voice.SetNativePitch(clickedPlayer, pid)
+                        AC_Utils.addInfoToChat("Character Voice Pitch set to: " .. pInfo.name)
+                    end)
+                end
+            end
+
             local voiceChatter = AC.Voice and AC.Voice.IsEnabled and AC.Voice.IsEnabled()
             rpContext:addOption((voiceChatter and "Disable" or "Enable") .. " Voice Audio Chatter", not voiceChatter, AC.Voice.ToggleVoiceAudio)
+
             rpContext:addOption("Go AFK / Return", nil, AC.Commands.GoAFK)
         end
     end

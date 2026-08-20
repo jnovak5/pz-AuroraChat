@@ -147,6 +147,7 @@ local function drawWorldCircleRing(mapUI, px, py, radius, numSegments, r, g, b, 
     local p0y = py + math.sin(0) * radius
     local prevX = mapUI.mapAPI:worldToUIX(p0x, p0y)
     local prevY = mapUI.mapAPI:worldToUIY(p0x, p0y)
+    local thick = math.max(1, math.floor(thickness or 1))
 
     for i = 1, numSegments do
         local angle = i * angleStep
@@ -155,10 +156,12 @@ local function drawWorldCircleRing(mapUI, px, py, radius, numSegments, r, g, b, 
         local nextX = mapUI.mapAPI:worldToUIX(wx, wy)
         local nextY = mapUI.mapAPI:worldToUIY(wx, wy)
 
-        if mapUI.javaObject and mapUI.javaObject.DrawLine then
-            mapUI.javaObject:DrawLine(whiteTex, prevX, prevY, nextX, nextY, thickness, r, g, b, alpha)
-        elseif mapUI.drawLine then
-            mapUI:drawLine(whiteTex, prevX, prevY, nextX, nextY, thickness, alpha, r, g, b)
+        if prevX and prevY and nextX and nextY then
+            if mapUI.javaObject and mapUI.javaObject.DrawLine then
+                mapUI.javaObject:DrawLine(whiteTex, prevX, prevY, nextX, nextY, thick, r, g, b, alpha)
+            elseif mapUI.drawLine then
+                mapUI:drawLine(whiteTex, prevX, prevY, nextX, nextY, thick, alpha, r, g, b)
+            end
         end
 
         prevX = nextX
@@ -183,45 +186,51 @@ function AC.RadioMap.Render(mapUI)
 
     local data = radio:getDeviceData()
     local isTurnedOn = data and data:getIsTurnedOn()
-    local r, g, b = 0.15, 0.85, 0.95 -- Vivid Cyan / Azure
+
+    -- High-Contrast Color Palette
+    -- Active / ON: Electric Aqua / Cyan (High visibility on map & dark mode)
+    -- Turned OFF: Vibrant Bright Crimson / Coral (Sharp, non-blending contrast)
+    local r, g, b = 0.05, 0.88, 1.0
     if not isTurnedOn then
-        r, g, b = 0.85, 0.65, 0.25 -- Amber if turned off
+        r, g, b = 1.0, 0.28, 0.35
     end
 
     local whiteTex = Texture:getWhite()
     local numSegments = 96
+    local tm = getTextManager()
 
-    -- 1. Intermediate Signal Distance Rings (Visible at Close Zoom)
-    local refDistances = {}
-    if range >= 12000 then
-        refDistances = { 500, 1500, 5000, 10000 }
-    elseif range >= 4000 then
-        refDistances = { 500, 1500, 3000 }
-    elseif range >= 1500 then
-        refDistances = { 250, 500, 1000 }
-    end
-
-    for _, refDist in ipairs(refDistances) do
-        if refDist < (range * 0.82) then
-            drawWorldCircleRing(mapUI, px, py, refDist, 64, r, g, b, 0.25, 1)
+    -- 1. Close, Medium, and Long Distance Signal Radar Propagation Rings (Visible at Any Zoom Level!)
+    local allDistanceRings = { 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000, 15000 }
+    for _, refDist in ipairs(allDistanceRings) do
+        if refDist < (range * 0.85) then
+            drawWorldCircleRing(mapUI, px, py, refDist, 64, r, g, b, 0.40, 1)
             local rx = mapUI.mapAPI:worldToUIX(px, py - refDist)
             local ry = mapUI.mapAPI:worldToUIY(px, py - refDist)
-            local lbl = refDist >= 1000 and string.format("%.1fkm", refDist / 1000) or string.format("%dm", refDist)
-            mapUI:drawTextCentre(lbl, rx, ry - 14, r, g, b, 0.75, UIFont.Small)
+            if rx and ry and tm then
+                local lbl = refDist >= 1000 and string.format("%.1fkm", refDist / 1000) or string.format("%dm", refDist)
+                local font = UIFont.Small
+                local textW = tm:MeasureStringX(font, lbl)
+                local textH = tm:getFontHeight(font)
+
+                -- High-contrast pill badge behind distance text
+                mapUI:drawRect(rx - (textW / 2) - 4, ry - 16, textW + 8, textH + 2, 0.88, 0.05, 0.07, 0.12)
+                mapUI:drawRectBorder(rx - (textW / 2) - 4, ry - 16, textW + 8, textH + 2, 0.90, r, g, b)
+                mapUI:drawTextCentre(lbl, rx, ry - 15, 1.0, 1.0, 1.0, 1.0, font)
+            end
         end
     end
 
     -- 2. Multi-Layer Radial Fringe Gradient (Simulates Signal Dispersion & Edge Blur at Max Range)
     local fringeLayers = {
-        { scale = 0.88, alpha = 0.08, thick = 1 },
-        { scale = 0.91, alpha = 0.15, thick = 1 },
-        { scale = 0.94, alpha = 0.25, thick = 1.5 },
-        { scale = 0.97, alpha = 0.45, thick = 2 },
-        { scale = 1.00, alpha = 0.90, thick = 2.5 }, -- Nominal limit
-        { scale = 1.03, alpha = 0.45, thick = 2 },
-        { scale = 1.06, alpha = 0.25, thick = 1.5 },
-        { scale = 1.09, alpha = 0.12, thick = 1 },
-        { scale = 1.12, alpha = 0.06, thick = 1 }
+        { scale = 0.88, alpha = 0.12, thick = 1 },
+        { scale = 0.91, alpha = 0.22, thick = 1 },
+        { scale = 0.94, alpha = 0.38, thick = 2 },
+        { scale = 0.97, alpha = 0.65, thick = 2 },
+        { scale = 1.00, alpha = 0.98, thick = 3 }, -- Nominal maximum limit
+        { scale = 1.03, alpha = 0.65, thick = 2 },
+        { scale = 1.06, alpha = 0.38, thick = 2 },
+        { scale = 1.09, alpha = 0.22, thick = 1 },
+        { scale = 1.12, alpha = 0.10, thick = 1 }
     }
 
     for _, layer in ipairs(fringeLayers) do
@@ -243,37 +252,44 @@ function AC.RadioMap.Render(mapUI)
         local uoutX = mapUI.mapAPI:worldToUIX(outX, outY)
         local uoutY = mapUI.mapAPI:worldToUIY(outX, outY)
 
-        if mapUI.javaObject and mapUI.javaObject.DrawLine then
-            mapUI.javaObject:DrawLine(whiteTex, uinX, uinY, uoutX, uoutY, 1, r, g, b, 0.18)
+        if uinX and uinY and uoutX and uoutY then
+            if mapUI.javaObject and mapUI.javaObject.DrawLine then
+                mapUI.javaObject:DrawLine(whiteTex, uinX, uinY, uoutX, uoutY, 1, r, g, b, 0.25)
+            end
         end
     end
 
-    -- 4. Center Crosshair
+    -- 4. Center Crosshair (with high-contrast dark drop shadow)
     local centerUIX = mapUI.mapAPI:worldToUIX(px, py)
     local centerUIY = mapUI.mapAPI:worldToUIY(px, py)
 
-    if mapUI.javaObject and mapUI.javaObject.DrawLine then
-        mapUI.javaObject:DrawLine(whiteTex, centerUIX - 10, centerUIY, centerUIX + 10, centerUIY, 2, r, g, b, 0.95)
-        mapUI.javaObject:DrawLine(whiteTex, centerUIX, centerUIY - 10, centerUIX, centerUIY + 10, 2, r, g, b, 0.95)
-    elseif mapUI.drawLine then
-        mapUI:drawLine(whiteTex, centerUIX - 10, centerUIY, centerUIX + 10, centerUIY, 2, 0.95, r, g, b)
-        mapUI:drawLine(whiteTex, centerUIX, centerUIY - 10, centerUIX, centerUIY + 10, 2, 0.95, r, g, b)
+    if centerUIX and centerUIY then
+        if mapUI.javaObject and mapUI.javaObject.DrawLine then
+            -- Dark shadow underlay
+            mapUI.javaObject:DrawLine(whiteTex, centerUIX - 13, centerUIY + 1, centerUIX + 13, centerUIY + 1, 3, 0.0, 0.0, 0.0, 0.8)
+            mapUI.javaObject:DrawLine(whiteTex, centerUIX + 1, centerUIY - 13, centerUIX + 1, centerUIY + 13, 3, 0.0, 0.0, 0.0, 0.8)
+            -- Foreground crosshair
+            mapUI.javaObject:DrawLine(whiteTex, centerUIX - 12, centerUIY, centerUIX + 12, centerUIY, 2, r, g, b, 1.0)
+            mapUI.javaObject:DrawLine(whiteTex, centerUIX, centerUIY - 12, centerUIX, centerUIY + 12, 2, r, g, b, 1.0)
+        elseif mapUI.drawLine then
+            mapUI:drawLine(whiteTex, centerUIX - 12, centerUIY, centerUIX + 12, centerUIY, 2, 1.0, r, g, b)
+            mapUI:drawLine(whiteTex, centerUIX, centerUIY - 12, centerUIX, centerUIY + 12, 2, 1.0, r, g, b)
+        end
+
+        -- 5. Info Badge above player (Clean high-contrast obsidian card)
+        local badgeText = string.format("[ Radio Range: %dm (±10%% Fringe) | %.1f MHz ]", range, freq)
+        if not isTurnedOn then
+            badgeText = string.format("[ Radio Range: %dm (OFF) ]", range)
+        end
+
+        local font = UIFont.Small
+        local textW = tm and tm:MeasureStringX(font, badgeText) or 180
+        local textH = tm and tm:getFontHeight(font) or 16
+        local badgeX = centerUIX - (textW / 2)
+        local badgeY = centerUIY - 34
+
+        mapUI:drawRect(badgeX - 4, badgeY - 2, textW + 8, textH + 4, 0.92, 0.05, 0.07, 0.12)
+        mapUI:drawRectBorder(badgeX - 4, badgeY - 2, textW + 8, textH + 4, 0.98, r, g, b)
+        mapUI:drawText(badgeText, badgeX, badgeY, 1.0, 1.0, 1.0, 1.0, font)
     end
-
-    -- 5. Info Badge above player (Clean text without emoji characters)
-    local badgeText = string.format("[ Radio Range: %dm (±10%% Fringe) | %.1f MHz ]", range, freq)
-    if not isTurnedOn then
-        badgeText = string.format("[ Radio Range: %dm (OFF) ]", range)
-    end
-
-    local tm = getTextManager()
-    local font = UIFont.Small
-    local textW = tm:MeasureStringX(font, badgeText)
-    local textH = tm:getFontHeight(font)
-    local badgeX = centerUIX - (textW / 2)
-    local badgeY = centerUIY - 32
-
-    mapUI:drawRect(badgeX - 4, badgeY - 2, textW + 8, textH + 4, 0.88, 0.04, 0.06, 0.1)
-    mapUI:drawRectBorder(badgeX - 4, badgeY - 2, textW + 8, textH + 4, 0.95, r, g, b)
-    mapUI:drawText(badgeText, badgeX, badgeY, 1.0, 1.0, 1.0, 1.0, font)
 end

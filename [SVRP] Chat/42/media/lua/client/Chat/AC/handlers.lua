@@ -345,16 +345,35 @@ function AC.Handlers.AddLineInChat(chatMessage, tabID)
 
     local myPlayer = getPlayer()
     local isMe = myPlayer and (myPlayer:getUsername() == parsedMessage.playerUsername)
-    local chattingPlayer = getPlayerFromUsername(parsedMessage.playerUsername)
-    if not chattingPlayer and myPlayer then
-        if isMe or (parsedMessage.playerUsername and parsedMessage.playerUsername == AC.Meta.GetName(myPlayer:getUsername())) then
-            chattingPlayer = myPlayer
-        else
-            local online = getOnlinePlayers()
-            if online then
-                for i = 0, online:size() - 1 do
-                    local op = online:get(i)
-                    if op:getUsername() == parsedMessage.playerUsername or AC.Meta.GetName(op:getUsername()) == parsedMessage.playerUsername then
+    local chattingPlayer = nil
+
+    if isMe or (parsedMessage.playerUsername and myPlayer and parsedMessage.playerUsername == AC.Meta.GetName(myPlayer:getUsername())) then
+        chattingPlayer = myPlayer
+    end
+
+    if not chattingPlayer and parsedMessage.playerUsername then
+        chattingPlayer = getPlayerFromUsername(parsedMessage.playerUsername)
+    end
+
+    local author = (chatMessage and chatMessage.getAuthor and chatMessage:getAuthor()) or nil
+    if not chattingPlayer and author and author ~= "" then
+        chattingPlayer = getPlayerFromUsername(author)
+    end
+
+    if not chattingPlayer then
+        local online = getOnlinePlayers()
+        if online then
+            for i = 0, online:size() - 1 do
+                local op = online:get(i)
+                if op then
+                    local opUsername = op.getUsername and op:getUsername()
+                    local opCharName = opUsername and AC.Meta.GetName(opUsername)
+                    local desc = op.getDescriptor and op:getDescriptor()
+                    local descName = desc and (desc:getForename() .. " " .. desc:getSurname())
+
+                    if (opUsername and (opUsername == parsedMessage.playerUsername or opUsername == author))
+                    or (opCharName and (opCharName == parsedMessage.playerUsername))
+                    or (descName and (descName == parsedMessage.playerUsername)) then
                         chattingPlayer = op
                         break
                     end
@@ -362,6 +381,34 @@ function AC.Handlers.AddLineInChat(chatMessage, tabID)
             end
         end
     end
+
+    if not chattingPlayer and parsedMessage.pos and parsedMessage.pos.x and parsedMessage.pos.y then
+        local targetX = parsedMessage.pos.x
+        local targetY = parsedMessage.pos.y
+        local targetZ = parsedMessage.pos.z or 0
+        local online = getOnlinePlayers()
+        if online then
+            local closestPlayer = nil
+            local closestDistSq = 36
+            for i = 0, online:size() - 1 do
+                local op = online:get(i)
+                if op then
+                    local dx = op:getX() - targetX
+                    local dy = op:getY() - targetY
+                    local dz = math.abs(op:getZ() - targetZ)
+                    local distSq = dx * dx + dy * dy + dz * dz * 10
+                    if distSq < closestDistSq then
+                        closestDistSq = distSq
+                        closestPlayer = op
+                    end
+                end
+            end
+            if closestPlayer then
+                chattingPlayer = closestPlayer
+            end
+        end
+    end
+
     if isMe and not chattingPlayer then
         chattingPlayer = myPlayer
     end
@@ -483,24 +530,22 @@ function AC.Handlers.AddLineInChat(chatMessage, tabID)
                 end
             end
 
-            -- Trigger player voice chatter ONLY for in-character spoken dialogue in General tab (tabID == 0)
-            local isGeneralDialogue = (tabID == 0 or tabID == nil)
-                and (not parsedMessage.radioFrequency)
+            -- Trigger player voice chatter for all in-character General chat messages (say, mesay, loud, meloud, etc.)
+            local isGeneralDialogue = (not parsedMessage.radioFrequency)
                 and (not parsedMessage.isOwnRadio)
                 and (not parsedMessage.fromRecorder)
                 and (parsedMessage.chatModifier ~= "ooc")
-                and (parsedMessage.chatModifier ~= "me")
-                and (parsedMessage.chatModifier ~= "do")
                 and (parsedMessage.chatModifier ~= "alert")
                 and (parsedMessage.chatModifier ~= "staff")
-                and (not parsedMessage.isEmote)
                 and (not parsedMessage.isPrivate)
 
             if isGeneralDialogue then
+                local voicePos = pos or (chattingPlayer and {x = chattingPlayer:getX(), y = chattingPlayer:getY(), z = chattingPlayer:getZ()})
+                local voiceType = parsedMessage.chatType or "say"
                 if not isDifferentZ then
-                    AC.Voice.PlayChatVoice(chattingPlayer, parsedMessage.chatType, rawText, false)
+                    AC.Voice.PlayChatVoice(chattingPlayer, voiceType, rawText, false, voicePos)
                 elseif canHearVoiceAcrossZ then
-                    AC.Voice.PlayChatVoice(chattingPlayer, parsedMessage.chatType, rawText, true)
+                    AC.Voice.PlayChatVoice(chattingPlayer, voiceType, rawText, true, voicePos)
                 end
             end
 
@@ -530,6 +575,20 @@ function AC.Handlers.AddLineInChat(chatMessage, tabID)
             if not isHearAll and not AC.Meta.IsInPosRange(myPlayer, parsedMessage.pos, chatType.xyRange * 1.5, chatType.zRange) then
                 pcall(function() chatMessage:setText("") end)
                 return true
+            end
+
+            -- Also trigger voice chatter for pos-based messages
+            local isGeneralDialogue = (not parsedMessage.radioFrequency)
+                and (not parsedMessage.isOwnRadio)
+                and (not parsedMessage.fromRecorder)
+                and (parsedMessage.chatModifier ~= "ooc")
+                and (parsedMessage.chatModifier ~= "alert")
+                and (parsedMessage.chatModifier ~= "staff")
+                and (not parsedMessage.isPrivate)
+
+            if isGeneralDialogue then
+                local isDifferentZ = (zDist > 0)
+                AC.Voice.PlayChatVoice(nil, parsedMessage.chatType or "say", rawText, isDifferentZ, pos)
             end
         else
             if not isHearAll then
