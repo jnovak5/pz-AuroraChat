@@ -332,7 +332,7 @@ function AC.Commands.Help()
 end
 
 function AC.Commands.SendPM(args)
-    local sandbox = SandboxVars.SVRPChatLocal or {}
+    local sandbox = SandboxVars.SVRPChat or {}
     if not sandbox.EnablePM and not AC.Override(true) then
         AC_Utils.addErrorToChat("Private messages are disabled.")
         return
@@ -365,23 +365,81 @@ end
 
 function AC.Commands.GrowBeard()
     local player = getPlayer()
-    if player:isFemale() then
+    if not player or player:isFemale() then
         AC_Utils.addErrorToChat("You can't grow a beard.")
         return
     end
-    local action = ISTrimBeard:new(player, "Long", nil, 0)
+
+    local currentModel = player:getHumanVisual():getBeardModel()
+    local currentStyle = getBeardStylesInstance():FindStyle(currentModel)
+    local currentLevel = (currentStyle and currentStyle:getLevel()) or 0
+
+    if currentLevel >= 3 then
+        AC_Utils.addInfoToChat("Your beard is already at maximum length (Stage 3/3).")
+        return
+    end
+
+    local targetLevel = currentLevel + 1
+    local beardLevels = { [1] = "BeardOnly", [2] = "Full", [3] = "LongScruffy" }
+    local targetStyle = beardLevels[targetLevel] or "Long"
+
+    local allStyles = getBeardStylesInstance():getAllStyles()
+    if allStyles then
+        for i = 0, allStyles:size() - 1 do
+            local style = allStyles:get(i)
+            if style and style:getLevel() == targetLevel then
+                local sName = style:getName()
+                if sName == beardLevels[targetLevel] then
+                    targetStyle = sName
+                    break
+                elseif not targetStyle or targetStyle == "" then
+                    targetStyle = sName
+                end
+            end
+        end
+    end
+
+    local action = ISTrimBeard:new(player, targetStyle, nil, 0)
     ISTimedActionQueue.add(action)
+    AC_Utils.addInfoToChat("Beard grew to stage " .. targetLevel .. "/3 (" .. targetStyle .. ")")
 end
 
 function AC.Commands.GrowHair()
     local player = getPlayer()
-    if player:isFemale() then
-        local action = ISCutHair:new(player, "Long2", nil, 0)
-        ISTimedActionQueue.add(action)
-    else
-        local action = ISCutHair:new(player, "Fabian", nil, 0)
-        ISTimedActionQueue.add(action)
+    if not player then return end
+
+    local currentModel = player:getHumanVisual():getHairModel()
+    local currentStyle = player:isFemale() and getHairStylesInstance():FindFemaleStyle(currentModel) or getHairStylesInstance():FindMaleStyle(currentModel)
+    local currentLevel = (currentStyle and currentStyle:getLevel()) or 0
+
+    if currentLevel >= 3 then
+        AC_Utils.addInfoToChat("Your hair is already at maximum length (Stage 3/3).")
+        return
     end
+
+    local targetLevel = currentLevel + 1
+    local femaleLevels = { [1] = "Demi", [2] = "Bob", [3] = "Long2" }
+    local maleLevels = { [1] = "Messy", [2] = "Donny", [3] = "Fabian" }
+    local targetStyle = player:isFemale() and femaleLevels[targetLevel] or maleLevels[targetLevel]
+
+    local allStyles = player:isFemale() and getHairStylesInstance():getAllFemaleStyles() or getHairStylesInstance():getAllMaleStyles()
+    if allStyles then
+        for i = 0, allStyles:size() - 1 do
+            local style = allStyles:get(i)
+            if style and style:getLevel() == targetLevel then
+                if style.isGrowReference and type(style.isGrowReference) == "function" and style:isGrowReference() then
+                    targetStyle = style:getName()
+                    break
+                end
+            end
+        end
+    end
+
+    targetStyle = targetStyle or (player:isFemale() and "Long2" or "Fabian")
+
+    local action = ISCutHair:new(player, targetStyle, nil, 0)
+    ISTimedActionQueue.add(action)
+    AC_Utils.addInfoToChat("Hair grew to stage " .. targetLevel .. "/3 (" .. targetStyle .. ")")
 end
 
 function AC.Commands.SetHairColor(args)
@@ -685,7 +743,7 @@ function AC.Commands.SetStatus(args)
 end
 
 function AC.Commands.PrivateChat(args)
-    local sandbox = SandboxVars.SVRPChatLocal or {}
+    local sandbox = SandboxVars.SVRPChat or {}
     if not sandbox.EnablePrivate then
         AC_Utils.addErrorToChat("Private chat is disabled.")
         return
@@ -716,7 +774,7 @@ function AC.Commands.StopPrivateChat()
 end
 
 function AC.Commands.Coords()
-    local sandbox = SandboxVars.SVRPChatLocal or {}
+    local sandbox = SandboxVars.SVRPChat or {}
     if not sandbox.AllowPlayerCoords and not AC.Override() then
         AC_Utils.addErrorToChat("Coordinates are disabled.")
         return
@@ -726,6 +784,23 @@ function AC.Commands.Coords()
     local y = math.floor(player:getY())
     local z = math.floor(player:getZ())
     AC_Utils.addInfoToChat(player:getUsername() .. " is at " .. x .. ", " .. y .. ", " .. z)
+end
+
+function AC.Commands.ToggleVoiceChatter(args)
+    local arg = args and args:gsub("^%s*(.-)%s*$", "%1"):lower() or ""
+    if arg == "on" then
+        AC.Voice.SetEnabled(true)
+        AC_Utils.addInfoToChat("Voice audio chatter enabled.")
+    elseif arg == "off" then
+        AC.Voice.SetEnabled(false)
+        AC_Utils.addInfoToChat("Voice audio chatter disabled.")
+    else
+        AC.Voice.ToggleVoiceAudio()
+    end
+end
+
+function AC.Commands.OpenCombat(args)
+    AC.OpenCombatMatchUI()
 end
 
 function AC.TabListHandler(list, text)
@@ -815,4 +890,21 @@ function AC.TabHandlers.RadioFrequencies(text)
         table.insert(frequencies, tostring(ARU_Utils.getRadioFrequency(radio) / 1000))
     end
     return AC.TabListHandler(frequencies, text)
+end
+
+function AC.Commands.SetTheme(args)
+    local theme = string.trim(string.lower(args or ""))
+    if theme == "1" or theme == "midnight" or theme == "slate" or theme == "dark" then
+        AC.Meta.SetChatTheme("midnight")
+    elseif theme == "2" or theme == "noir" or theme == "black" or theme == "charcoal" or theme == "stealth" then
+        AC.Meta.SetChatTheme("noir")
+    elseif theme == "3" or theme == "amber" or theme == "warm" or theme == "bronze" then
+        AC.Meta.SetChatTheme("amber")
+    else
+        AC_Utils.addErrorToChat("Usage: /chattheme [midnight | noir | amber]")
+    end
+end
+
+function AC.TabHandlers.ThemeNames(text)
+    return AC.TabListHandler({"midnight", "noir", "amber"}, text)
 end

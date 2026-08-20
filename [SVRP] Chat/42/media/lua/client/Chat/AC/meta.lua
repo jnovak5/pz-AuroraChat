@@ -20,20 +20,38 @@ AC.Meta.ChatPreferences = AC.Meta.ChatPreferences or {
     UnreadTabBlinking = true,
     OverheadTypingIndicator = true,
     SaveLastChat = false,
+    ChatTheme = "midnight",
 }
 
-local function changeModifier(modifier, enable)
-    local args = {}
-    args[1] = enable and "enable" or "disable"
-    args[2] = modifier
-    sendClientCommand(getPlayer(), "AC", "SetModifier", args)
-end
-
-local function getModifier(username, modifier)
-    if not AC.PlayerModifiers[username] then return false end
-    if not AC.PlayerModifiers[username][modifier] then return false end
-    return true
-end
+AC.Meta.Themes = {
+    midnight = {
+        id = "midnight",
+        name = "Midnight Slate (Modern Dark)",
+        bg = {r = 0.07, g = 0.08, b = 0.12, a = 0.80},
+        border = {r = 0.22, g = 0.28, b = 0.38, a = 0.85},
+        tabSelected = {r = 0.14, g = 0.18, b = 0.25, a = 0.90},
+        tabUnselected = {r = 0.06, g = 0.07, b = 0.10, a = 0.70},
+        textEntry = {r = 0.05, g = 0.06, b = 0.09, a = 0.90},
+    },
+    noir = {
+        id = "noir",
+        name = "Charcoal Noir (Classic Stealth)",
+        bg = {r = 0.02, g = 0.02, b = 0.02, a = 0.75},
+        border = {r = 0.35, g = 0.35, b = 0.35, a = 0.80},
+        tabSelected = {r = 0.12, g = 0.12, b = 0.12, a = 0.90},
+        tabUnselected = {r = 0.03, g = 0.03, b = 0.03, a = 0.70},
+        textEntry = {r = 0.00, g = 0.00, b = 0.00, a = 0.85},
+    },
+    amber = {
+        id = "amber",
+        name = "Warm Amber (Post-Apocalypse)",
+        bg = {r = 0.10, g = 0.08, b = 0.06, a = 0.80},
+        border = {r = 0.45, g = 0.35, b = 0.20, a = 0.85},
+        tabSelected = {r = 0.20, g = 0.16, b = 0.10, a = 0.90},
+        tabUnselected = {r = 0.08, g = 0.06, b = 0.04, a = 0.70},
+        textEntry = {r = 0.07, g = 0.05, b = 0.03, a = 0.90},
+    }
+}
 
 local function writeChatPrefs()
     local file = getFileWriter("AC_ChatPreferences.txt", true, false)
@@ -62,7 +80,7 @@ local function writeChatPref(preference, value)
 end
 
 local function getChatPref(preference)
-    return AC.Meta.ChatPreferences[preference]
+    return AC.Meta.ChatPreferences and AC.Meta.ChatPreferences[preference]
 end
 
 local function readChatPrefs()
@@ -91,6 +109,69 @@ local function readChatPrefs()
         line = file:readLine()
     end
     file:close()
+end
+
+function AC.Meta.GetActiveTheme()
+    local themeKey = (AC.Meta.ChatPreferences and AC.Meta.ChatPreferences.ChatTheme) or "midnight"
+    return AC.Meta.Themes[themeKey] or AC.Meta.Themes.midnight
+end
+
+function AC.Meta.SetChatTheme(themeKey)
+    if not AC.Meta.Themes[themeKey] then
+        themeKey = "midnight"
+    end
+    writeChatPref("ChatTheme", themeKey)
+    local theme = AC.Meta.Themes[themeKey]
+    if ISChat.instance then
+        if ISChat.instance.backgroundColor then
+            ISChat.instance.backgroundColor.r = theme.bg.r
+            ISChat.instance.backgroundColor.g = theme.bg.g
+            ISChat.instance.backgroundColor.b = theme.bg.b
+        end
+        if ISChat.instance.borderColor then
+            ISChat.instance.borderColor.r = theme.border.r
+            ISChat.instance.borderColor.g = theme.border.g
+            ISChat.instance.borderColor.b = theme.border.b
+        end
+        if ISChat.instance.panel then
+            if ISChat.instance.panel.backgroundColor then
+                ISChat.instance.panel.backgroundColor.r = theme.bg.r
+                ISChat.instance.panel.backgroundColor.g = theme.bg.g
+                ISChat.instance.panel.backgroundColor.b = theme.bg.b
+            end
+            if ISChat.instance.panel.borderColor then
+                ISChat.instance.panel.borderColor.r = theme.border.r
+                ISChat.instance.panel.borderColor.g = theme.border.g
+                ISChat.instance.panel.borderColor.b = theme.border.b
+            end
+        end
+        if ISChat.instance.textEntry then
+            if ISChat.instance.textEntry.backgroundColor then
+                ISChat.instance.textEntry.backgroundColor.r = theme.textEntry.r
+                ISChat.instance.textEntry.backgroundColor.g = theme.textEntry.g
+                ISChat.instance.textEntry.backgroundColor.b = theme.textEntry.b
+            end
+            if ISChat.instance.textEntry.borderColor then
+                ISChat.instance.textEntry.borderColor.r = theme.border.r
+                ISChat.instance.textEntry.borderColor.g = theme.border.g
+                ISChat.instance.textEntry.borderColor.b = theme.border.b
+            end
+        end
+    end
+    AC_Utils.addInfoToChat("Chatbox color scheme set to: " .. theme.name)
+end
+
+local function changeModifier(modifier, enable)
+    local args = {}
+    args[1] = enable and "enable" or "disable"
+    args[2] = modifier
+    sendClientCommand(getPlayer(), "AC", "SetModifier", args)
+end
+
+local function getModifier(username, modifier)
+    if not AC.PlayerModifiers[username] then return false end
+    if not AC.PlayerModifiers[username][modifier] then return false end
+    return true
 end
 
 function AC.Meta.GetKnownLanguages()
@@ -472,12 +553,41 @@ function AC.Meta.SetRadioSync(channel)
     radioSyncOption = channel
 end
 
+function AC.Meta.CreateCombatContext(context)
+    local combatOption = context:addOptionOnTop("Combat & Dice Roller", nil, AC.OpenCombatMatchUI)
+    local combatContext = context:getNew(context)
+    context:addSubMenu(combatOption, combatContext)
+
+    combatContext:addOption("Open Combat & Turn Manager", nil, AC.OpenCombatMatchUI)
+
+    local quickDiceOption = combatContext:addOption("Quick Dice Roll", nil, nil)
+    local quickDiceContext = combatContext:getNew(combatContext)
+    combatContext:addSubMenu(quickDiceOption, quickDiceContext)
+
+    local diceList = {"d4", "d6", "d8", "d10", "d12", "d20", "d100"}
+    for _, dName in ipairs(diceList) do
+        quickDiceContext:addOption("Roll 1" .. dName, dName, function(d)
+            if AC_ISCombatMatchUI and AC_ISCombatMatchUI.doRollDice then
+                AC_ISCombatMatchUI.doRollDice(d)
+            else
+                AC.Commands.Roll(d)
+            end
+        end)
+    end
+
+    combatContext:addOption("Custom Roll (Formula)", nil, AC.MakeShowDialogPrompt("Enter dice formula (e.g. 2d6+4):", function(formula)
+        if formula and formula ~= "" then
+            AC.Commands.Roll(formula)
+        end
+    end))
+end
+
 function AC.Meta.CreateActionsContext(context, myPlayer, players)
-    local actionsOption = context:addOptionOnTop("Actions", nil, nil)
+    local actionsOption = context:insertOptionAfter("Combat & Dice Roller", "Player Actions", nil, nil)
     local actionsContext = context:getNew(context)
     context:addSubMenu(actionsOption, actionsContext)
 
-    actionsContext:addOption("Go AFK", nil, AC.Commands.GoAFK)
+    actionsContext:addOption("Go AFK / Return", nil, AC.Commands.GoAFK)
 
     local languageOption = actionsContext:addOption("Choose Language", nil, nil)
     local languageContext = actionsContext:getNew(actionsContext)
@@ -558,7 +668,7 @@ function AC.Meta.CreateActionsContext(context, myPlayer, players)
         medicalOption.notAvailable = true
     end
 
-    local sandbox = SandboxVars.SVRPChatLocal or {}
+    local sandbox = SandboxVars.SVRPChat or {}
     if sandbox.EnablePrivate then
         if AC.Meta.HasPrivate(true) then
             actionsContext:addOption("Close Private Chat", nil, AC.Commands.StopPrivateChat)
@@ -571,12 +681,15 @@ function AC.Meta.CreateActionsContext(context, myPlayer, players)
         end
     end
 
-    actionsContext:addOption("Show Help", nil, AC.Commands.Help)
-    actionsContext:addOption("List RP Chat Commands", nil, AC.Commands.ListAllCommands)
+    local helpOption = actionsContext:addOption("Help & Reference", nil, nil)
+    local helpContext = actionsContext:getNew(actionsContext)
+    actionsContext:addSubMenu(helpOption, helpContext)
+    helpContext:addOption("Show Chat Help", nil, AC.Commands.Help)
+    helpContext:addOption("List All RP Chat Commands", nil, AC.Commands.ListAllCommands)
 end
 
 function AC.Meta.CreateCharacterContext(context, myPlayer)
-    local characterOption = context:insertOptionAfter("Actions", "Character", nil, nil)
+    local characterOption = context:insertOptionAfter("Player Actions", "Character & Appearance", nil, nil)
     local characterContext = context:getNew(context)
     context:addSubMenu(characterOption, characterContext)
 
@@ -593,18 +706,173 @@ function AC.Meta.CreateCharacterContext(context, myPlayer)
     end
     characterContext:addOption("Edit Bio", nil, openEditBio)
 
-    local sandbox = SandboxVars.SVRPChatLocal or {}
+    local sandbox = SandboxVars.SVRPChat or SandboxVars.SVRPChat or {}
     if sandbox.EnableModCharacter then
         characterContext:addOption("Set Name", nil, AC.MakeShowDialogPrompt("Input your new name", AC.Commands.SetName))
-        characterContext:addOption("Grow Hair", nil, AC.Commands.GrowHair)
-        characterContext:addOption("Set Hair Color", nil, AC.MakeColorDialogPrompt("Set Hair Color", AC.Commands.SetHairColor))
+
+        local function predicateRazor(item)
+            if not item or item:isBroken() then return false end
+            return (ItemTag and ItemTag.RAZOR and item:hasTag(ItemTag.RAZOR)) or item:getType() == "Razor" or item:getType() == "DisposableRazor"
+        end
+
+        local function predicateScissors(item)
+            if not item or item:isBroken() then return false end
+            return (ItemTag and ItemTag.SCISSORS and item:hasTag(ItemTag.SCISSORS)) or item:getType() == "Scissors"
+        end
+
+        local function predicateDoHairdo(item)
+            if not item then return false end
+            return (ItemTag and ItemTag.DO_HAIRDO and item:hasTag(ItemTag.DO_HAIRDO)) or item:getType() == "Hairgel" or item:getType() == "Hairspray2"
+        end
+
+        local function predicateSlickHair(item)
+            if not item then return false end
+            return item:getType() == "Hairgel"
+        end
+
+        local function addDisabledTooltip(option, text)
+            local tooltip = ISWorldObjectContextMenu.addToolTip()
+            option.notAvailable = true
+            tooltip.description = text
+            option.toolTip = tooltip
+        end
+
+        local playerInv = myPlayer:getInventory()
+
+        -- Hair Submenu
+        local hairOption = characterContext:addOption("Hair", nil, nil)
+        local hairMenu = characterContext:getNew(characterContext)
+        characterContext:addSubMenu(hairOption, hairMenu)
+
+        local currentHairStyle = myPlayer:isFemale() and getHairStylesInstance():FindFemaleStyle(myPlayer:getHumanVisual():getHairModel()) or getHairStylesInstance():FindMaleStyle(myPlayer:getHumanVisual():getHairModel())
+        local currentHairLevel = (currentHairStyle and currentHairStyle:getLevel()) or 0
+        local growHairTitle = (currentHairLevel >= 3) and "Grow Hair (Max Length - Stage 3/3)" or ("Grow Hair (+1 Stage to " .. (currentHairLevel + 1) .. "/3)")
+        local growHairOpt = hairMenu:addOption(growHairTitle, nil, AC.Commands.GrowHair)
+        if currentHairLevel >= 3 then growHairOpt.notAvailable = true end
+
+        hairMenu:addOption("Set Hair Color", nil, AC.MakeColorDialogPrompt("Set Hair Color", AC.Commands.SetHairColor))
+
+        local cutHairOption = hairMenu:addOption("Cut / Style Hair", nil, nil)
+        local cutHairMenu = hairMenu:getNew(hairMenu)
+        hairMenu:addSubMenu(cutHairOption, cutHairMenu)
+
+        local currentHairStyle = myPlayer:isFemale() and getHairStylesInstance():FindFemaleStyle(myPlayer:getHumanVisual():getHairModel()) or getHairStylesInstance():FindMaleStyle(myPlayer:getHumanVisual():getHairModel())
+        local hairStyles = myPlayer:isFemale() and getHairStylesInstance():getAllFemaleStyles() or getHairStylesInstance():getAllMaleStyles()
+        local hairList = {}
+        if hairStyles then
+            for i=1, hairStyles:size() do
+                table.insert(hairList, hairStyles:get(i-1))
+            end
+        end
+
+        if myPlayer:getVisual() and myPlayer:getVisual():getNonAttachedHair() then
+            cutHairMenu:addOption(getText("ContextMenu_UntieHair"), myPlayer, ISCharacterScreen.onCutHair, myPlayer:getVisual():getNonAttachedHair(), 100)
+        end
+
+        if currentHairStyle and currentHairStyle:getLevel() > 0 then
+            if not (myPlayer:getVisual() and myPlayer:getVisual():getNonAttachedHair()) then
+                for _, hStyle in ipairs(hairList) do
+                    if hStyle:getLevel() <= currentHairStyle:getLevel() and hStyle:getName() ~= currentHairStyle:getName() and hStyle:isAttachedHair() and hStyle:getName() ~= "" then
+                        cutHairMenu:addOption(getText("ContextMenu_TieHair", getText("IGUI_Hair_" .. hStyle:getName())), myPlayer, ISCharacterScreen.onCutHair, hStyle:getName(), 100)
+                    end
+                end
+            end
+
+            local validCutStyles = {}
+            for _, hStyle in ipairs(hairList) do
+                if not hStyle:isAttachedHair() and not hStyle:isNoChoose() and hStyle:getLevel() < currentHairStyle:getLevel() and hStyle:getName() ~= "" then
+                    table.insert(validCutStyles, hStyle)
+                end
+            end
+            for i=1, currentHairStyle:getTrimChoices():size() do
+                local styleId = currentHairStyle:getTrimChoices():get(i-1)
+                local hStyle = myPlayer:isFemale() and getHairStylesInstance():FindFemaleStyle(styleId) or getHairStylesInstance():FindMaleStyle(styleId)
+                if hStyle then
+                    table.insert(validCutStyles, hStyle)
+                end
+            end
+
+            for _, hStyle in ipairs(validCutStyles) do
+                local sName = hStyle:getName()
+                local displayName = (sName == "Bald") and getText("ContextMenu_ShaveHair") or getText("ContextMenu_CutHairFor", getText("IGUI_Hair_" .. sName))
+                local opt = cutHairMenu:addOption(displayName, myPlayer, ISCharacterScreen.onCutHair, sName, 300)
+
+                if sName == "Bald" then
+                    if not playerInv:containsEvalRecurse(predicateRazor) and not playerInv:containsEvalRecurse(predicateScissors) then
+                        addDisabledTooltip(opt, getText("Tooltip_requireRazorOrScissors"))
+                    end
+                elseif (sName:contains("Mohawk") and sName ~= "MohawkFlat") or sName:contains("Spike") then
+                    if not playerInv:containsEvalRecurse(predicateDoHairdo) then
+                        addDisabledTooltip(opt, getText("Tooltip_requireHairGelOrHairSpray"))
+                    end
+                elseif sName:contains("GreasedBack") then
+                    if not playerInv:containsEvalRecurse(predicateSlickHair) then
+                        addDisabledTooltip(opt, getText("Tooltip_requireHairGel"))
+                    end
+                elseif sName:contains("Buffont") then
+                    if not playerInv:containsTypeRecurse("Hairspray2") then
+                        addDisabledTooltip(opt, getText("Tooltip_requireHairSpray"))
+                    end
+                elseif not playerInv:containsEvalRecurse(predicateScissors) then
+                    addDisabledTooltip(opt, getText("Tooltip_RequireScissors"))
+                end
+            end
+        else
+            local noCutOpt = cutHairMenu:addOption("Hair is already shortest length", nil, nil)
+            noCutOpt.notAvailable = true
+        end
+
+        -- Beard Submenu (Male only)
         if not myPlayer:isFemale() then
-            characterContext:addOption("Grow Beard", nil, AC.Commands.GrowBeard)
-            characterContext:addOption("Set Beard Color", nil, AC.MakeColorDialogPrompt("Set Beard Color", AC.Commands.SetBeardColor))
+            local beardOption = characterContext:addOption("Beard", nil, nil)
+            local beardMenu = characterContext:getNew(characterContext)
+            characterContext:addSubMenu(beardOption, beardMenu)
+
+            local currentBeardStyle = getBeardStylesInstance():FindStyle(myPlayer:getHumanVisual():getBeardModel())
+            local currentBeardLevel = (currentBeardStyle and currentBeardStyle:getLevel()) or 0
+            local growBeardTitle = (currentBeardLevel >= 3) and "Grow Beard (Max Length - Stage 3/3)" or ("Grow Beard (+1 Stage to " .. (currentBeardLevel + 1) .. "/3)")
+            local growBeardOpt = beardMenu:addOption(growBeardTitle, nil, AC.Commands.GrowBeard)
+            if currentBeardLevel >= 3 then growBeardOpt.notAvailable = true end
+
+            beardMenu:addOption("Set Beard Color", nil, AC.MakeColorDialogPrompt("Set Beard Color", AC.Commands.SetBeardColor))
+
+            local trimBeardOption = beardMenu:addOption("Trim / Shave Beard", nil, nil)
+            local trimBeardMenu = beardMenu:getNew(beardMenu)
+            beardMenu:addSubMenu(trimBeardOption, trimBeardMenu)
+
+            if currentBeardStyle and currentBeardStyle:getLevel() > 0 then
+                local shaveOpt = trimBeardMenu:addOption(getText("ContextMenu_TrimBeard"), myPlayer, ISCharacterScreen.onTrimBeard, "")
+                if not playerInv:containsEvalRecurse(predicateRazor) and not playerInv:containsEvalRecurse(predicateScissors) then
+                    addDisabledTooltip(shaveOpt, getText("Tooltip_requireRazorOrScissors"))
+                end
+
+                local allBeard = getBeardStylesInstance():getAllStyles()
+                if allBeard then
+                    for i=0, allBeard:size()-1 do
+                        local bStyle = allBeard:get(i)
+                        if bStyle:getLevel() < currentBeardStyle:getLevel() and bStyle:getName() ~= "" then
+                            local opt = trimBeardMenu:addOption(getText("ContextMenu_TrimBeard_For", getText("IGUI_Beard_" .. bStyle:getName())), myPlayer, ISCharacterScreen.onTrimBeard, bStyle:getName())
+                            if not playerInv:containsEvalRecurse(predicateRazor) and not playerInv:containsEvalRecurse(predicateScissors) then
+                                addDisabledTooltip(opt, getText("Tooltip_requireRazorOrScissors"))
+                            end
+                        end
+                    end
+                end
+
+                for i=0, currentBeardStyle:getTrimChoices():size()-1 do
+                    local bStyleName = currentBeardStyle:getTrimChoices():get(i)
+                    local opt = trimBeardMenu:addOption(getText("ContextMenu_TrimBeard_For", getText("IGUI_Beard_" .. bStyleName)), myPlayer, ISCharacterScreen.onTrimBeard, bStyleName)
+                    if not playerInv:containsEvalRecurse(predicateRazor) and not playerInv:containsEvalRecurse(predicateScissors) then
+                        addDisabledTooltip(opt, getText("Tooltip_requireRazorOrScissors"))
+                    end
+                end
+            else
+                local noTrimOpt = trimBeardMenu:addOption("Clean Shaven (No beard to trim)", nil, nil)
+                noTrimOpt.notAvailable = true
+            end
         end
     end
 
-    local sandbox = SandboxVars.SVRPChatLocal or {}
     if sandbox.EnableSelfInjury then
         local injureSelfOption = characterContext:addOption("Add Injury", nil, nil)
         local injureSelfContext = characterContext:getNew(characterContext)
@@ -646,7 +914,7 @@ function AC.Meta.CreateCharacterContext(context, myPlayer)
 end
 
 function AC.Meta.CreateChatSettingsContext(context)
-    local chatSettingsOption = context:insertOptionAfter("Character", "SVRP Chat Settings", nil, nil)
+    local chatSettingsOption = context:insertOptionAfter("Character & Appearance", "SVRP Chat Settings", nil, nil)
     local chatSettingsContext = context:getNew(context)
     context:addSubMenu(chatSettingsOption, chatSettingsContext)
 
@@ -697,6 +965,19 @@ function AC.Meta.CreateChatSettingsContext(context)
 
     local overheadTypingIndicator = AC.Meta.GetOverheadTypingIndicator()
     chatSettingsContext:addOption((overheadTypingIndicator and "Disable" or "Enable") .. " Overhead Typing Indicator", not overheadTypingIndicator, AC.Meta.SetOverheadTypingIndicator)
+
+    local voiceChatter = AC.Voice and AC.Voice.IsEnabled and AC.Voice.IsEnabled()
+    chatSettingsContext:addOption((voiceChatter and "Disable" or "Enable") .. " Voice Audio Chatter", not voiceChatter, AC.Voice.ToggleVoiceAudio)
+
+    local themeOption = chatSettingsContext:addOption("Chatbox Color Scheme", nil, nil)
+    local themeContext = chatSettingsContext:getNew(chatSettingsContext)
+    chatSettingsContext:addSubMenu(themeOption, themeContext)
+
+    local activeTheme = AC.Meta.GetActiveTheme()
+    local currentThemeId = activeTheme and activeTheme.id or "midnight"
+    themeContext:addOption((currentThemeId == "midnight" and "● " or "○ ") .. "Midnight Slate (Modern Dark)", "midnight", AC.Meta.SetChatTheme)
+    themeContext:addOption((currentThemeId == "noir" and "● " or "○ ") .. "Charcoal Noir (Classic Stealth)", "noir", AC.Meta.SetChatTheme)
+    themeContext:addOption((currentThemeId == "amber" and "● " or "○ ") .. "Warm Amber (Post-Apocalypse)", "amber", AC.Meta.SetChatTheme)
 end
 
 function AC.Meta.CreateAdminContext(context, myPlayer, players)

@@ -13,6 +13,8 @@ require "Chat/AC/meta"
 require "Chat/AC/parsing"
 require "Chat/AC/recorders"
 require "Chat/AC/status"
+require "Chat/AC/voice"
+require "Chat/AC_ISCombatMatchUI"
 
 -- Must be last in require chain
 require "Chat/AC/events"

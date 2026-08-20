@@ -79,27 +79,27 @@ AC.ChatModifiers["alert"] = {
 
 -- Define chat colors for each modifier type
 AC.ChatColors = {}
-AC.ChatColors["playerDefault"] = { r = 0.8, g = 0.8, b = 0.8 }
-AC.ChatColors["emote"] = "<RGB:0.5,0.5,1>"
-AC.ChatColors["emotemuted"] = "<RGB:0.3,0.3,0.8>"
-AC.ChatColors["environment"] = "<RGB:0.5,1,0.5>"
-AC.ChatColors["ooc"] = "<RGB:0.4,0.4,0.4>"
-AC.ChatColors["alert"] = "<RGB:1,0,0>"
-AC.ChatColors["text"] = "<RGB:0.8,0.8,0.8>"
-AC.ChatColors["textmuted"] = "<RGB:0.5,0.5,0.5>"
-AC.ChatColors["error"] = "<RGB:1,0,0>"
-AC.ChatColors["info"] = "<RGB:0.4,0.4,1>"
-AC.ChatColors["langprefix"] = "<RGB:0.5,0.5,0.5>"
-AC.ChatColors["radiochannel"] = "<RGB:1,1,1>"
-AC.ChatColors["admintag"] = "<RGB:0,1,0>"
-AC.ChatColors["roll"] = "<RGB:1,0.5,0>"
+AC.ChatColors["playerDefault"] = { r = 0.95, g = 0.95, b = 0.95 }
+AC.ChatColors["emote"] = "<RGB:0.7,0.8,1.0>"
+AC.ChatColors["emotemuted"] = "<RGB:0.5,0.6,0.9>"
+AC.ChatColors["environment"] = "<RGB:0.6,1.0,0.6>"
+AC.ChatColors["ooc"] = "<RGB:0.75,0.75,0.80>"
+AC.ChatColors["alert"] = "<RGB:1.0,0.3,0.3>"
+AC.ChatColors["text"] = "<RGB:1.0,1.0,1.0>"
+AC.ChatColors["textmuted"] = "<RGB:0.7,0.7,0.7>"
+AC.ChatColors["error"] = "<RGB:1.0,0.3,0.3>"
+AC.ChatColors["info"] = "<RGB:0.5,0.75,1.0>"
+AC.ChatColors["langprefix"] = "<RGB:0.75,0.75,0.75>"
+AC.ChatColors["radiochannel"] = "<RGB:1.0,1.0,1.0>"
+AC.ChatColors["admintag"] = "<RGB:0.3,1.0,0.3>"
+AC.ChatColors["roll"] = "<RGB:1.0,0.7,0.2>"
 
 AC.ChatColors["volumeprefixes"] = {}
-AC.ChatColors["volumeprefixes"]["whisper"] = "<RGB:0.4,0.4,0.4>"
-AC.ChatColors["volumeprefixes"]["low"] = "<RGB:0.5,0.5,0.5>"
-AC.ChatColors["volumeprefixes"]["say"] = "<RGB:0.6,0.6,0.6>"
-AC.ChatColors["volumeprefixes"]["loud"] = "<RGB:0.7,0.7,0.7>"
-AC.ChatColors["volumeprefixes"]["shout"] = "<RGB:1,0.4,0.4>"
+AC.ChatColors["volumeprefixes"]["whisper"] = "<RGB:0.65,0.65,0.7>"
+AC.ChatColors["volumeprefixes"]["low"] = "<RGB:0.75,0.75,0.8>"
+AC.ChatColors["volumeprefixes"]["say"] = "<RGB:0.90,0.90,0.95>"
+AC.ChatColors["volumeprefixes"]["loud"] = "<RGB:0.98,0.98,1.0>"
+AC.ChatColors["volumeprefixes"]["shout"] = "<RGB:1.0,0.5,0.5>"
 
 AC.SpecialCommands = {}
 AC.SpecialCommands["/roll"] = {
@@ -296,5 +296,33 @@ AC.SpecialCommands["/help"] = {
     tabHandlers = {},
     usage = "/help <command>",
     help = "Get help on a command.",
+    adminOnly = false,
+}
+AC.SpecialCommands["/voicechatter"] = {
+    handler = "ToggleVoiceChatter",
+    tabHandlers = {AC.TabHandlers.OnOff},
+    usage = "/voicechatter [on|off]",
+    help = "Toggles conversational voice audio chatter on or off.",
+    adminOnly = false,
+}
+AC.SpecialCommands["/combat"] = {
+    handler = "OpenCombat",
+    tabHandlers = {},
+    usage = "/combat",
+    help = "Opens the Combat, Turn Order, and Dice Match UI.",
+    adminOnly = false,
+}
+AC.SpecialCommands["/chattheme"] = {
+    handler = "SetTheme",
+    tabHandlers = {"ThemeNames"},
+    usage = "/chattheme [midnight|noir|amber]",
+    help = "Changes the chatbox color scheme (1=Midnight Slate, 2=Charcoal Noir, 3=Warm Amber).",
+    adminOnly = false,
+}
+AC.SpecialCommands["/theme"] = {
+    handler = "SetTheme",
+    tabHandlers = {"ThemeNames"},
+    usage = "/theme [midnight|noir|amber]",
+    help = "Changes the chatbox color scheme.",
     adminOnly = false,
 }

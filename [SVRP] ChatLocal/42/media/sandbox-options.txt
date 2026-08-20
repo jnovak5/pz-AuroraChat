@@ -198,5 +198,15 @@ option SVRPChatLocal.EnableBioShortDescription
   translation = SVRPChatLocal.EnableBioShortDescription,
 }
 
+option SVRPChatLocal.EnableVoiceChatter
+{
+  type = boolean,
+  default = true,
+
+  page = SVRPChatLocal,
+  translation = SVRPChatLocal.EnableVoiceChatter,
+}
+
+
 
 

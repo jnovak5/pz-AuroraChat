@@ -338,9 +338,37 @@ function AC.Handlers.AddLineInChat(chatMessage, tabID)
         parsedMessage.language = AC.Meta.GetCurrentLanguage(parsedMessage.playerUsername)
     end
 
-    local chattingPlayer = getPlayerFromUsername(parsedMessage.playerUsername)
     local myPlayer = getPlayer()
-    local isMe = myPlayer:getUsername() == parsedMessage.playerUsername
+    local isMe = myPlayer and (myPlayer:getUsername() == parsedMessage.playerUsername)
+    local chattingPlayer = getPlayerFromUsername(parsedMessage.playerUsername)
+    if not chattingPlayer and myPlayer then
+        if isMe or (parsedMessage.playerUsername and parsedMessage.playerUsername == AC.Meta.GetName(myPlayer:getUsername())) then
+            chattingPlayer = myPlayer
+        else
+            local online = getOnlinePlayers()
+            if online then
+                for i = 0, online:size() - 1 do
+                    local op = online:get(i)
+                    if op:getUsername() == parsedMessage.playerUsername or AC.Meta.GetName(op:getUsername()) == parsedMessage.playerUsername then
+                        chattingPlayer = op
+                        break
+                    end
+                end
+            end
+        end
+    end
+    if isMe and not chattingPlayer then
+        chattingPlayer = myPlayer
+    end
+
+    print(string.format("[SVRP Chat Debug] AddLineInChat: author=%s, user=%s, isMe=%s, resolvedPlayer=%s, chatType=%s, modifier=%s, radio=%s",
+        tostring(chatMessage:getAuthor()),
+        tostring(parsedMessage.playerUsername),
+        tostring(isMe),
+        tostring(chattingPlayer and chattingPlayer:getUsername()),
+        tostring(parsedMessage.chatType),
+        tostring(parsedMessage.chatModifier),
+        tostring(parsedMessage.radioFrequency)))
 
     local hasRadio, radioChannel = pcall(function() return chatMessage:getRadioChannel() end)
     if hasRadio and radioChannel > 0 then
@@ -389,23 +417,14 @@ function AC.Handlers.AddLineInChat(chatMessage, tabID)
             pcall(function() myPlayer:addLineChatElement(textToDisplay .. "", colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, AC.ChatTypes[parsedMessage.chatType].xyRange, "radio") end)
             
             if parsedMessage.activeRadio then
+                local xyRange = AC.ChatTypes[parsedMessage.chatType].xyRange
                 if instanceof(parsedMessage.activeRadio, "IsoRadio") then
-                    local success = pcall(function() parsedMessage.activeRadio:addLineChatElement(textToDisplay .. "", colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, AC.ChatTypes[parsedMessage.chatType].xyRange, "radio") end)
-                    if not success then success = pcall(function() parsedMessage.activeRadio:getChatElement():addChatLine(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, AC.ChatTypes[parsedMessage.chatType].xyRange, "radio", true, true, true, true, true, true) end) end
-                    if not success then success = pcall(function() parsedMessage.activeRadio:getDeviceData():AddDeviceText(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, "radio", "-1", 30) end) end
-                    if not success then success = pcall(function() parsedMessage.activeRadio:getDeviceData():AddDeviceText(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, "radio", -1, 30) end) end
-                    if not success then success = pcall(function() parsedMessage.activeRadio:AddDeviceText(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, "radio", "-1", 30) end) end
-                    if not success then success = pcall(function() parsedMessage.activeRadio:AddDeviceText(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, "radio", -1, 30) end) end
-                    if not success then success = pcall(function() parsedMessage.activeRadio:getDeviceData():AddDeviceText(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, "radio", "-1") end) end
-                    if not success then success = pcall(function() parsedMessage.activeRadio:getDeviceData():AddDeviceText(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, "radio", -1) end) end
-                    if not success then success = pcall(function() parsedMessage.activeRadio:AddDeviceText(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, "radio", "-1") end) end
-                    if not success then success = pcall(function() parsedMessage.activeRadio:AddDeviceText(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, "radio", -1) end) end
+                    local success = pcall(function() parsedMessage.activeRadio:addLineChatElement(textToDisplay .. "", colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, xyRange, "radio") end)
+                    if not success then success = pcall(function() parsedMessage.activeRadio:getChatElement():addChatLine(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, xyRange, "radio", true, true, true, true, true, true) end) end
+                    if not success then pcall(function() parsedMessage.activeRadio:getDeviceData():AddDeviceText(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, "radio", "-1", 30) end) end
                 elseif instanceof(parsedMessage.activeRadio, "VehiclePart") then
-                    local success = pcall(function() parsedMessage.activeRadio:getVehicle():getChatElement():addChatLine(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, AC.ChatTypes[parsedMessage.chatType].xyRange, "radio", true, true, true, true, true, true) end)
-                    if not success then success = pcall(function() parsedMessage.activeRadio:getDeviceData():AddDeviceText(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, "radio", "-1", 30) end) end
-                    if not success then success = pcall(function() parsedMessage.activeRadio:getDeviceData():AddDeviceText(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, "radio", -1, 30) end) end
-                    if not success then success = pcall(function() parsedMessage.activeRadio:getDeviceData():AddDeviceText(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, "radio", "-1") end) end
-                    if not success then success = pcall(function() parsedMessage.activeRadio:getDeviceData():AddDeviceText(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, "radio", -1) end) end
+                    local success = pcall(function() parsedMessage.activeRadio:getVehicle():getChatElement():addChatLine(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, xyRange, "radio", true, true, true, true, true, true) end)
+                    if not success then pcall(function() parsedMessage.activeRadio:getDeviceData():AddDeviceText(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, "radio", "-1", 30) end) end
                 end
             end
         end
@@ -414,6 +433,10 @@ function AC.Handlers.AddLineInChat(chatMessage, tabID)
     if not parsedMessage.isOwnRadio then
         local chatType = AC.ChatTypes[parsedMessage.chatType]
         local pos
+        local effectiveDist = 0
+        local horizontalDist = 0
+        local zDist = 0
+        local isDifferentZ = false
 
         if parsedMessage.fromRecorder then
             chatType = AC.ChatTypes["low"]
@@ -422,72 +445,102 @@ function AC.Handlers.AddLineInChat(chatMessage, tabID)
                 pcall(function() chatMessage:setText("") end)
                 return true
             end
-            if not AC.Meta.IsInRange(myPlayer, recPlayer, chatType.xyRange * 1.5, chatType.zRange) then
+            if not isHearAll and not AC.Meta.IsInRange(myPlayer, recPlayer, chatType.xyRange * 1.5, chatType.zRange) then
                 pcall(function() chatMessage:setText("") end)
                 return true
             end
-            pos = {x = recPlayer:getX(), y = recPlayer:getY()}
+            pos = {x = recPlayer:getX(), y = recPlayer:getY(), z = recPlayer:getZ()}
+            local dx = myPlayer:getX() - pos.x
+            local dy = myPlayer:getY() - pos.y
+            zDist = math.abs(myPlayer:getZ() - pos.z)
+            horizontalDist = math.sqrt(dx * dx + dy * dy)
+            effectiveDist = horizontalDist + zDist * 8.0
         elseif parsedMessage.isNpc then
             pos = {x = myPlayer:getX(), y = myPlayer:getY(), z = myPlayer:getZ()}
         elseif chattingPlayer then
-            if not AC.Meta.IsInRange(myPlayer, chattingPlayer, chatType.xyRange * 1.5, chatType.zRange) then
-                if myPlayer:getZ() == chattingPlayer:getZ() then
-                    if parsedMessage.chatType == "whisper" and AC.CanSeePlayer(chattingPlayer, false, AC.ChatTypes["say"].xyRange) then
-                        local colorRGB = AC.Meta.GetNameColorRGB(parsedMessage.playerUsername)
-                        if parsedMessage.onRadio then
-                            if not AC.PlayerChatTimes then AC.PlayerChatTimes = {} end; AC.PlayerChatTimes[chattingPlayer:getUsername()] = getTimeInMillis(); pcall(function() chattingPlayer:addLineChatElement("Whispered into a walkie", colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, AC.ChatTypes["say"].xyRange, "") end)
-                        else
-                            if not AC.PlayerChatTimes then AC.PlayerChatTimes = {} end; AC.PlayerChatTimes[chattingPlayer:getUsername()] = getTimeInMillis(); pcall(function() chattingPlayer:addLineChatElement("Whispered", colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, AC.ChatTypes["say"].xyRange, "") end)
-                        end
-                    elseif parsedMessage.chatType == "low" and AC.CanSeePlayer(chattingPlayer, false, AC.ChatTypes["say"].xyRange) then
-                        local colorRGB = AC.Meta.GetNameColorRGB(parsedMessage.playerUsername)
-                        if parsedMessage.onRadio then
-                            if not AC.PlayerChatTimes then AC.PlayerChatTimes = {} end; AC.PlayerChatTimes[chattingPlayer:getUsername()] = getTimeInMillis(); pcall(function() chattingPlayer:addLineChatElement("Spoke Quietly into a walkie", colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, AC.ChatTypes["say"].xyRange, "") end)
-                        else
-                            if not AC.PlayerChatTimes then AC.PlayerChatTimes = {} end; AC.PlayerChatTimes[chattingPlayer:getUsername()] = getTimeInMillis(); pcall(function() chattingPlayer:addLineChatElement("Spoke Quietly", colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, AC.ChatTypes["say"].xyRange, "") end)
-                        end
-                    elseif parsedMessage.chatType == "say" and AC.CanSeePlayer(chattingPlayer, false, AC.ChatTypes["loud"].xyRange) then
-                        local colorRGB = AC.Meta.GetNameColorRGB(parsedMessage.playerUsername)
-                        if parsedMessage.onRadio then
-                            if not AC.PlayerChatTimes then AC.PlayerChatTimes = {} end; AC.PlayerChatTimes[chattingPlayer:getUsername()] = getTimeInMillis(); pcall(function() chattingPlayer:addLineChatElement("Spoke into a walkie", colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, AC.ChatTypes["loud"].xyRange, "") end)
-                        else
-                            if not AC.PlayerChatTimes then AC.PlayerChatTimes = {} end; AC.PlayerChatTimes[chattingPlayer:getUsername()] = getTimeInMillis(); pcall(function() chattingPlayer:addLineChatElement("Spoke", colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, AC.ChatTypes["loud"].xyRange, "") end)
-                        end
-                    end
+            local dx = myPlayer:getX() - chattingPlayer:getX()
+            local dy = myPlayer:getY() - chattingPlayer:getY()
+            zDist = math.abs(myPlayer:getZ() - chattingPlayer:getZ())
+            horizontalDist = math.sqrt(dx * dx + dy * dy)
+            isDifferentZ = (zDist > 0)
+
+            -- Check if voice can be heard across floors
+            local canHearVoiceAcrossZ = false
+            if isDifferentZ then
+                if parsedMessage.chatType == "say" and zDist <= 1 and horizontalDist <= (chatType.xyRange * 1.5) then
+                    canHearVoiceAcrossZ = true
+                elseif parsedMessage.chatType == "loud" and zDist <= 2 and horizontalDist <= (chatType.xyRange * 1.5) then
+                    canHearVoiceAcrossZ = true
+                elseif parsedMessage.chatType == "shout" and zDist <= 4 and horizontalDist <= (chatType.xyRange * 1.5) then
+                    canHearVoiceAcrossZ = true
+                elseif parsedMessage.chatType == "low" and zDist <= 1 and horizontalDist <= (chatType.xyRange * 1.0) then
+                    canHearVoiceAcrossZ = true
                 end
+            end
+
+            -- Trigger Sims-style player voice chatter if sent in General (not radio, not OOC, not recorder)
+            if not parsedMessage.radioFrequency and not parsedMessage.fromRecorder and parsedMessage.chatModifier ~= "ooc" then
+                if not isDifferentZ then
+                    AC.Voice.PlayChatVoice(chattingPlayer, parsedMessage.chatType, rawText, false)
+                elseif canHearVoiceAcrossZ then
+                    AC.Voice.PlayChatVoice(chattingPlayer, parsedMessage.chatType, rawText, true)
+                end
+            end
+
+            -- Floor attenuation penalty (+8m per Z-level difference)
+            local floorPenalty = zDist * 8.0
+            if parsedMessage.chatType == "whisper" and zDist > 0 then
+                floorPenalty = 9999
+            elseif parsedMessage.chatType == "low" and zDist > 1 then
+                floorPenalty = 9999
+            end
+            effectiveDist = horizontalDist + floorPenalty
+            local maxRange = chatType.maxRange or (chatType.xyRange * 1.5 + 0.99)
+
+            -- If player is on different Z level or out of range, do not show text in chat window or overhead (unless admin hear-all)
+            if not isHearAll and (isDifferentZ or effectiveDist > maxRange or zDist > chatType.zRange) then
                 pcall(function() chatMessage:setText("") end)
                 return true
             end
-            pos = {x = chattingPlayer:getX(), y = chattingPlayer:getY()}
+            pos = {x = chattingPlayer:getX(), y = chattingPlayer:getY(), z = chattingPlayer:getZ()}
         elseif parsedMessage.pos then
-            local isHearAll = myPlayer.isHearAll and myPlayer:isHearAll() or false
+            pos = parsedMessage.pos
+            local dx = myPlayer:getX() - pos.x
+            local dy = myPlayer:getY() - pos.y
+            zDist = math.abs(myPlayer:getZ() - (pos.z or myPlayer:getZ()))
+            horizontalDist = math.sqrt(dx * dx + dy * dy)
+            effectiveDist = horizontalDist + zDist * 8.0
             if not isHearAll and not AC.Meta.IsInPosRange(myPlayer, parsedMessage.pos, chatType.xyRange * 1.5, chatType.zRange) then
                 pcall(function() chatMessage:setText("") end)
                 return true
             end
-            pos = parsedMessage.pos
         else
-            local isHearAll = myPlayer.isHearAll and myPlayer:isHearAll() or false
             if not isHearAll then
                 pcall(function() chatMessage:setText("") end)
                 return true
             end
         end
 
-        local isHearAll = myPlayer.isHearAll and myPlayer:isHearAll() or false
         if not isMe and parsedMessage.chatModifier ~= "ooc" and not isHearAll then
-            local xDist = myPlayer:getX() - (pos and pos.x or myPlayer:getX())
-            local yDist = myPlayer:getY() - (pos and pos.y or myPlayer:getY())
-            local distance = math.sqrt(xDist * xDist + yDist * yDist)
-            for _, part in ipairs(parsedMessage.parts) do
-                if part.text then
-                    part.text = AC.Parsing.ScrambleTextByDistance(part.text, distance, chatType.xyRange + 0.99, (chatType.xyRange * 1.5) + 0.99)
+            local clearRange = chatType.clearRange or chatType.xyRange
+            local maxRange = chatType.maxRange or (chatType.xyRange * 1.5)
+            if zDist > 0 then
+                local zMuffle = math.min(0.6, 0.25 * zDist)
+                for _, part in ipairs(parsedMessage.parts) do
+                    if part.text then
+                        part.text = AC.Parsing.ScrambleTextByDistance(part.text, effectiveDist, clearRange * (1 - zMuffle), maxRange)
+                    end
+                end
+            else
+                for _, part in ipairs(parsedMessage.parts) do
+                    if part.text then
+                        part.text = AC.Parsing.ScrambleTextByDistance(part.text, horizontalDist, clearRange, maxRange)
+                    end
                 end
             end
         end
 
         local sandbox = SandboxVars.SVRPChatLocal or {}
-        local isHearAll = myPlayer.isHearAll and myPlayer:isHearAll() or false
         if parsedMessage.chatModifier ~= "ooc" and AC.Meta.CanUnderstand(parsedMessage.language) and safeHasTrait(myPlayer, "HardOfHearing") and sandbox.EnableHardOfHearing and not isMe and not isHearAll then
             local xyRange = chatType.xyRange + 0.99
             local xDist = myPlayer:getX() - (pos and pos.x or myPlayer:getX())
@@ -502,7 +555,6 @@ function AC.Handlers.AddLineInChat(chatMessage, tabID)
         return true
     end
 
-    local isHearAll = myPlayer.isHearAll and myPlayer:isHearAll() or false
     local sandbox = SandboxVars.SVRPChatLocal or {}
     if parsedMessage.chatModifier ~= "ooc" and safeHasTrait(myPlayer, "Deaf") and sandbox.EnableDeaf and (not isMe or parsedMessage.fromRecorder) and not isHearAll then
         AC.Parsing.AdjustForDeaf(parsedMessage)
@@ -525,7 +577,7 @@ function AC.Handlers.AddLineInChat(chatMessage, tabID)
         end
     end
 
-    if chattingPlayer and not parsedMessage.radioFrequency and not parsedMessage.fromRecorder then
+    if chattingPlayer and not parsedMessage.radioFrequency and not parsedMessage.fromRecorder and (not isDifferentZ or isHearAll) then
         local textOnlyMessage = AC.Parsing.GetTextOnly(parsedMessage)
         textOnlyMessage = textOnlyMessage:gsub("\r\n", " "):gsub("\n", " "):gsub("\r", " ")
         textOnlyMessage = textOnlyMessage:sub(1,1):upper() .. textOnlyMessage:sub(2)

@@ -33,13 +33,79 @@ function AC.Visibility.GetPlayerAlpha(player)
     end
 end
 
---- Draw text centered with a black outline
+--- Check if a screen coordinate / bounding box is occluded by open UI windows (e.g. Chatbox, Combat UI)
+--- @param x number Screen center X
+--- @param y number Screen top Y
+--- @param w number? Optional width
+--- @param h number? Optional height
+--- @return boolean
+function AC.Visibility.IsOccludedByUI(x, y, w, h)
+    w = w or 0
+    h = h or 14
+    local x1 = x - (w / 2)
+    local x2 = x + (w / 2)
+    local y1 = y
+    local y2 = y + h
+
+    -- 1. Check ISChat window
+    if ISChat and ISChat.instance and ISChat.instance:isVisible() then
+        local chat = ISChat.instance
+        local cx = chat:getAbsoluteX()
+        local cy = chat:getAbsoluteY()
+        local cw = chat:getWidth()
+        local ch = (chat.isCollapsed and chat:isCollapsed()) and (chat:titleBarHeight() or 20) or chat:getHeight()
+
+        if x1 < cx + cw and x2 > cx and y1 < cy + ch and y2 > cy then
+            return true
+        end
+    end
+
+    -- 2. Check Combat Match UI
+    if AC_ISCombatMatchUI and AC_ISCombatMatchUI.instance and AC_ISCombatMatchUI.instance:isVisible() then
+        local ui = AC_ISCombatMatchUI.instance
+        local ux = ui:getAbsoluteX()
+        local uy = ui:getAbsoluteY()
+        local uw = ui:getWidth()
+        local uh = ui:getHeight()
+
+        if x1 < ux + uw and x2 > ux and y1 < uy + uh and y2 > uy then
+            return true
+        end
+    end
+
+    -- 3. Check Character Bio UI
+    if AC_ISWriteBio and AC_ISWriteBio.instance and AC_ISWriteBio.instance:isVisible() then
+        local bio = AC_ISWriteBio.instance
+        local bx = bio:getAbsoluteX()
+        local by = bio:getAbsoluteY()
+        local bw = bio:getWidth()
+        local bh = bio:getHeight()
+
+        if x1 < bx + bw and x2 > bx and y1 < by + bh and y2 > by then
+            return true
+        end
+    end
+
+    return false
+end
+
+--- Draw text centered with a black outline and UI occlusion checks
 function AC.Visibility.DrawTextCentre(font, x, y, text, r, g, b, a)
+    if not text or text == "" or not a or a <= 0.01 then return end
     local tm = getTextManager()
-    
+    if not tm then return end
+
     -- Ensure integer pixel coordinates to prevent text rendering wobble/jitter
     x = math.floor(x)
     y = math.floor(y)
+
+    local textW = tm:MeasureStringX(font or UIFont.Small, text)
+    local textH = tm:getFontHeight(font or UIFont.Small)
+
+    -- Do not draw if covered by the chatbox or open modal UI
+    if AC.Visibility.IsOccludedByUI(x, y, textW, textH) then
+        return
+    end
 
     -- Draw 4-way black outline
     tm:DrawStringCentre(font, x - 1, y - 1, text, 0, 0, 0, a)

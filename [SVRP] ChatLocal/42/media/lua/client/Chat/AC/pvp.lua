@@ -76,7 +76,9 @@ function AC.Pvp.ShowPvpOnPlayers()
                         -- Center texture vertically relative to text
                         local fontHeight = getTextManager():getFontFromEnum(UIFont.Small):getLineHeight()
                         local iconY = y + (fontHeight / 2) - (h / 2)
-                        AC.Pvp.SkullTexture:render(iconX, iconY, w, h, 1.0, 1.0, 1.0, alpha, nil)
+                        if not AC.Visibility.IsOccludedByUI(iconX + (w/2), iconY, w, h) then
+                            AC.Pvp.SkullTexture:render(iconX, iconY, w, h, 1.0, 1.0, 1.0, alpha, nil)
+                        end
                     else
                         AC.Visibility.DrawTextCentre(UIFont.Small, iconX + 15, y, "[PVP]", 1.0, 0.2, 0.2, alpha)
                     end

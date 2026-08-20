@@ -14,6 +14,7 @@ AC.ISChatOriginal.initialise = AC.ISChatOriginal.initialise or ISChat.initialise
 function ISChat:initialise()
     AC.ISChatOriginal.initialise(self)
 
+    self.panel.prerender = AC.ISTabPanel.prerender
     self.panel.render = AC.ISTabPanel.render
     self.panel.getTabIndexAtX = AC.ISTabPanel.getTabIndexAtX
     self.panel.getWidthOfAllTabs = AC.ISTabPanel.getWidthOfAllTabs
@@ -152,35 +153,81 @@ function ISChat:createChildren()
     AC.ISChatOriginal.createChildren(self)
     self.textEntry:setMaxTextLength(1250)
 
-    self.muteTypingButton = ISButton:new(self.gearButton:getX() - 30, 1, 20, 16, "", self, ISChat.onMuteTypingButtonClick)
+    local btnWid = 20
+    local btnHgt = 16
+    local btnGap = 4
+    local rightX = self.gearButton and self.gearButton:getX() or (self.width - 26)
+
+    -- 1. Mute Typing Button
+    local muteX = rightX - btnWid - btnGap
+    self.muteTypingButton = ISButton:new(muteX, 1, btnWid, btnHgt, "", self, ISChat.onMuteTypingButtonClick)
     self.muteTypingButton.anchorRight = true
     self.muteTypingButton.anchorLeft = false
     self.muteTypingButton:initialise()
     self.muteTypingButton.borderColor.a = 0.0
     self.muteTypingButton.backgroundColor.a = 0.0
-    self.muteTypingButton.backgroundColorMouseOver.a = 0.0
+    self.muteTypingButton.backgroundColorMouseOver.a = 0.3
     if AC.Indicator.muteTyping then
         self.muteTypingButton:setImage(getTexture("media/ui/AC_typing_off.png"))
     else
         self.muteTypingButton:setImage(getTexture("media/ui/AC_typing_on.png"))
     end
+    self.muteTypingButton.tooltip = "Toggle Overhead Typing Indicator"
     self.muteTypingButton:setUIName("toggle typing indicator")
     self:addChild(self.muteTypingButton)
     self.muteTypingButton:setVisible(true)
 
-    self.showRangeButton = ISButton:new(self.muteTypingButton:getX() - 30, 1, 20, 16, "", self, ISChat.onShowRangeButtonClick)
+    -- 2. Voice Chatter Button
+    local voiceX = muteX - btnWid - btnGap
+    self.voiceChatterButton = ISButton:new(voiceX, 1, btnWid, btnHgt, "", self, ISChat.onVoiceChatterButtonClick)
+    self.voiceChatterButton.anchorRight = true
+    self.voiceChatterButton.anchorLeft = false
+    self.voiceChatterButton:initialise()
+    self.voiceChatterButton.borderColor.a = 0.0
+    self.voiceChatterButton.backgroundColor.a = 0.0
+    self.voiceChatterButton.backgroundColorMouseOver.a = 0.3
+    if AC.Voice and AC.Voice.IsEnabled and AC.Voice.IsEnabled() then
+        self.voiceChatterButton:setImage(getTexture("media/ui/AC_voice_on.png"))
+    else
+        self.voiceChatterButton:setImage(getTexture("media/ui/AC_voice_off.png"))
+    end
+    self.voiceChatterButton.tooltip = "Toggle Voice Audio Chatter"
+    self.voiceChatterButton:setUIName("toggle voice audio chatter")
+    self:addChild(self.voiceChatterButton)
+    self.voiceChatterButton:setVisible(true)
+
+    -- 3. Show Range Button
+    local rangeX = voiceX - btnWid - btnGap
+    self.showRangeButton = ISButton:new(rangeX, 1, btnWid, btnHgt, "", self, ISChat.onShowRangeButtonClick)
     self.showRangeButton.anchorRight = true
     self.showRangeButton.anchorLeft = false
     self.showRangeButton:initialise()
     self.showRangeButton.borderColor.a = 0.0
     self.showRangeButton.backgroundColor.a = 0.0
-    self.showRangeButton.backgroundColorMouseOver.a = 0.0
+    self.showRangeButton.backgroundColorMouseOver.a = 0.3
     self.showRangeButton:setImage(getTexture("media/ui/AC_range.png"))
+    self.showRangeButton.tooltip = "Toggle Chat Range Circles"
     self.showRangeButton:setUIName("toggle range indicator")
     self:addChild(self.showRangeButton)
     self.showRangeButton:setVisible(true)
     self.showRangeTicks = 0
 
+    -- 4. Combat & Dice Button
+    local diceX = rangeX - btnWid - btnGap
+    self.combatDiceButton = ISButton:new(diceX, 1, btnWid, btnHgt, "", self, function() AC.OpenCombatMatchUI() end)
+    self.combatDiceButton.anchorRight = true
+    self.combatDiceButton.anchorLeft = false
+    self.combatDiceButton:initialise()
+    self.combatDiceButton.borderColor.a = 0.0
+    self.combatDiceButton.backgroundColor.a = 0.0
+    self.combatDiceButton.backgroundColorMouseOver.a = 0.3
+    self.combatDiceButton:setImage(getTexture("media/ui/AC_dice.png"))
+    self.combatDiceButton.tooltip = "Combat & Dice Roller"
+    self.combatDiceButton:setUIName("open combat & dice manager")
+    self:addChild(self.combatDiceButton)
+    self.combatDiceButton:setVisible(true)
+
+    -- 5. Scroll To Bottom Button
     self.scrollToBottomButton = ISButton:new(self.width - 20, self.height - self.textEntry.height - 30, 20, 16, "", self, ISChat.onScrollToBottomClick)
     self.scrollToBottomButton.anchorRight = true
     self.scrollToBottomButton.anchorLeft = false
@@ -189,14 +236,83 @@ function ISChat:createChildren()
     self.scrollToBottomButton:initialise()
     self.scrollToBottomButton.borderColor.a = 0.0
     self.scrollToBottomButton.backgroundColor.a = 0.0
-    self.scrollToBottomButton.backgroundColorMouseOver.a = 0.0
+    self.scrollToBottomButton.backgroundColorMouseOver.a = 0.3
     self.scrollToBottomButton:setImage(getTexture("media/ui/AC_scrollBottom.png"))
+    self.scrollToBottomButton.tooltip = "Scroll to Latest Message"
     self.scrollToBottomButton:setUIName("scroll to bottom")
     self:addChild(self.scrollToBottomButton)
     self.scrollToBottomButton:setVisible(false)
 
+    -- Gear button tooltip
+    if self.gearButton then
+        self.gearButton.tooltip = "Chat Settings & Roleplay Actions"
+    end
+
     self.groundHighlighter = GroundHightlighter:new()
     self.groundHighlighter:setColor(0.8, 0.8, 0.8, 0.5)
+end
+
+ISChat.minTextOpaque = 1.0
+ISChat.maxTextOpaque = 1.0
+
+AC.ISChatOriginal.makeFade = AC.ISChatOriginal.makeFade or ISChat.makeFade
+function ISChat:makeFade(fraction)
+    AC.ISChatOriginal.makeFade(self, fraction)
+    if self.chatText and self.chatText.setContentTransparency then
+        self.chatText:setContentTransparency(1.0)
+    end
+    if self.tabs then
+        for _, tab in ipairs(self.tabs) do
+            if tab and tab.setContentTransparency then
+                tab:setContentTransparency(1.0)
+            end
+        end
+    end
+end
+
+AC.ISChatOriginal.prerender = AC.ISChatOriginal.prerender or ISChat.prerender
+function ISChat:prerender()
+    local theme = AC.Meta and AC.Meta.GetActiveTheme and AC.Meta.GetActiveTheme()
+    if theme then
+        if self.backgroundColor then
+            self.backgroundColor.r = theme.bg.r
+            self.backgroundColor.g = theme.bg.g
+            self.backgroundColor.b = theme.bg.b
+        end
+        if self.borderColor then
+            self.borderColor.r = theme.border.r
+            self.borderColor.g = theme.border.g
+            self.borderColor.b = theme.border.b
+        end
+        if self.panel then
+            if self.panel.backgroundColor then
+                self.panel.backgroundColor.r = theme.bg.r
+                self.panel.backgroundColor.g = theme.bg.g
+                self.panel.backgroundColor.b = theme.bg.b
+            end
+            if self.panel.borderColor then
+                self.panel.borderColor.r = theme.border.r
+                self.panel.borderColor.g = theme.border.g
+                self.panel.borderColor.b = theme.border.b
+            end
+        end
+        if self.textEntry then
+            if self.textEntry.backgroundColor then
+                self.textEntry.backgroundColor.r = theme.textEntry.r
+                self.textEntry.backgroundColor.g = theme.textEntry.g
+                self.textEntry.backgroundColor.b = theme.textEntry.b
+            end
+            if self.textEntry.borderColor then
+                self.textEntry.borderColor.r = theme.border.r
+                self.textEntry.borderColor.g = theme.border.g
+                self.textEntry.borderColor.b = theme.border.b
+            end
+        end
+    end
+    if self.chatText and self.chatText.setContentTransparency then
+        self.chatText:setContentTransparency(1.0)
+    end
+    AC.ISChatOriginal.prerender(self)
 end
 
 AC.ISChatOriginal.onGearButtonClick = AC.ISChatOriginal.onGearButtonClick or ISChat.onGearButtonClick
@@ -206,6 +322,7 @@ function ISChat:onGearButtonClick()
     if context then
         local myPlayer = getPlayer()
         local players = getOnlinePlayers()
+        AC.Meta.CreateCombatContext(context)
         AC.Meta.CreateActionsContext(context, myPlayer, players)
         AC.Meta.CreateCharacterContext(context, myPlayer)
         AC.Meta.CreateChatSettingsContext(context)
@@ -304,6 +421,15 @@ function ISChat:onMuteTypingButtonClick()
         self.muteTypingButton:setImage(getTexture("media/ui/AC_typing_off.png"))
     else
         self.muteTypingButton:setImage(getTexture("media/ui/AC_typing_on.png"))
+    end
+end
+
+function ISChat:onVoiceChatterButtonClick()
+    local newState = AC.Voice.ToggleVoiceAudio()
+    if newState then
+        self.voiceChatterButton:setImage(getTexture("media/ui/AC_voice_on.png"))
+    else
+        self.voiceChatterButton:setImage(getTexture("media/ui/AC_voice_off.png"))
     end
 end
 
@@ -467,6 +593,28 @@ end
 -- *** ISTabPanel override ***
 AC.ISTabPanel = {}
 
+function AC.ISTabPanel:prerender()
+    if ISTabPanel.mouseOut and ISTabPanel.viewDragging and not ISMouseDrag.dragView then
+        self:clearStencilRect()
+        self:setStencilRect(0 - self:getAbsoluteX(), 0 - self:getAbsoluteY(), getCore():getScreenWidth(), getCore():getScreenHeight())
+        self:drawRectBorder(self:getMouseX(), self:getMouseY(), ISTabPanel.viewDragging.view:getWidth(), ISTabPanel.viewDragging.view:getHeight(), 1,1,1,1)
+        self:clearStencilRect()
+    end
+    self:updateSmoothScrolling()
+
+    -- Draw panel background & border in PRERENDER so it is drawn BEHIND chat text, never on top of it!
+    local theme = AC.Meta and AC.Meta.GetActiveTheme and AC.Meta.GetActiveTheme()
+    local bg = theme and theme.bg or self.backgroundColor
+    local border = theme and theme.border or self.borderColor
+
+    if bg and bg.a and bg.a > 0 then
+        self:drawRect(0, self.tabHeight, self.width, self.height - self.tabHeight, bg.a * (self.tabTransparency or 1), bg.r, bg.g, bg.b)
+    end
+    if border and border.a and border.a > 0 then
+        self:drawRectBorder(0, self.tabHeight, self.width, self.height - self.tabHeight, border.a * (self.tabTransparency or 1), border.r, border.g, border.b)
+    end
+end
+
 function AC.ISTabPanel:render()
     local showPrivate = AC.Meta.HasPrivate(true)
     local showFocused = AC.Meta.HasFocus()
@@ -535,8 +683,9 @@ function AC.ISTabPanel:render()
     else
         newViewList = self.viewList
     end
-    self:drawRect(0, self.tabHeight, self.width, self.height - self.tabHeight, self.backgroundColor.a, self.backgroundColor.r, self.backgroundColor.g, self.backgroundColor.b)
-    self:drawRectBorder(0, self.tabHeight, self.width, self.height - self.tabHeight, self.borderColor.a, self.borderColor.r, self.borderColor.g, self.borderColor.b)
+    local theme = AC.Meta and AC.Meta.GetActiveTheme and AC.Meta.GetActiveTheme()
+    local selColor = theme and theme.tabSelected or {r=0.14, g=0.18, b=0.25, a=0.90}
+    local unselColor = theme and theme.tabUnselected or {r=0.06, g=0.07, b=0.10, a=0.70}
     local x = inset
     if self.centerTabs and (self:getWidth() >= self:getWidthOfAllTabs()) then
         x = (self:getWidth() - self:getWidthOfAllTabs()) / 2
@@ -578,17 +727,17 @@ function AC.ISTabPanel:render()
                 end
             end
             if viewObject.name == self.activeView.name and not self.isDragging and not ISTabPanel.mouseOut then
-                self:drawTextureScaled(ISTabPanel.tabSelected, x, 0, tabWidth, self.tabHeight - 1, self.tabTransparency,1,1,1)
+                self:drawTextureScaled(ISTabPanel.tabSelected, x, 0, tabWidth, self.tabHeight - 1, self.tabTransparency, selColor.r, selColor.g, selColor.b)
                 self.shouldBlink = false
             else
-                self:drawTextureScaled(ISTabPanel.tabUnSelected, x, 0, tabWidth, self.tabHeight - 1, self.tabTransparency,1,1,1)
+                self:drawTextureScaled(ISTabPanel.tabUnSelected, x, 0, tabWidth, self.tabHeight - 1, self.tabTransparency, unselColor.r, unselColor.g, unselColor.b)
                 if self:getMouseY() >= 0 and self:getMouseY() < self.tabHeight and self:isMouseOver() and self:getTabIndexAtX(self:getMouseX()) == i then
                     viewObject.fade:setFadeIn(true)
                 else
                     viewObject.fade:setFadeIn(false)
                 end
                 viewObject.fade:update()
-                self:drawTextureScaled(ISTabPanel.tabSelected, x, 0, tabWidth, self.tabHeight - 1, 0.2 * viewObject.fade:fraction(),1,1,1)
+                self:drawTextureScaled(ISTabPanel.tabSelected, x, 0, tabWidth, self.tabHeight - 1, 0.2 * viewObject.fade:fraction(), selColor.r, selColor.g, selColor.b)
             end
 
             if self.shouldBlink then

@@ -117,6 +117,51 @@ function AC.Events.onServerCommand(module, command, args)
         local sourceUsername = args[1]
         local message = args[2]
         AC.Handlers.AddStaffMessage(sourceUsername, message)
+    elseif command == "CombatInvite" then
+        local hostUsername = args[1]
+        local isViewer = args[2] or false
+        local hostDisplayName = AC.Meta.GetName(hostUsername) or hostUsername
+        local w = 340
+        local h = 180
+        local x = (getCore():getScreenWidth() - w) / 2
+        local y = (getCore():getScreenHeight() - h) / 2
+        local promptText = hostDisplayName .. (isViewer and " invited you to spectate a Combat Match as a Viewer. Join?" or " invited you to a Combat Match as a Combatant. Join?")
+        local modal = ISModalDialog:new(x, y, w, h, promptText, true, hostUsername, function(_, button)
+            if button.internal == "YES" then
+                sendClientCommand(getPlayer(), "AC", "CombatAccept", {hostUsername, isViewer})
+                AC.OpenCombatMatchUI()
+            else
+                sendClientCommand(getPlayer(), "AC", "CombatDecline", {hostUsername})
+            end
+        end)
+        modal:initialise()
+        modal:addToUIManager()
+    elseif command == "CombatSync" then
+        AC_Combat.CurrentMatch = args[1]
+        if AC_ISCombatMatchUI.instance then
+            AC_ISCombatMatchUI.instance:updateMatchView()
+        end
+    elseif command == "CombatRoll" then
+        local rollText = args[1]
+        if AC_Combat.CurrentMatch then
+            AC_Combat.CurrentMatch.history = AC_Combat.CurrentMatch.history or {}
+            table.insert(AC_Combat.CurrentMatch.history, { text = rollText, r = 1.0, g = 0.85, b = 0.3 })
+            if AC_ISCombatMatchUI.instance then
+                AC_ISCombatMatchUI.instance:updateMatchView()
+            end
+        end
+    elseif command == "CombatEnd" then
+        AC_Utils.addInfoToChat("Combat match ended.")
+        AC_Combat.CurrentMatch = nil
+        if AC_ISCombatMatchUI.instance then
+            AC_ISCombatMatchUI.instance:updateMatchView()
+        end
+    elseif command == "CombatKicked" then
+        AC_Utils.addInfoToChat("You were removed from the combat match.")
+        AC_Combat.CurrentMatch = nil
+        if AC_ISCombatMatchUI.instance then
+            AC_ISCombatMatchUI.instance:updateMatchView()
+        end
     end
 end
 

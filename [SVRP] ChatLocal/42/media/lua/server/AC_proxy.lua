@@ -50,7 +50,7 @@ end
 
 local function NotifyTyping(sendingPlayer, command, args)
     local onlinePlayers = getOnlinePlayers()
-    if onlinePlayers:size() == 0 then return end
+    if not onlinePlayers or onlinePlayers:size() == 0 then return end
     local xyRange, zRange
     if command == "onCleared" then
         xyRange = 50
@@ -102,145 +102,409 @@ local staffColors = {
     ["Observer"] = "<RGB:0.8,0.2,0.8>"
 }
 
+local function broadcastCombatMatch(match, commandName, cmdArgs)
+    if not match then return end
+    commandName = commandName or "CombatSync"
+    cmdArgs = cmdArgs or {match}
+    local allPlayers = getOnlinePlayers()
+    if not allPlayers or allPlayers:size() == 0 then return end
+
+    local userMap = {}
+    for _, u in ipairs(match.participants or {}) do userMap[u] = true end
+    for _, u in ipairs(match.viewers or {}) do userMap[u] = true end
+
+    for i = 0, allPlayers:size() - 1 do
+        local player = allPlayers:get(i)
+        if userMap[player:getUsername()] then
+            sendServerCommand(player, "AC", commandName, cmdArgs)
+        end
+    end
+end
+
+-- Command dispatch table
+local CommandHandlers = {}
+
+CommandHandlers.doLog = function(sendingPlayer, args)
+    doLog(sendingPlayer, args)
+end
+
+CommandHandlers.SetPlayerColor = function(sendingPlayer, args)
+    SetPlayerColor(sendingPlayer, args[1], args[2], args[3])
+end
+
+CommandHandlers.SetPlayerLanguage = function(sendingPlayer, args)
+    SetPlayerLanguage(sendingPlayer, args[1])
+end
+
+CommandHandlers.SetPlayerName = function(sendingPlayer, args)
+    SetPlayerName(sendingPlayer, args[1])
+end
+
+CommandHandlers.SetPlayerStatus = function(sendingPlayer, args)
+    SetPlayerStatus(sendingPlayer, args and args[1] or nil)
+end
+
+CommandHandlers.RemoveKnownLanguage = function(sendingPlayer, args)
+    local username, language = args[1], args[2]
+    local allPlayers = getOnlinePlayers()
+    if not allPlayers or allPlayers:size() == 0 then return end
+    for i=0, allPlayers:size()-1 do
+        local player = allPlayers:get(i)
+        if player:getUsername() == username then
+            sendServerCommand(player, "AC", "RemoveKnownLanguage", {language})
+            break
+        end
+    end
+end
+
+CommandHandlers.AddKnownLanguage = function(sendingPlayer, args)
+    local username, language = args[1], args[2]
+    local allPlayers = getOnlinePlayers()
+    if not allPlayers or allPlayers:size() == 0 then return end
+    for i=0, allPlayers:size()-1 do
+        local player = allPlayers:get(i)
+        if player:getUsername() == username then
+            sendServerCommand(player, "AC", "AddKnownLanguage", {language})
+            break
+        end
+    end
+end
+
+CommandHandlers.SetModifier = function(sendingPlayer, args)
+    SetModifier(sendingPlayer, args[1], args[2])
+end
+
+local function forwardToUser(targetUsername, sendingPlayer, commandName, cmdArgs)
+    local allPlayers = getOnlinePlayers()
+    if not allPlayers or allPlayers:size() == 0 then return end
+    for i=0, allPlayers:size()-1 do
+        local player = allPlayers:get(i)
+        if player:getUsername() == targetUsername then
+            sendServerCommand(player, "AC", commandName, cmdArgs)
+            break
+        end
+    end
+end
+
+CommandHandlers.InvitePrivate = function(sendingPlayer, args)
+    forwardToUser(args[1], sendingPlayer, "InvitePrivate", {sendingPlayer:getUsername()})
+end
+
+CommandHandlers.PrivateUnavailable = function(sendingPlayer, args)
+    forwardToUser(args[1], sendingPlayer, "PrivateUnavailable", {sendingPlayer:getUsername()})
+end
+
+CommandHandlers.AcceptPrivateInvite = function(sendingPlayer, args)
+    forwardToUser(args[1], sendingPlayer, "AcceptPrivateInvite", {sendingPlayer:getUsername()})
+end
+
+CommandHandlers.DeclinePrivateInvite = function(sendingPlayer, args)
+    forwardToUser(args[1], sendingPlayer, "DeclinePrivateInvite", {sendingPlayer:getUsername()})
+end
+
+CommandHandlers.StopPrivate = function(sendingPlayer, args)
+    forwardToUser(args[1], sendingPlayer, "StopPrivate", {sendingPlayer:getUsername()})
+end
+
+CommandHandlers.PrivateChat = function(sendingPlayer, args)
+    local otherPlayer, message, lang = args[1], args[2], args[3]
+    local allPlayers = getOnlinePlayers()
+    if not allPlayers or allPlayers:size() == 0 then return end
+    for i=0, allPlayers:size()-1 do
+        local player = allPlayers:get(i)
+        if player:getUsername() == otherPlayer then
+            sendServerCommand(player, "AC", "PrivateChat", {sendingPlayer:getUsername(), message})
+            doPrivateLog(sendingPlayer, {player:getX(), player:getY(), player:getZ(), message, lang})
+            break
+        end
+    end
+end
+
+CommandHandlers.Injure = function(sendingPlayer, args)
+    local bodyPartStr, injury = args[1], args[2]
+    local bodyPartType = BodyPartType.FromString(bodyPartStr)
+    if bodyPartType then
+        local bodyDamage = sendingPlayer:getBodyDamage()
+        local bodyPart = bodyDamage:getBodyPart(bodyPartType)
+        if injury == "Bleeding" then bodyPart:setBleedingTime(10)
+        elseif injury == "Bullet" then bodyPart:setHaveBullet(true, 0)
+        elseif injury == "Burned" then bodyPart:setBurnTime(50)
+        elseif injury == "Deep Wound" then bodyPart:generateDeepWound()
+        elseif injury == "Fracture" then bodyPart:setFractureTime(21)
+        elseif injury == "Glass Shards" then bodyPart:generateDeepShardWound()
+        elseif injury == "Infected" then bodyPart:setWoundInfectionLevel(10)
+        elseif injury == "Scratched" then bodyPart:setScratched(true, true)
+        elseif injury == "Laceration" then bodyPart:setCut(true)
+        elseif injury == "Bite" then
+            bodyPart:SetBitten(true)
+            bodyPart:SetInfected(false)
+            bodyPart:SetFakeInfected(false)
+        elseif injury == "Cold" then bodyDamage:setColdStrength(100.0)
+        elseif injury == "Sickness" then bodyDamage:setFoodSicknessLevel(100.0)
+        end
+        bodyDamage:AddDamage(bodyPartType, 15.0)
+    end
+end
+
+CommandHandlers.Ailment = function(sendingPlayer, args)
+    local ailment = args[1]
+    local bodyDamage = sendingPlayer:getBodyDamage()
+    if ailment == "Cold" then
+        bodyDamage:setColdStrength(100.0)
+        bodyDamage:setHasACold(true)
+    elseif ailment == "Sickness" then
+        sendingPlayer:getStats():set(CharacterStat.FOOD_SICKNESS, 40.0)
+    end
+end
+
+local function broadcastStaffMessage(sendingPlayer, text, command)
+    local color = staffColors[sendingPlayer:getAccessLevel()] or "<RGB:0.8,0.8,0.8>"
+    local message = color .. "[" .. sendingPlayer:getUsername() .. "]" .. AC_Utils.MagicSpace .. "<RGB:1,1,1>" .. (text or "")
+    local allPlayers = getOnlinePlayers()
+    if not allPlayers or allPlayers:size() == 0 then return end
+    for i=0, allPlayers:size()-1 do
+        local player = allPlayers:get(i)
+        if AC_Utils.isStaff(player) then
+            sendServerCommand(player, "AC", command, {sendingPlayer:getUsername(), message})
+        end
+    end
+end
+
+CommandHandlers.Override = function(sendingPlayer, args)
+    broadcastStaffMessage(sendingPlayer, args[1], "Override")
+end
+
+CommandHandlers.StaffChat = function(sendingPlayer, args)
+    broadcastStaffMessage(sendingPlayer, args[1], "StaffChat")
+end
+
+CommandHandlers.BioSave = function(sendingPlayer, args)
+    PlayerDB.CharacterBioStorage[sendingPlayer:getUsername()] = {description = args[1]}
+    ModData.add("AC_CharacterBioStorage", PlayerDB.CharacterBioStorage)
+end
+
+CommandHandlers.BioLoad = function(sendingPlayer, args)
+    sendServerCommand(sendingPlayer, "AC", "BioLoad", PlayerDB.CharacterBioStorage[args[1]] or {})
+end
+
+CommandHandlers.ApplyRpBuffs = function(sendingPlayer, args)
+    local stats = sendingPlayer:getStats()
+    if args.boredom and stats:get(CharacterStat.BOREDOM) > args.boredom then stats:remove(CharacterStat.BOREDOM, args.boredom) end
+    if args.hunger and stats:get(CharacterStat.HUNGER) > args.hunger then stats:remove(CharacterStat.HUNGER, args.hunger) end
+    if args.thirst and stats:get(CharacterStat.THIRST) > args.thirst then stats:remove(CharacterStat.THIRST, args.thirst) end
+    if args.stressSmokes and stats:get(CharacterStat.STRESS) > args.stressSmokes then stats:remove(CharacterStat.STRESS, args.stressSmokes) end
+    if args.unhappyness and stats:get(CharacterStat.UNHAPPINESS) > args.unhappyness then stats:remove(CharacterStat.UNHAPPINESS, args.unhappyness) end
+end
+
+-- Combat Handlers
+CommandHandlers.CombatCreate = function(sendingPlayer, args)
+    local hostName = sendingPlayer:getUsername()
+    PlayerDB.CombatMatches = PlayerDB.CombatMatches or {}
+    PlayerDB.PlayerToCombatMatch = PlayerDB.PlayerToCombatMatch or {}
+    PlayerDB.CombatMatches[hostName] = {
+        host = hostName,
+        isActive = false,
+        round = 1,
+        currentTurn = 1,
+        participants = { hostName },
+        viewers = {},
+        history = {}
+    }
+    PlayerDB.PlayerToCombatMatch[hostName] = hostName
+    sendServerCommand(sendingPlayer, "AC", "CombatSync", {PlayerDB.CombatMatches[hostName]})
+end
+
+CommandHandlers.CombatInvite = function(sendingPlayer, args)
+    local targetUsername, isViewer = args[1], args[2] or false
+    local hostName = sendingPlayer:getUsername()
+    forwardToUser(targetUsername, sendingPlayer, "CombatInvite", {hostName, isViewer})
+end
+
+CommandHandlers.CombatAccept = function(sendingPlayer, args)
+    local hostName, isViewer = args[1], args[2] or false
+    PlayerDB.CombatMatches = PlayerDB.CombatMatches or {}
+    PlayerDB.PlayerToCombatMatch = PlayerDB.PlayerToCombatMatch or {}
+    local match = PlayerDB.CombatMatches[hostName]
+    local username = sendingPlayer:getUsername()
+    if match then
+        if isViewer then
+            match.viewers = match.viewers or {}
+            local found = false
+            for _, u in ipairs(match.viewers) do if u == username then found = true break end end
+            if not found then table.insert(match.viewers, username) end
+        else
+            match.participants = match.participants or {}
+            local found = false
+            for _, u in ipairs(match.participants) do if u == username then found = true break end end
+            if not found then table.insert(match.participants, username) end
+        end
+        PlayerDB.PlayerToCombatMatch[username] = hostName
+        broadcastCombatMatch(match, "CombatSync", {match})
+    end
+end
+
+CommandHandlers.CombatToggleRole = function(sendingPlayer, args)
+    local targetUsername = args[1]
+    local hostName = sendingPlayer:getUsername()
+    PlayerDB.CombatMatches = PlayerDB.CombatMatches or {}
+    local match = PlayerDB.CombatMatches[hostName]
+    if match then
+        local isParticipant = false
+        for i, u in ipairs(match.participants or {}) do
+            if u == targetUsername then
+                table.remove(match.participants, i)
+                isParticipant = true
+                break
+            end
+        end
+        if isParticipant then
+            match.viewers = match.viewers or {}
+            table.insert(match.viewers, targetUsername)
+        else
+            for i, u in ipairs(match.viewers or {}) do
+                if u == targetUsername then
+                    table.remove(match.viewers, i)
+                    break
+                end
+            end
+            match.participants = match.participants or {}
+            table.insert(match.participants, targetUsername)
+        end
+        broadcastCombatMatch(match, "CombatSync", {match})
+    end
+end
+
+CommandHandlers.CombatLeave = function(sendingPlayer, args)
+    local username = sendingPlayer:getUsername()
+    PlayerDB.CombatMatches = PlayerDB.CombatMatches or {}
+    PlayerDB.PlayerToCombatMatch = PlayerDB.PlayerToCombatMatch or {}
+    local hostName = PlayerDB.PlayerToCombatMatch[username]
+    if hostName and PlayerDB.CombatMatches[hostName] then
+        local match = PlayerDB.CombatMatches[hostName]
+        if hostName == username then
+            broadcastCombatMatch(match, "CombatEnd", {})
+            for _, u in ipairs(match.participants or {}) do PlayerDB.PlayerToCombatMatch[u] = nil end
+            for _, u in ipairs(match.viewers or {}) do PlayerDB.PlayerToCombatMatch[u] = nil end
+            PlayerDB.CombatMatches[hostName] = nil
+        else
+            for i = #(match.participants or {}), 1, -1 do
+                if match.participants[i] == username then table.remove(match.participants, i) end
+            end
+            for i = #(match.viewers or {}), 1, -1 do
+                if match.viewers[i] == username then table.remove(match.viewers, i) end
+            end
+            PlayerDB.PlayerToCombatMatch[username] = nil
+            broadcastCombatMatch(match, "CombatSync", {match})
+        end
+    end
+end
+
+CommandHandlers.CombatKick = function(sendingPlayer, args)
+    local targetUsername = args[1]
+    local hostName = sendingPlayer:getUsername()
+    PlayerDB.CombatMatches = PlayerDB.CombatMatches or {}
+    PlayerDB.PlayerToCombatMatch = PlayerDB.PlayerToCombatMatch or {}
+    local match = PlayerDB.CombatMatches[hostName]
+    if match then
+        for i = #(match.participants or {}), 1, -1 do
+            if match.participants[i] == targetUsername then table.remove(match.participants, i) end
+        end
+        for i = #(match.viewers or {}), 1, -1 do
+            if match.viewers[i] == targetUsername then table.remove(match.viewers, i) end
+        end
+        PlayerDB.PlayerToCombatMatch[targetUsername] = nil
+        forwardToUser(targetUsername, sendingPlayer, "CombatKicked", {})
+        broadcastCombatMatch(match, "CombatSync", {match})
+    end
+end
+
+CommandHandlers.CombatReorder = function(sendingPlayer, args)
+    local newOrder = args[1]
+    local hostName = sendingPlayer:getUsername()
+    PlayerDB.CombatMatches = PlayerDB.CombatMatches or {}
+    local match = PlayerDB.CombatMatches[hostName]
+    if match and type(newOrder) == "table" then
+        match.participants = newOrder
+        broadcastCombatMatch(match, "CombatSync", {match})
+    end
+end
+
+CommandHandlers.CombatStart = function(sendingPlayer, args)
+    local hostName = sendingPlayer:getUsername()
+    PlayerDB.CombatMatches = PlayerDB.CombatMatches or {}
+    local match = PlayerDB.CombatMatches[hostName]
+    if match then
+        match.isActive = true
+        match.round = 1
+        match.currentTurn = 1
+        table.insert(match.history, { text = "--- Combat Started (Round 1) ---", r = 0.3, g = 1.0, b = 0.3 })
+        broadcastCombatMatch(match, "CombatSync", {match})
+    end
+end
+
+CommandHandlers.CombatEnd = function(sendingPlayer, args)
+    local hostName = sendingPlayer:getUsername()
+    PlayerDB.CombatMatches = PlayerDB.CombatMatches or {}
+    local match = PlayerDB.CombatMatches[hostName]
+    if match then
+        match.isActive = false
+        table.insert(match.history, { text = "--- Combat Ended ---", r = 1.0, g = 0.3, b = 0.3 })
+        broadcastCombatMatch(match, "CombatSync", {match})
+    end
+end
+
+CommandHandlers.CombatNextTurn = function(sendingPlayer, args)
+    local hostName = sendingPlayer:getUsername()
+    PlayerDB.CombatMatches = PlayerDB.CombatMatches or {}
+    local match = PlayerDB.CombatMatches[hostName]
+    if match and match.isActive and #match.participants > 0 then
+        match.currentTurn = match.currentTurn + 1
+        if match.currentTurn > #match.participants then
+            match.currentTurn = 1
+            match.round = (match.round or 1) + 1
+            table.insert(match.history, { text = string.format("--- Round %d ---", match.round), r = 0.4, g = 0.8, b = 1.0 })
+        end
+        local currentActor = match.participants[match.currentTurn]
+        local actorName = PlayerDB.PlayerNames and PlayerDB.PlayerNames[currentActor] or currentActor
+        table.insert(match.history, { text = string.format("Turn: %s", actorName), r = 0.8, g = 0.9, b = 0.5 })
+        broadcastCombatMatch(match, "CombatSync", {match})
+    end
+end
+
+CommandHandlers.CombatPrevTurn = function(sendingPlayer, args)
+    local hostName = sendingPlayer:getUsername()
+    PlayerDB.CombatMatches = PlayerDB.CombatMatches or {}
+    local match = PlayerDB.CombatMatches[hostName]
+    if match and match.isActive and #match.participants > 0 then
+        match.currentTurn = match.currentTurn - 1
+        if match.currentTurn < 1 then
+            match.currentTurn = #match.participants
+            match.round = math.max(1, (match.round or 1) - 1)
+        end
+        broadcastCombatMatch(match, "CombatSync", {match})
+    end
+end
+
+CommandHandlers.CombatRoll = function(sendingPlayer, args)
+    local rollText = args[5] or args[1]
+    local username = sendingPlayer:getUsername()
+    PlayerDB.PlayerToCombatMatch = PlayerDB.PlayerToCombatMatch or {}
+    PlayerDB.CombatMatches = PlayerDB.CombatMatches or {}
+    local hostName = PlayerDB.PlayerToCombatMatch[username]
+    if hostName and PlayerDB.CombatMatches[hostName] then
+        local match = PlayerDB.CombatMatches[hostName]
+        table.insert(match.history, { text = rollText, r = 1.0, g = 0.85, b = 0.3 })
+        if #match.history > 100 then table.remove(match.history, 1) end
+        broadcastCombatMatch(match, "CombatRoll", {rollText})
+    end
+end
+
 local function onACCommand(module, command, sendingPlayer, args)
     if module ~= "AC" then return end
     args = args or {}
-
-    if command == "doLog" then
-        doLog(sendingPlayer, args)
-    elseif command == "SetPlayerColor" then
-        SetPlayerColor(sendingPlayer, args[1], args[2], args[3])
-    elseif command == "SetPlayerLanguage" then
-        SetPlayerLanguage(sendingPlayer, args[1])
-    elseif command == "SetPlayerName" then
-        SetPlayerName(sendingPlayer, args[1])
-    elseif command == "SetPlayerStatus" then
-        SetPlayerStatus(sendingPlayer, args and args[1] or nil)
-    elseif command == "RemoveKnownLanguage" or command == "AddKnownLanguage" then
-        local username, language = args[1], args[2]
-        local allPlayers = getOnlinePlayers()
-        if allPlayers:size() == 0 then return end
-        for i=0, allPlayers:size()-1 do
-            local player = allPlayers:get(i)
-            if player:getUsername() == username then
-                sendServerCommand(player, "AC", command, {language})
-                break
-            end
-        end
-    elseif command == "SetModifier" then
-        local direction, modifier = args[1], args[2]
-        SetModifier(sendingPlayer, direction, modifier)
-    elseif command == "InvitePrivate"
-    or     command == "PrivateUnavailable"
-    or     command == "AcceptPrivateInvite"
-    or     command == "DeclinePrivateInvite"
-    or     command == "StopPrivate" then
-        local otherPlayer = args[1]
-        local allPlayers = getOnlinePlayers()
-        if allPlayers:size() == 0 then return end
-        for i=0, allPlayers:size()-1 do
-            local player = allPlayers:get(i)
-            if player:getUsername() == otherPlayer then
-                sendServerCommand(player, "AC", command, {sendingPlayer:getUsername()})
-                break
-            end
-        end
-    elseif command == "PrivateChat" then
-        local otherPlayer = args[1]
-        local message = args[2]
-        local lang = args[3]
-        local allPlayers = getOnlinePlayers()
-        if allPlayers:size() == 0 then return end
-        for i=0, allPlayers:size()-1 do
-            local player = allPlayers:get(i)
-            if player:getUsername() == otherPlayer then
-                sendServerCommand(player, "AC", command, {sendingPlayer:getUsername(), message})
-                doPrivateLog(sendingPlayer, {player:getX(), player:getY(), player:getZ(), message, lang})
-                break
-            end
-        end
-    elseif command == "Injure" then
-        local bodyPartStr = args[1]
-        local injury = args[2]
-        local bodyPartType = BodyPartType.FromString(bodyPartStr)
-        if bodyPartType then
-            local bodyDamage = sendingPlayer:getBodyDamage()
-            local bodyPart = bodyDamage:getBodyPart(bodyPartType)
-            
-            if injury == "Bleeding" then bodyPart:setBleedingTime(10)
-            elseif injury == "Bullet" then bodyPart:setHaveBullet(true, 0)
-            elseif injury == "Burned" then bodyPart:setBurnTime(50)
-            elseif injury == "Deep Wound" then bodyPart:generateDeepWound()
-            elseif injury == "Fracture" then bodyPart:setFractureTime(21)
-            elseif injury == "Glass Shards" then bodyPart:generateDeepShardWound()
-            elseif injury == "Infected" then bodyPart:setWoundInfectionLevel(10)
-            elseif injury == "Scratched" then bodyPart:setScratched(true, true)
-            elseif injury == "Laceration" then bodyPart:setCut(true)
-            elseif injury == "Bite" then
-                bodyPart:SetBitten(true)
-                bodyPart:SetInfected(false)
-                bodyPart:SetFakeInfected(false)
-            elseif injury == "Cold" then bodyDamage:setColdStrength(100.0)
-            elseif injury == "Sickness" then bodyDamage:setFoodSicknessLevel(100.0)
-            end
-            
-            bodyDamage:AddDamage(bodyPartType, 15.0)
-        end
-    elseif command == "Ailment" then
-        local ailment = args[1]
-        local bodyDamage = sendingPlayer:getBodyDamage()
-        if ailment == "Cold" then
-            bodyDamage:setColdStrength(100.0)
-            bodyDamage:setHasACold(true)
-        elseif ailment == "Sickness" then
-            sendingPlayer:getStats():set(CharacterStat.FOOD_SICKNESS, 40.0)
-        end
-    elseif command == "Override" then
-        local color = staffColors[sendingPlayer:getAccessLevel()]
-        if not color then color = "<RGB:0.8,0.8,0.8>" end
-        local message = color .. "[" .. sendingPlayer:getUsername() .. "]" .. AC_Utils.MagicSpace .. "<RGB:1,1,1>" .. args[1]
-        local allPlayers = getOnlinePlayers()
-        if allPlayers:size() == 0 then return end
-        for i=0, allPlayers:size()-1 do
-            local player = allPlayers:get(i)
-            if AC_Utils.isStaff(player) then
-                sendServerCommand(player, "AC", command, {sendingPlayer:getUsername(), message})
-            end
-        end
-    elseif command == "StaffChat" then
-        local color = staffColors[sendingPlayer:getAccessLevel()]
-        if not color then color = "<RGB:0.8,0.8,0.8>" end
-        local message = color .. "[" .. sendingPlayer:getUsername() .. "]" .. AC_Utils.MagicSpace .. "<RGB:1,1,1>" .. args[1]
-        local allPlayers = getOnlinePlayers()
-        if allPlayers:size() == 0 then return end
-        for i=0, allPlayers:size()-1 do
-            local player = allPlayers:get(i)
-            if AC_Utils.isStaff(player) then
-                sendServerCommand(player, "AC", command, {sendingPlayer:getUsername(), message})
-            end
-        end
-    elseif command == "BioSave" then
-        PlayerDB.CharacterBioStorage[sendingPlayer:getUsername()] = {description = args[1]}
-        ModData.add("AC_CharacterBioStorage", PlayerDB.CharacterBioStorage)
-    elseif command == "BioLoad" then
-        sendServerCommand(sendingPlayer, module, command, PlayerDB.CharacterBioStorage[args[1]] or {})
-    elseif command == "ApplyRpBuffs" then
-        local stats = sendingPlayer:getStats()
-        if args.boredom and stats:get(CharacterStat.BOREDOM) > args.boredom then
-            stats:remove(CharacterStat.BOREDOM, args.boredom)
-        end
-        if args.hunger and stats:get(CharacterStat.HUNGER) > args.hunger then
-            stats:remove(CharacterStat.HUNGER, args.hunger)
-        end
-        if args.thirst and stats:get(CharacterStat.THIRST) > args.thirst then
-            stats:remove(CharacterStat.THIRST, args.thirst)
-        end
-        if args.stressSmokes and stats:get(CharacterStat.STRESS) > args.stressSmokes then
-            stats:remove(CharacterStat.STRESS, args.stressSmokes)
-        end
-        if args.unhappyness and stats:get(CharacterStat.UNHAPPINESS) > args.unhappyness then
-            stats:remove(CharacterStat.UNHAPPINESS, args.unhappyness)
-        end
+    local handler = CommandHandlers[command]
+    if handler then
+        handler(sendingPlayer, args)
     else
         NotifyTyping(sendingPlayer, command, args)
     end
