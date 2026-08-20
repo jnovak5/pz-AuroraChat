@@ -326,3 +326,17 @@ AC.SpecialCommands["/theme"] = {
     help = "Changes the chatbox color scheme.",
     adminOnly = false,
 }
+AC.SpecialCommands["/servermsg"] = {
+    handler = "ServerMsg",
+    tabHandlers = {},
+    usage = "/servermsg <message>",
+    help = "Broadcast an announcement to all connected players.",
+    adminOnly = true,
+}
+AC.SpecialCommands["/servermessage"] = {
+    handler = "ServerMsg",
+    tabHandlers = {},
+    usage = "/servermessage <message>",
+    help = "Broadcast an announcement to all connected players.",
+    adminOnly = true,
+}

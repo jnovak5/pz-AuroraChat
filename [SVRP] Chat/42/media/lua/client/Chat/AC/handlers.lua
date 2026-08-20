@@ -236,6 +236,11 @@ function AC.Handlers.AddLineInChat(chatMessage, tabID)
     local isAlert = false
     pcall(function() isAlert = chatMessage:isServerAlert() end)
     if isAlert then
+        local alertText = (chatMessage.getText and chatMessage:getText()) or ""
+        local alertAuthor = (chatMessage.isShowAuthor and chatMessage:isShowAuthor() and chatMessage.getAuthor and chatMessage:getAuthor()) or nil
+        if AC.Alert and AC.Alert.ShowServerMessage and alertText ~= "" then
+            AC.Alert.ShowServerMessage(alertText, alertAuthor)
+        end
         return false
     end
 
@@ -478,8 +483,20 @@ function AC.Handlers.AddLineInChat(chatMessage, tabID)
                 end
             end
 
-            -- Trigger Sims-style player voice chatter if sent in General (not radio, not OOC, not recorder)
-            if not parsedMessage.radioFrequency and not parsedMessage.fromRecorder and parsedMessage.chatModifier ~= "ooc" then
+            -- Trigger player voice chatter ONLY for in-character spoken dialogue in General tab (tabID == 0)
+            local isGeneralDialogue = (tabID == 0 or tabID == nil)
+                and (not parsedMessage.radioFrequency)
+                and (not parsedMessage.isOwnRadio)
+                and (not parsedMessage.fromRecorder)
+                and (parsedMessage.chatModifier ~= "ooc")
+                and (parsedMessage.chatModifier ~= "me")
+                and (parsedMessage.chatModifier ~= "do")
+                and (parsedMessage.chatModifier ~= "alert")
+                and (parsedMessage.chatModifier ~= "staff")
+                and (not parsedMessage.isEmote)
+                and (not parsedMessage.isPrivate)
+
+            if isGeneralDialogue then
                 if not isDifferentZ then
                     AC.Voice.PlayChatVoice(chattingPlayer, parsedMessage.chatType, rawText, false)
                 elseif canHearVoiceAcrossZ then
@@ -596,8 +613,11 @@ function AC.Handlers.AddLineInChat(chatMessage, tabID)
             AC.ISChatOriginal.addLineInChat(fakeMessage, tab.tabID)
         end
         ISChat.instance.servermsg = parsedMessage.parts[1].text
-        ISChat.instance.servermsgTimer = 5000
+        ISChat.instance.servermsgTimer = 10000
         ISChat.instance.panel.blinkTabs = blinkingTabsCurrently
+        if AC.Alert and AC.Alert.ShowServerMessage then
+            AC.Alert.ShowServerMessage(parsedMessage.parts[1].text, parsedMessage.author)
+        end
         return true
     end
 

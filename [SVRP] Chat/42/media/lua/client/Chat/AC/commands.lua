@@ -803,6 +803,35 @@ function AC.Commands.OpenCombat(args)
     AC.OpenCombatMatchUI()
 end
 
+function AC.Commands.ServerMsg(args)
+    if not AC.Override(true) and not AC_Utils.isStaff(getPlayer()) then
+        AC_Utils.addErrorToChat("You must be staff to use /servermsg.")
+        return
+    end
+
+    local text = args and args:gsub("^%s*(.-)%s*$", "%1") or ""
+    if text == "" then
+        AC_Utils.addErrorToChat("Usage: /servermsg <message>")
+        return
+    end
+
+    -- Remove surrounding quotes if already present
+    if (text:sub(1, 1) == '"' and text:sub(-1) == '"') or (text:sub(1, 1) == "'" and text:sub(-1) == "'") then
+        text = text:sub(2, -2):gsub("^%s*(.-)%s*$", "%1")
+    end
+
+    if text == "" then
+        AC_Utils.addErrorToChat("Usage: /servermsg <message>")
+        return
+    end
+
+    -- Clean any double quotes inside text so server console receives clean quoted string
+    local cleanText = text:gsub('"', "'")
+
+    -- Send command to server wrapped in quotes so spaces are never cut off by PZ server command parser
+    SendCommandToServer('/servermsg "' .. cleanText .. '"')
+end
+
 function AC.TabListHandler(list, text)
     if text == nil or text == "" then return list[1] end
     for i=1, #list do

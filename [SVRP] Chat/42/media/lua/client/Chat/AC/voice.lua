@@ -3,7 +3,9 @@ if not isClient() then return end
 AC = AC or {}
 AC.Voice = AC.Voice or {}
 
-AC.Voice.ActiveQueues = {}
+AC.Voice.LastPlayTimes = {}
+AC.Voice.LastMessageTexts = {}
+AC.Voice.ActiveSoundIds = {}
 
 --- Check if voice chatter is enabled for local player
 function AC.Voice.IsEnabled()
@@ -37,107 +39,82 @@ function AC.Voice.ToggleVoiceAudio()
     return newState
 end
 
--- Verified Project Zomboid Vanilla Player Voice Sound Script Names
-local femaleSounds = {
-    soft = {"VoiceFemaleWhisperHey", "VoiceFemaleWhisperPsst", "VoiceFemaleLureTsk", "VoiceFemaleSighBored"},
-    normal = {"VoiceFemaleLureCmon", "VoiceFemaleSighReliefed", "VoiceFemaleWhisperHey", "VoiceFemaleExercise"},
-    loud = {"VoiceFemaleLureCmon", "VoiceFemaleMeleeAttack", "VoiceFemaleShoutHey", "VoiceFemaleMeleeShove"},
-    shout = {"VoiceFemaleShoutHey", "VoiceFemaleMeleeAttackHeavy", "VoiceFemaleShoutMegaphoneHey"},
+-- Strictly categorized natural voice pools for each chat range
+local femaleVoicePools = {
+    whisper = { "VoiceFemaleWhisperHey", "VoiceFemaleWhisperPsst" },
+    low     = { "VoiceFemaleSighReliefed", "VoiceFemaleSighBored", "VoiceFemaleLureTsk" },
+    say     = { "VoiceFemale", "VoiceFemaleSighReliefed" },
+    loud    = { "VoiceFemaleLureCmon", "VoiceFemaleMeleeAttack" },
+    shout   = { "VoiceFemaleShoutHey" }
 }
 
-local maleSounds = {
-    soft = {"VoiceMaleWhisperHey", "VoiceMaleWhisperPsst", "VoiceMaleLureTsk", "VoiceMaleSighBored"},
-    normal = {"VoiceMaleLureCmon", "VoiceMaleSighReliefed", "VoiceMaleWhisperHey", "VoiceMaleExercise"},
-    loud = {"VoiceMaleLureCmon", "VoiceMaleMeleeAttack", "VoiceMaleShoutHey", "VoiceMaleMeleeShove"},
-    shout = {"VoiceMaleShoutHey", "VoiceMaleMeleeAttackHeavy", "VoiceMaleShoutMegaphoneHey"},
+local maleVoicePools = {
+    whisper = { "VoiceMaleWhisperHey", "VoiceMaleWhisperPsst" },
+    low     = { "VoiceMaleSighReliefed", "VoiceMaleSighBored", "VoiceMaleLureTsk" },
+    say     = { "VoiceMale", "VoiceMaleSighReliefed" },
+    loud    = { "VoiceMaleLureCmon", "VoiceMaleMeleeAttack" },
+    shout   = { "VoiceMaleShoutHey" }
 }
-
---- Get sound list based on gender and volume
-local function getVoicePool(isFemale, chatType)
-    local pool = isFemale and femaleSounds or maleSounds
-    if chatType == "whisper" then
-        return pool.soft
-    elseif chatType == "low" then
-        return pool.soft
-    elseif chatType == "say" then
-        return pool.normal
-    elseif chatType == "loud" then
-        return pool.loud
-    elseif chatType == "shout" then
-        return pool.shout
-    end
-    return pool.normal
-end
-
---- Determine how many chatter syllables to play based on character length (1 to 3 seconds)
-local function getSyllableCount(text)
-    local len = string.len(text or "")
-    if len <= 18 then
-        return 1
-    elseif len <= 45 then
-        return 2
-    else
-        return 3
-    end
-end
 
 --- Get volume factor based on chat volume type
 local function getVolumeFactor(chatType)
     if chatType == "whisper" then
-        return 0.35
+        return 0.30
     elseif chatType == "low" then
-        return 0.60
+        return 0.55
     elseif chatType == "say" then
-        return 0.90
+        return 0.85
     elseif chatType == "loud" then
-        return 1.20
+        return 1.15
     elseif chatType == "shout" then
-        return 1.50
+        return 1.45
     end
-    return 0.90
+    return 0.85
 end
 
---- Play a voice sound on a player emitter or object with fallback
-local function playVoiceClip(player, soundName, volume)
+--- Play a voice sound with pitch & volume modulation on player emitter
+local function playVoiceClip(player, playerKey, soundName, volume, pitch)
     if not player or not soundName then return end
-    local played = false
-
-    -- Try player:getEmitter()
     local emitter = player:getEmitter()
     if emitter then
-        local ok, res = pcall(function()
+        -- Stop any existing voice sound currently playing on this player's emitter
+        if AC.Voice.ActiveSoundIds[playerKey] then
+            pcall(function()
+                emitter:stopSound(AC.Voice.ActiveSoundIds[playerKey])
+            end)
+            AC.Voice.ActiveSoundIds[playerKey] = nil
+        end
+
+        pcall(function()
             local soundId = emitter:playSound(soundName)
             if soundId and soundId > 0 then
+                AC.Voice.ActiveSoundIds[playerKey] = soundId
                 if emitter.setVolume then
                     emitter:setVolume(soundId, volume or 1.0)
                 end
-                return true
-            end
-            return false
-        end)
-        if ok and res then played = true end
-    end
+                if emitter.setPitch and pitch then
+                    emitter:setPitch(soundId, pitch)
+                end
 
-    -- Fallback to player:playSound()
-    if not played then
-        pcall(function()
-            local soundId = player:playSound(soundName)
-            if soundId and soundId > 0 then played = true end
-        end)
-    end
-
-    -- Fallback to player:playSoundLocal()
-    if not played then
-        pcall(function()
-            if player.playSoundLocal then
-                player:playSoundLocal(soundName)
-                played = true
+                -- Apply character's chosen named voice (Bob, Hank, James, Chris / Kate, Casey-Jo, Maryanne, Janine)
+                local desc = player.getDescriptor and player:getDescriptor()
+                if desc and emitter.setParameterValueByName then
+                    local vType = desc.getVoiceType and desc:getVoiceType()
+                    local vPitch = desc.getVoicePitch and desc:getVoicePitch()
+                    if vType ~= nil then
+                        emitter:setParameterValueByName(soundId, "CharacterVoiceType", tonumber(vType) or 0)
+                    end
+                    if vPitch ~= nil then
+                        emitter:setParameterValueByName(soundId, "CharacterVoicePitch", tonumber(vPitch) or 0)
+                    end
+                end
             end
         end)
+    else
+        pcall(function()
+            player:playSound(soundName)
+        end)
     end
-
-    print(string.format("[SVRP Chat Voice] playVoiceClip: sound=%s, player=%s, volume=%.2f, success=%s",
-        tostring(soundName), tostring(player:getUsername()), volume or 1.0, tostring(played)))
 end
 
 --- Play voice chatter for a player character
@@ -146,79 +123,57 @@ end
 --- @param text string
 --- @param isMuffled boolean
 function AC.Voice.PlayChatVoice(player, chatType, text, isMuffled)
-    if not player then
-        print("[SVRP Chat Voice] PlayChatVoice: player is nil, skipping voice audio.")
-        return
-    end
-    if not AC.Voice.IsEnabled() then
-        print("[SVRP Chat Voice] PlayChatVoice: voice chatter is disabled in player settings.")
-        return
-    end
+    if not player then return end
+    if not AC.Voice.IsEnabled() then return end
 
-    local sandbox = SandboxVars.SVRPChat or {}
-    if sandbox.EnableVoiceChatter == false then
-        print("[SVRP Chat Voice] PlayChatVoice: voice chatter is disabled in Sandbox options.")
-        return
-    end
+    local sandbox = SandboxVars.SVRPChat or SandboxVars.SVRPChat or {}
+    if sandbox.EnableVoiceChatter == false then return end
 
-    local isFemale = player:isFemale()
-    local pool = getVoicePool(isFemale, chatType)
-    if not pool or #pool == 0 then
-        print("[SVRP Chat Voice] PlayChatVoice: sound pool is empty for chatType=" .. tostring(chatType))
-        return
-    end
-
-    local syllableCount = getSyllableCount(text)
-    local volume = getVolumeFactor(chatType)
-    if isMuffled then
-        volume = volume * 0.5
-    end
-
-    local selectedSounds = {}
-    for i = 1, syllableCount do
-        local randIndex = ZombRand(#pool) + 1
-        table.insert(selectedSounds, pool[randIndex])
-    end
-
-    print(string.format("[SVRP Chat Voice] PlayChatVoice: player=%s (female=%s), chatType=%s, textLen=%d, syllables=%d, muffled=%s, sounds=%s",
-        tostring(player:getUsername()), tostring(isFemale), tostring(chatType), string.len(text or ""), syllableCount, tostring(isMuffled), table.concat(selectedSounds, ", ")))
-
-    -- Play first sound immediately
-    playVoiceClip(player, selectedSounds[1], volume)
-
-    -- If more syllables, queue them with natural conversational cadence (~280ms)
-    if #selectedSounds > 1 then
-        table.insert(AC.Voice.ActiveQueues, {
-            player = player,
-            sounds = selectedSounds,
-            index = 2,
-            nextTime = getTimestampMs() + 280,
-            volume = volume
-        })
-    end
-end
-
---- Process active voice chatter queues on tick
-function AC.Voice.Update()
-    if #AC.Voice.ActiveQueues == 0 then return end
-
+    local playerKey = (player.getUsername and player:getUsername()) or (player.getOnlineID and tostring(player:getOnlineID())) or tostring(player)
     local now = getTimestampMs()
-    for i = #AC.Voice.ActiveQueues, 1, -1 do
-        local item = AC.Voice.ActiveQueues[i]
-        if now >= item.nextTime then
-            local soundName = item.sounds[item.index]
-            if item.player and soundName then
-                playVoiceClip(item.player, soundName, item.volume)
-            end
 
-            item.index = item.index + 1
-            if item.index > #item.sounds then
-                table.remove(AC.Voice.ActiveQueues, i)
-            else
-                item.nextTime = now + 260 + ZombRand(80)
-            end
+    -- 1. Exact Message Deduplication (prevents multiple tabs from re-triggering for the same message)
+    if text and text ~= "" then
+        local lastText = AC.Voice.LastMessageTexts and AC.Voice.LastMessageTexts[playerKey]
+        local lastTextTime = AC.Voice.LastPlayTimes[playerKey] or 0
+        if lastText == text and (now - lastTextTime) < 2500 then
+            return
         end
     end
-end
 
-Events.OnTick.Add(AC.Voice.Update)
+    -- 2. Debounce: Minimum cooldown (1000ms) between voice triggers for the same player
+    local lastTime = AC.Voice.LastPlayTimes[playerKey] or 0
+    if (now - lastTime) < 1000 then
+        return
+    end
+
+    AC.Voice.LastPlayTimes[playerKey] = now
+    AC.Voice.LastMessageTexts = AC.Voice.LastMessageTexts or {}
+    AC.Voice.LastMessageTexts[playerKey] = text
+
+    local isFemale = player:isFemale()
+    local pools = isFemale and femaleVoicePools or maleVoicePools
+    local pool = pools[chatType] or pools.say
+    if not pool or #pool == 0 then return end
+
+    local chosenSound = pool[ZombRand(#pool) + 1]
+
+    -- Volume calculation with muffling
+    local volume = getVolumeFactor(chatType)
+    if isMuffled then
+        volume = volume * 0.45
+    end
+
+    -- Pitch variation: slight organic variance (0.94 - 1.06) + punctuation awareness
+    local pitch = 0.94 + (ZombRand(12) / 100)
+    if text then
+        if string.find(text, "%?") then
+            pitch = pitch + 0.10 -- Inquisitive rising pitch for questions
+        elseif string.find(text, "%!") then
+            pitch = pitch + 0.05 -- Energetic pitch for exclamations
+            volume = math.min(1.50, volume * 1.1)
+        end
+    end
+
+    playVoiceClip(player, playerKey, chosenSound, volume, pitch)
+end
