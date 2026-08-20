@@ -1,4 +1,4 @@
-if not isClient() then return end -- only in MP
+if isServer() and not isClient() then return end
 AC = AC or {}
 local sandbox = (SandboxVars and SandboxVars.SVRPChatLocal) or {}
 
@@ -340,3 +340,18 @@ AC.SpecialCommands["/servermessage"] = {
     help = "Broadcast an announcement to all connected players.",
     adminOnly = true,
 }
+AC.SpecialCommands["/cellmsg"] = {
+    handler = "CellMsg",
+    tabHandlers = {},
+    usage = "/cellmsg <message>",
+    help = "Broadcast an announcement banner to players within a 50x50 tile area.",
+    adminOnly = true,
+}
+AC.SpecialCommands["/cmsg"] = {
+    handler = "CellMsg",
+    tabHandlers = {},
+    usage = "/cmsg <message>",
+    help = "Broadcast an announcement banner to players within a 50x50 tile area.",
+    adminOnly = true,
+}
+

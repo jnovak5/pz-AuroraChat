@@ -1,5 +1,5 @@
 ---@diagnostic disable: duplicate-set-field
-if not isClient() then return end -- only in MP
+if isServer() and not isClient() then return end
 
 require "Chat/ISChat"
 require "Chat/AC"

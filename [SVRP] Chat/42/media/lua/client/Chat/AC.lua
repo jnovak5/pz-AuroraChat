@@ -1,4 +1,4 @@
-if not isClient() then return end -- only in MP
+if isServer() and not isClient() then return end
 AC = AC or {}
 
 require "Chat/AC/afk"
@@ -12,10 +12,15 @@ require "Chat/AC/indicator"
 require "Chat/AC/languages"
 require "Chat/AC/meta"
 require "Chat/AC/parsing"
+require "Chat/AC/radio_map"
+require "Chat/AC/events_system"
 require "Chat/AC/recorders"
 require "Chat/AC/status"
 require "Chat/AC/voice"
+require "Chat/AC/worldmap_hooks"
 require "Chat/AC_ISCombatMatchUI"
+require "Chat/AC_ISCreateEventUI"
+require "Chat/AC_ISEventManageUI"
 
 -- Must be last in require chain
 require "Chat/AC/events"

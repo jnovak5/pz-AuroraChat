@@ -1,4 +1,4 @@
-if not isClient() then return end
+if isServer() and not isClient() then return end
 
 AC = AC or {}
 AC.Visibility = AC.Visibility or {}

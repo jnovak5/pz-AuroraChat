@@ -1,4 +1,4 @@
-if not isClient() then return end -- only in MP
+if isServer() and not isClient() then return end
 AC = AC or {}
 AC.Commands = AC.Commands or {}
 AC.TabHandlers = AC.TabHandlers or {}
@@ -830,6 +830,42 @@ function AC.Commands.ServerMsg(args)
 
     -- Send command to server wrapped in quotes so spaces are never cut off by PZ server command parser
     SendCommandToServer('/servermsg "' .. cleanText .. '"')
+end
+
+function AC.Commands.CellMsg(args)
+    local player = getPlayer()
+    if not AC.Override(true) and not AC_Utils.isStaff(player) then
+        AC_Utils.addErrorToChat("You must be staff to use /cellmsg.")
+        return
+    end
+
+    local text = args and args:gsub("^%s*(.-)%s*$", "%1") or ""
+    if text == "" then
+        AC_Utils.addErrorToChat("Usage: /cellmsg <message>")
+        return
+    end
+
+    -- Remove surrounding quotes if already present
+    if (text:sub(1, 1) == '"' and text:sub(-1) == '"') or (text:sub(1, 1) == "'" and text:sub(-1) == "'") then
+        text = text:sub(2, -2):gsub("^%s*(.-)%s*$", "%1")
+    end
+
+    if text == "" then
+        AC_Utils.addErrorToChat("Usage: /cellmsg <message>")
+        return
+    end
+
+    local cleanText = text:gsub('"', "'")
+    local px = player and math.floor(player:getX()) or 0
+    local py = player and math.floor(player:getY()) or 0
+    local author = player and player:getUsername() or "Admin"
+
+    if isClient() then
+        sendClientCommand("AC", "CellMsg", { text = cleanText, x = px, y = py, author = author, radius = 25 })
+    else
+        AC.Alert.ShowCellMessage(cleanText, author)
+        AC_Utils.addInfoToChat(string.format("[Local Area Broadcast] %s: %s", author, cleanText))
+    end
 end
 
 function AC.TabListHandler(list, text)

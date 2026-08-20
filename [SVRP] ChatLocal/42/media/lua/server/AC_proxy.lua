@@ -499,6 +499,135 @@ CommandHandlers.CombatRoll = function(sendingPlayer, args)
     end
 end
 
+CommandHandlers.CombatHealth = function(sendingPlayer, args)
+    local username = sendingPlayer:getUsername()
+    local currentHP = tonumber(args[1]) or 100
+    local maxHP = tonumber(args[2]) or 100
+    local logText = args[3] or ""
+
+    PlayerDB.PlayerToCombatMatch = PlayerDB.PlayerToCombatMatch or {}
+    PlayerDB.CombatMatches = PlayerDB.CombatMatches or {}
+    local hostName = PlayerDB.PlayerToCombatMatch[username]
+    if hostName and PlayerDB.CombatMatches[hostName] then
+        local match = PlayerDB.CombatMatches[hostName]
+        match.health = match.health or {}
+        match.health[username] = { current = currentHP, max = maxHP }
+        if logText ~= "" then
+            table.insert(match.history, { text = logText, r = 0.95, g = 0.4, b = 0.4 })
+            if #match.history > 100 then table.remove(match.history, 1) end
+        end
+        broadcastCombatMatch(match, "CombatSync", {match})
+    end
+end
+
+CommandHandlers.EventCreate = function(sendingPlayer, args)
+    local hostName = sendingPlayer:getUsername()
+    PlayerDB.PlayerEvents = PlayerDB.PlayerEvents or {}
+
+    local eventId = hostName .. "_" .. getTimestampMs()
+    local newEvent = {
+        id = eventId,
+        host = hostName,
+        hostCharName = args.hostCharName or hostName,
+        title = args.title or "Player Event",
+        description = args.description or "",
+        category = args.category or "Roleplay",
+        radius = tonumber(args.radius) or 50,
+        isPublic = (args.isPublic ~= false),
+        isAdminEvent = (args.isAdminEvent == true),
+        x = tonumber(args.x) or math.floor(sendingPlayer:getX()),
+        y = tonumber(args.y) or math.floor(sendingPlayer:getY()),
+        z = tonumber(args.z) or math.floor(sendingPlayer:getZ()),
+        attendees = {
+            [hostName] = { status = "accepted", charName = args.hostCharName or hostName }
+        },
+        timestamp = getTimestamp(),
+    }
+
+    PlayerDB.PlayerEvents[eventId] = newEvent
+    ModData.add("AC_PlayerEvents", PlayerDB.PlayerEvents)
+    sendServerCommand("AC", "EventSync", { PlayerDB.PlayerEvents })
+
+    if newEvent.isPublic then
+        local tag = newEvent.isAdminEvent and "[OFFICIAL EVENT]" or "[EVENT]"
+        local notifyMsg = string.format("%s '%s' started at (%d, %d)! Check your map to view or RSVP.", tag, newEvent.title, newEvent.x, newEvent.y)
+        sendServerCommand("AC", "EventBroadcast", { notifyMsg, newEvent.isAdminEvent })
+    end
+end
+
+CommandHandlers.EventCancel = function(sendingPlayer, args)
+    local hostName = sendingPlayer:getUsername()
+    local eventId = args[1]
+    PlayerDB.PlayerEvents = PlayerDB.PlayerEvents or {}
+
+    local event = PlayerDB.PlayerEvents[eventId]
+    if event and (event.host == hostName or sendingPlayer:isAccessLevel("admin")) then
+        local title = event.title
+        PlayerDB.PlayerEvents[eventId] = nil
+        ModData.add("AC_PlayerEvents", PlayerDB.PlayerEvents)
+        sendServerCommand("AC", "EventSync", { PlayerDB.PlayerEvents })
+        sendServerCommand("AC", "EventBroadcast", { string.format("Event '%s' has concluded/ended.", title), false })
+    end
+end
+
+CommandHandlers.EventInvite = function(sendingPlayer, args)
+    local hostName = sendingPlayer:getUsername()
+    local eventId = args[1]
+    local targetList = args[2] or {}
+    PlayerDB.PlayerEvents = PlayerDB.PlayerEvents or {}
+
+    local event = PlayerDB.PlayerEvents[eventId]
+    if not event then return end
+
+    local onlinePlayers = getOnlinePlayers()
+    for _, targetUsername in ipairs(targetList) do
+        event.attendees[targetUsername] = event.attendees[targetUsername] or { status = "invited", charName = targetUsername }
+        if onlinePlayers then
+            for i = 0, onlinePlayers:size() - 1 do
+                local targetP = onlinePlayers:get(i)
+                if targetP and targetP:getUsername() == targetUsername then
+                    sendServerCommand(targetP, "AC", "EventInvite", { eventId, event.title, event.hostCharName or hostName, event.isAdminEvent })
+                    break
+                end
+            end
+        end
+    end
+
+    ModData.add("AC_PlayerEvents", PlayerDB.PlayerEvents)
+    sendServerCommand("AC", "EventSync", { PlayerDB.PlayerEvents })
+end
+
+CommandHandlers.EventRSVP = function(sendingPlayer, args)
+    local username = sendingPlayer:getUsername()
+    local eventId = args[1]
+    local status = args[2] or "accepted"
+    local charName = args[3] or username
+    PlayerDB.PlayerEvents = PlayerDB.PlayerEvents or {}
+
+    local event = PlayerDB.PlayerEvents[eventId]
+    if event then
+        event.attendees = event.attendees or {}
+        event.attendees[username] = { status = status, charName = charName }
+        ModData.add("AC_PlayerEvents", PlayerDB.PlayerEvents)
+        sendServerCommand("AC", "EventSync", { PlayerDB.PlayerEvents })
+    end
+end
+
+CommandHandlers.CellMsg = function(sendingPlayer, args)
+    if not sendingPlayer then return end
+    if not AC_Utils.isStaff(sendingPlayer) and not AC.Override(true) then return end
+
+    local text = args.text or args[1]
+    if not text or text == "" then return end
+
+    local x = args.x or sendingPlayer:getX()
+    local y = args.y or sendingPlayer:getY()
+    local author = args.author or sendingPlayer:getUsername()
+    local radius = args.radius or 25 -- 50x50 tiles = radius 25
+
+    sendServerCommand("AC", "CellMsg", { text = text, author = author, x = x, y = y, radius = radius })
+end
+
 local function onACCommand(module, command, sendingPlayer, args)
     if module ~= "AC" then return end
     args = args or {}
@@ -570,6 +699,7 @@ local function ProcessLastSeenTimes()
     ModData.add("AC_PlayerStatus", PlayerDB.PlayerStatus)
     ModData.add("AC_CharacterBioStorage", PlayerDB.CharacterBioStorage)
     ModData.add("AC_CharacterPortraitStorage", PlayerDB.CharacterPortraitStorage)
+    ModData.add("AC_PlayerEvents", PlayerDB.PlayerEvents)
 end
 
 local function OnInitGlobalModData(isNewGame)
@@ -582,6 +712,7 @@ local function OnInitGlobalModData(isNewGame)
     PlayerDB.PlayerStatus   = ModData.getOrCreate("AC_PlayerStatus")
     PlayerDB.CharacterBioStorage = ModData.getOrCreate("AC_CharacterBioStorage")
     PlayerDB.CharacterPortraitStorage = ModData.getOrCreate("AC_CharacterPortraitStorage")
+    PlayerDB.PlayerEvents   = ModData.getOrCreate("AC_PlayerEvents")
 end
 
 Events.EveryDays.Add(ProcessLastSeenTimes)

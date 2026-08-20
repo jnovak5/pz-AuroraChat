@@ -1,4 +1,4 @@
-if not isClient() then return end -- only in MP
+if isServer() and not isClient() then return end
 AC = AC or {}
 AC.Events = AC.Events or {}
 AC.Events.IsFirstSync = true
@@ -24,6 +24,9 @@ function AC.Events.OnReceiveGlobalModData(key, modData)
         end
     elseif key == "AC_PlayerStatus" then
         AC.PlayerStatus = modData
+    elseif key == "AC_PlayerEvents" then
+        AC.PlayerEvents = AC.PlayerEvents or {}
+        AC.PlayerEvents.ActiveEvents = modData or {}
     end
 end
 
@@ -33,6 +36,7 @@ function AC.Events.OnConnected()
     ModData.request("AC_PlayerModifiers")
     ModData.request("AC_PlayerNames")
     ModData.request("AC_PlayerStatus")
+    ModData.request("AC_PlayerEvents")
 end
 
 function AC.Events.onServerCommand(module, command, args)
@@ -73,7 +77,44 @@ function AC.Events.onServerCommand(module, command, args)
     elseif command == "SetPlayerStatus" then
         local player = args[1]
         local status = args[2]
-        AC.PlayerStatus[player] = status
+        if status and status ~= "" then
+            AC.PlayerStatus[player] = status
+        else
+            AC.PlayerStatus[player] = nil
+        end
+    elseif command == "EventSync" then
+        AC.PlayerEvents = AC.PlayerEvents or {}
+        AC.PlayerEvents.ActiveEvents = args[1] or {}
+    elseif command == "EventBroadcast" then
+        local msg = args[1]
+        if msg then
+            AC_Utils.addInfoToChat(msg)
+        end
+    elseif command == "EventInvite" then
+        local eventId = args[1]
+        local eventTitle = args[2]
+        local hostName = args[3]
+        local isAdmin = args[4] or false
+        pcall(function() getSoundManager():playUISound("UIActivatePlayButton") end)
+
+        local tag = isAdmin and "★ Official Server Event" or "Player Event"
+        AC_Utils.addInfoToChat(string.format("[EVENT INVITE] %s invited you to '%s' (%s)! Check your Map to RSVP.", hostName, eventTitle, tag))
+
+        local w, h = 340, 160
+        local x = (getCore():getScreenWidth() - w) / 2
+        local y = (getCore():getScreenHeight() - h) / 2
+        local prompt = string.format("%s invited you to '%s' (%s).\nWould you like to RSVP as Going?", hostName, eventTitle, tag)
+        local modal = ISModalDialog:new(x, y, w, h, prompt, true, eventId, function(_, button)
+            if button.internal == "YES" then
+                AC.PlayerEvents.RSVP(eventId, "accepted")
+                AC_Utils.addInfoToChat("RSVP confirmed: Going to '" .. eventTitle .. "'!")
+            else
+                AC.PlayerEvents.RSVP(eventId, "maybe")
+                AC_Utils.addInfoToChat("RSVP set to: Interested / Maybe.")
+            end
+        end)
+        modal:initialise()
+        modal:addToUIManager()
     elseif command == "AddKnownLanguage" then
         local languageData = AC.Languages[args[1]]
         if languageData then
@@ -161,6 +202,23 @@ function AC.Events.onServerCommand(module, command, args)
         AC_Combat.CurrentMatch = nil
         if AC_ISCombatMatchUI.instance then
             AC_ISCombatMatchUI.instance:updateMatchView()
+        end
+    elseif command == "CellMsg" then
+        local data = args[1] or args
+        if data and data.text then
+            local p = getPlayer()
+            if p then
+                local px = p:getX()
+                local py = p:getY()
+                local tx = data.x or px
+                local ty = data.y or py
+                local rad = data.radius or 25
+                -- 50x50 tile area check
+                if math.abs(px - tx) <= rad and math.abs(py - ty) <= rad then
+                    AC.Alert.ShowCellMessage(data.text, data.author)
+                    AC_Utils.addInfoToChat(string.format("[Local Area Broadcast] %s: %s", data.author or "Admin", data.text))
+                end
+            end
         end
     end
 end

@@ -1,10 +1,11 @@
-if not isClient() then return end
+if isServer() and not isClient() then return end
 
 AC = AC or {}
 AC.Alert = AC.Alert or {}
 
 AC.Alert.CurrentMessage = nil
 AC.Alert.Author = nil
+AC.Alert.IsCell = false
 AC.Alert.Timer = 0
 AC.Alert.TotalDuration = 0
 AC.Alert.Lines = {}
@@ -70,7 +71,7 @@ function AC.Alert.PlayAlertSound()
     end
 end
 
---- Show a high-visibility server alert broadcast
+--- Show a high-visibility server alert broadcast (server-wide)
 function AC.Alert.ShowServerMessage(text, author)
     if not text or text == "" then return end
 
@@ -81,6 +82,7 @@ function AC.Alert.ShowServerMessage(text, author)
     AC.Alert.LastAlertText = text
     AC.Alert.LastAlertTime = now
 
+    AC.Alert.IsCell = false
     AC.Alert.CurrentMessage = text
     AC.Alert.Author = (author and author ~= "" and author ~= "Server") and author or nil
 
@@ -100,7 +102,35 @@ function AC.Alert.ShowServerMessage(text, author)
     AC.Alert.PlayAlertSound()
 end
 
---- Render the high-visibility server alert broadcast on screen
+--- Show a high-visibility local area alert broadcast (50x50 tile cell)
+function AC.Alert.ShowCellMessage(text, author)
+    if not text or text == "" then return end
+
+    local now = getTimestampMs()
+    if AC.Alert.LastAlertText == text and (now - AC.Alert.LastAlertTime) < 3000 then
+        return
+    end
+    AC.Alert.LastAlertText = text
+    AC.Alert.LastAlertTime = now
+
+    AC.Alert.IsCell = true
+    AC.Alert.CurrentMessage = text
+    AC.Alert.Author = (author and author ~= "" and author ~= "Server") and author or nil
+
+    local duration = math.min(18000, math.max(10000, string.len(text) * 120))
+    AC.Alert.TotalDuration = duration
+    AC.Alert.Timer = duration
+
+    local screenW = getCore():getScreenWidth()
+    local maxBannerW = math.min(1200, math.floor(screenW * 0.75))
+    local maxTextW = maxBannerW - 80
+
+    AC.Alert.Lines = wrapText(text, FONT_TITLE, maxTextW)
+
+    AC.Alert.PlayAlertSound()
+end
+
+--- Render the high-visibility server or local area alert broadcast on screen
 function AC.Alert.Render(uiElement)
     if not AC.Alert.CurrentMessage or AC.Alert.Timer <= 0 then
         return
@@ -134,13 +164,21 @@ function AC.Alert.Render(uiElement)
     local paddingY = 22
     local paddingX = 40
 
+    local isCell = AC.Alert.IsCell == true
+    local headerText = ""
+    if isCell then
+        headerText = AC.Alert.Author and ("[ LOCAL AREA ANNOUNCEMENT - " .. string.upper(AC.Alert.Author) .. " ]") or "[ LOCAL AREA ANNOUNCEMENT ]"
+    else
+        headerText = AC.Alert.Author and ("[ SERVER ANNOUNCEMENT - " .. string.upper(AC.Alert.Author) .. " ]") or "[ SERVER ANNOUNCEMENT ]"
+    end
+
     -- Determine banner width based on widest line
     local maxMeasuredW = 0
     for _, line in ipairs(AC.Alert.Lines) do
         local lw = tm:MeasureStringX(FONT_TITLE, line)
         if lw > maxMeasuredW then maxMeasuredW = lw end
     end
-    local headerW = tm:MeasureStringX(FONT_HEADER, "[ SERVER ANNOUNCEMENT ]")
+    local headerW = tm:MeasureStringX(FONT_HEADER, headerText)
     if headerW > maxMeasuredW then maxMeasuredW = headerW end
 
     local bannerW = math.max(650, maxMeasuredW + (paddingX * 2))
@@ -152,25 +190,37 @@ function AC.Alert.Render(uiElement)
     local ui = uiElement or ISAlert.instance or ISChat.instance
     if not ui then return end
 
+    -- Color scheme: Server = Crimson/Gold, Cell = Vivid Cyan/Teal
+    local glowR, glowG, glowB = 0.85, 0.15, 0.15
+    local topR, topG, topB = 0.95, 0.25, 0.15
+    local borderR, borderG, borderB = 0.85, 0.35, 0.15
+    local headR, headG, headB = 1.0, 0.80, 0.20
+
+    if isCell then
+        glowR, glowG, glowB = 0.10, 0.65, 0.85
+        topR, topG, topB = 0.15, 0.85, 0.95
+        borderR, borderG, borderB = 0.25, 0.75, 0.90
+        headR, headG, headB = 0.30, 0.95, 0.85
+    end
+
     -- 1. Dark semi-transparent background with rich glass styling
     -- Backdrop shadow / glow
-    ui:drawRect(bannerX - 4, bannerY - 4, bannerW + 8, bannerH + 8, alpha * 0.45, 0.85, 0.15, 0.15)
+    ui:drawRect(bannerX - 4, bannerY - 4, bannerW + 8, bannerH + 8, alpha * 0.45, glowR, glowG, glowB)
     -- Main background panel (deep obsidian)
     ui:drawRect(bannerX, bannerY, bannerW, bannerH, alpha * 0.94, 0.04, 0.04, 0.07)
-    -- Accent top bar (crimson glow)
-    ui:drawRect(bannerX, bannerY, bannerW, 4, alpha * 0.98, 0.95, 0.25, 0.15)
+    -- Accent top bar
+    ui:drawRect(bannerX, bannerY, bannerW, 4, alpha * 0.98, topR, topG, topB)
     -- Double glowing border
-    ui:drawRectBorder(bannerX, bannerY, bannerW, bannerH, alpha * 0.88, 0.85, 0.35, 0.15)
-    ui:drawRectBorder(bannerX + 1, bannerY + 1, bannerW - 2, bannerH - 2, alpha * 0.55, 0.95, 0.55, 0.25)
+    ui:drawRectBorder(bannerX, bannerY, bannerW, bannerH, alpha * 0.88, borderR, borderG, borderB)
+    ui:drawRectBorder(bannerX + 1, bannerY + 1, bannerW - 2, bannerH - 2, alpha * 0.55, topR, topG, topB)
 
-    -- 2. Header Tag: "[ SERVER ANNOUNCEMENT ]"
-    local headerText = AC.Alert.Author and ("[ SERVER ANNOUNCEMENT - " .. string.upper(AC.Alert.Author) .. " ]") or "[ SERVER ANNOUNCEMENT ]"
+    -- 2. Header Tag
     local curY = bannerY + paddingY - 6
 
     -- Shadow
     ui:drawTextCentre(headerText, bannerX + (bannerW / 2) + 1, curY + 1, 0, 0, 0, alpha * 0.9, FONT_HEADER)
-    -- Main header text (vivid golden amber)
-    ui:drawTextCentre(headerText, bannerX + (bannerW / 2), curY, 1.0, 0.80, 0.20, alpha, FONT_HEADER)
+    -- Main header text
+    ui:drawTextCentre(headerText, bannerX + (bannerW / 2), curY, headR, headG, headB, alpha, FONT_HEADER)
 
     curY = curY + headerH + 6
 

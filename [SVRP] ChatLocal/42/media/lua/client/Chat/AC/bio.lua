@@ -1,4 +1,4 @@
-if not isClient() then return end -- only in MP
+if isServer() and not isClient() then return end
 AC = AC or {}
 AC.Bio = AC.Bio or {}
 

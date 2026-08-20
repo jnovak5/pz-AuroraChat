@@ -1,4 +1,4 @@
-if not isClient() then return end
+if isServer() and not isClient() then return end
 
 local FONT_HGT_SMALL = (getTextManager() and getTextManager():getFontHeight(UIFont.Small)) or 14
 local FONT_HGT_MEDIUM = (getTextManager() and getTextManager():getFontHeight(UIFont.Medium)) or 18
@@ -128,7 +128,14 @@ function AC_ISCombatMatchUI:createChildren()
         local dx = pad + (i - 1) * (diceBtnWid + pad / 2)
         local btn = ISButton:new(dx, diceSectionY, diceBtnWid, btnHgt, dName, self, function() AC_ISCombatMatchUI.doRollDice(dName) end)
         btn:initialise()
-        btn.backgroundColor = {r=0.2, g=0.25, b=0.35, a=0.8}
+        btn.backgroundColor = {r=0.12, g=0.18, b=0.28, a=0.9}
+        btn.borderColor = {r=0.3, g=0.6, b=0.85, a=0.8}
+        local iconTex = getTexture("media/ui/AC_dice_" .. dName .. ".png") or getTexture("media/ui/AC_dice.png")
+        if iconTex then
+            btn.iconTexture = iconTex
+            btn.joypadTextureWH = math.max(16, math.floor(btnHgt * 0.72))
+            btn.tooltip = "Roll " .. string.upper(dName)
+        end
         self:addChild(btn)
         table.insert(self.diceButtons, btn)
     end
@@ -146,8 +153,56 @@ function AC_ISCombatMatchUI:createChildren()
     self.customRollButton.backgroundColor = {r=0.8, g=0.5, b=0.1, a=0.8}
     self:addChild(self.customRollButton)
 
+    -- Player Health / HP Tracking Controls
+    local hpBarY = customY + btnHgt + 8 * FONT_SCALE
+    local hpBtnW = 36 * FONT_SCALE
+    local hpCenterW = self.width - pad * 2 - (hpBtnW * 7 + 16 * FONT_SCALE)
+
+    self.btnHpSub10 = ISButton:new(pad, hpBarY, hpBtnW, btnHgt, "-10", self, function() self:adjustHP(-10) end)
+    self.btnHpSub10:initialise()
+    self.btnHpSub10.backgroundColor = {r=0.5, g=0.1, b=0.1, a=0.8}
+    self:addChild(self.btnHpSub10)
+
+    self.btnHpSub5 = ISButton:new(pad + hpBtnW + 2, hpBarY, hpBtnW, btnHgt, "-5", self, function() self:adjustHP(-5) end)
+    self.btnHpSub5:initialise()
+    self.btnHpSub5.backgroundColor = {r=0.45, g=0.15, b=0.1, a=0.8}
+    self:addChild(self.btnHpSub5)
+
+    self.btnHpSub1 = ISButton:new(pad + (hpBtnW * 2) + 4, hpBarY, hpBtnW, btnHgt, "-1", self, function() self:adjustHP(-1) end)
+    self.btnHpSub1:initialise()
+    self.btnHpSub1.backgroundColor = {r=0.4, g=0.2, b=0.1, a=0.8}
+    self:addChild(self.btnHpSub1)
+
+    self.hpDisplayBtn = ISButton:new(pad + (hpBtnW * 3) + 8, hpBarY, hpCenterW, btnHgt, "HP: 100 / 100", self, nil)
+    self.hpDisplayBtn:initialise()
+    self.hpDisplayBtn.backgroundColor = {r=0.1, g=0.35, b=0.15, a=0.9}
+    self.hpDisplayBtn.borderColor = {r=0.2, g=0.85, b=0.3, a=0.9}
+    self:addChild(self.hpDisplayBtn)
+
+    local rightStartX = pad + (hpBtnW * 3) + 8 + hpCenterW + 4
+
+    self.btnHpAdd1 = ISButton:new(rightStartX, hpBarY, hpBtnW, btnHgt, "+1", self, function() self:adjustHP(1) end)
+    self.btnHpAdd1:initialise()
+    self.btnHpAdd1.backgroundColor = {r=0.1, g=0.35, b=0.15, a=0.8}
+    self:addChild(self.btnHpAdd1)
+
+    self.btnHpAdd5 = ISButton:new(rightStartX + hpBtnW + 2, hpBarY, hpBtnW, btnHgt, "+5", self, function() self:adjustHP(5) end)
+    self.btnHpAdd5:initialise()
+    self.btnHpAdd5.backgroundColor = {r=0.1, g=0.4, b=0.2, a=0.8}
+    self:addChild(self.btnHpAdd5)
+
+    self.btnHpAdd10 = ISButton:new(rightStartX + (hpBtnW * 2) + 4, hpBarY, hpBtnW, btnHgt, "+10", self, function() self:adjustHP(10) end)
+    self.btnHpAdd10:initialise()
+    self.btnHpAdd10.backgroundColor = {r=0.1, g=0.45, b=0.25, a=0.8}
+    self:addChild(self.btnHpAdd10)
+
+    self.btnHpFull = ISButton:new(rightStartX + (hpBtnW * 3) + 6, hpBarY, hpBtnW, btnHgt, "Full", self, function() self:resetHP() end)
+    self.btnHpFull:initialise()
+    self.btnHpFull.backgroundColor = {r=0.1, g=0.5, b=0.3, a=0.8}
+    self:addChild(self.btnHpFull)
+
     -- Combat Roll History Feed
-    local histY = customY + btnHgt + 10 * FONT_SCALE
+    local histY = hpBarY + btnHgt + 10 * FONT_SCALE
     local histHgt = self.height - histY - pad
     self.historyList = ISScrollingListBox:new(pad, histY, self.width - pad * 2, histHgt)
     self.historyList:initialise()
@@ -158,6 +213,46 @@ function AC_ISCombatMatchUI:createChildren()
     self.historyList.doDrawItem = AC_ISCombatMatchUI.drawHistoryItem
     self:addChild(self.historyList)
 
+    self:updateMatchView()
+end
+
+function AC_ISCombatMatchUI:adjustHP(delta)
+    AC_Combat.PlayerHP = AC_Combat.PlayerHP or { current = 100, max = 100 }
+    local oldHP = AC_Combat.PlayerHP.current or 100
+    local maxHP = AC_Combat.PlayerHP.max or 100
+    local newHP = math.max(0, math.min(maxHP, oldHP + delta))
+    AC_Combat.PlayerHP.current = newHP
+
+    local me = getPlayer()
+    local charName = me and me:getDescriptor() and (me:getDescriptor():getForename() .. " " .. me:getDescriptor():getSurname()) or (me and me:getUsername() or "Player")
+    local sign = delta >= 0 and ("+" .. delta) or tostring(delta)
+    local logText = string.format("[HP] %s: %d/%d HP (%s)", charName, newHP, maxHP, sign)
+
+    if AC_Combat.CurrentMatch then
+        sendClientCommand(me, "AC", "CombatHealth", { newHP, maxHP, logText })
+    else
+        self.historyList:addItem(logText, { text = logText, r = 0.95, g = 0.4, b = 0.4 })
+        self.historyList:setYScroll(-10000)
+    end
+    self:updateMatchView()
+end
+
+function AC_ISCombatMatchUI:resetHP()
+    AC_Combat.PlayerHP = AC_Combat.PlayerHP or { current = 100, max = 100 }
+    local maxHP = AC_Combat.PlayerHP.max or 100
+    local delta = maxHP - (AC_Combat.PlayerHP.current or 0)
+    AC_Combat.PlayerHP.current = maxHP
+
+    local me = getPlayer()
+    local charName = me and me:getDescriptor() and (me:getDescriptor():getForename() .. " " .. me:getDescriptor():getSurname()) or (me and me:getUsername() or "Player")
+    local logText = string.format("[HP] %s: Full HP Restored (%d/%d)", charName, maxHP, maxHP)
+
+    if AC_Combat.CurrentMatch then
+        sendClientCommand(me, "AC", "CombatHealth", { maxHP, maxHP, logText })
+    else
+        self.historyList:addItem(logText, { text = logText, r = 0.3, g = 0.95, b = 0.4 })
+        self.historyList:setYScroll(-10000)
+    end
     self:updateMatchView()
 end
 
@@ -179,6 +274,27 @@ function AC_ISCombatMatchUI:updateMatchView()
     local me = getPlayer()
     local myUsername = me and me:getUsername() or ""
     local isHost = match and match.host == myUsername
+
+    -- Update HP Display button text
+    AC_Combat.PlayerHP = AC_Combat.PlayerHP or { current = 100, max = 100 }
+    if match and match.health and match.health[myUsername] then
+        AC_Combat.PlayerHP = match.health[myUsername]
+    end
+    local curHP = AC_Combat.PlayerHP.current or 100
+    local maxHP = AC_Combat.PlayerHP.max or 100
+    if self.hpDisplayBtn then
+        self.hpDisplayBtn:setTitle(string.format("HP: %d / %d", curHP, maxHP))
+        if curHP <= (maxHP * 0.25) then
+            self.hpDisplayBtn.backgroundColor = {r=0.5, g=0.1, b=0.1, a=0.9}
+            self.hpDisplayBtn.borderColor = {r=0.9, g=0.2, b=0.2, a=0.9}
+        elseif curHP <= (maxHP * 0.5) then
+            self.hpDisplayBtn.backgroundColor = {r=0.5, g=0.35, b=0.1, a=0.9}
+            self.hpDisplayBtn.borderColor = {r=0.9, g=0.75, b=0.2, a=0.9}
+        else
+            self.hpDisplayBtn.backgroundColor = {r=0.1, g=0.35, b=0.15, a=0.9}
+            self.hpDisplayBtn.borderColor = {r=0.2, g=0.85, b=0.3, a=0.9}
+        end
+    end
 
     if not match then
         self.inviteCombatantButton:setTitle("Host New Match")
@@ -295,6 +411,23 @@ function AC_ISCombatMatchUI:drawTurnListItem(y, item, alt)
     local fontHgt = (getTextManager() and getTextManager():getFontHeight(UIFont.Small)) or 14
     local textY = y + (hgt - fontHgt) / 2
     self:drawText(nameText, 10, textY, r, g, b, 1.0, UIFont.Small)
+
+    -- Show combatant HP badge if available
+    local match = AC_Combat.CurrentMatch
+    local hpData = match and match.health and match.health[data.username]
+    if hpData and not data.isViewer then
+        local cHP = hpData.current or 100
+        local mHP = hpData.max or 100
+        local hpStr = string.format("HP: %d/%d", cHP, mHP)
+        local hpR, hpG, hpB = 0.2, 0.9, 0.3
+        if cHP <= (mHP * 0.25) then
+            hpR, hpG, hpB = 0.95, 0.2, 0.2
+        elseif cHP <= (mHP * 0.5) then
+            hpR, hpG, hpB = 0.95, 0.75, 0.2
+        end
+        self:drawTextRight(hpStr, self.width - 20, textY, hpR, hpG, hpB, 1.0, UIFont.Small)
+    end
+
     return y + hgt
 end
 
