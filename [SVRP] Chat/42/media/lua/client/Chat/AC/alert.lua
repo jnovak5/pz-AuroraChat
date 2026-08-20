@@ -43,32 +43,20 @@ end
 AC.Alert.LastAlertText = nil
 AC.Alert.LastAlertTime = 0
 
---- Play loud and clear audible alert chime
+--- Play a clean, gentle notification chime for server announcements
 function AC.Alert.PlayAlertSound()
-    -- 1. Play UI sound (active in UI/menus)
     pcall(function()
-        getSoundManager():playUISound("UIActivatePlayButton")
-    end)
-    pcall(function()
-        getSoundManager():playUISound("UIPauseMenuEnter")
-    end)
-
-    -- 2. Play local world sound on player (audible in-game)
-    local player = getPlayer()
-    if player then
-        pcall(function()
-            player:playSoundLocal("RadioButton")
-        end)
-        local emitter = player:getEmitter()
+        local player = getPlayer()
+        local emitter = player and player.getEmitter and player:getEmitter()
         if emitter then
-            pcall(function()
-                local sId = emitter:playSound("UIPauseMenuEnter")
-                if sId and sId > 0 and emitter.setVolume then
-                    emitter:setVolume(sId, 1.5)
-                end
-            end)
+            local sId = emitter:playSound("UIPauseMenuEnter")
+            if sId ~= nil and emitter.setVolume then
+                emitter:setVolume(sId, 0.50)
+            end
+        else
+            getSoundManager():playUISound("UIPauseMenuEnter")
         end
-    end
+    end)
 end
 
 --- Show a high-visibility server alert broadcast (server-wide)

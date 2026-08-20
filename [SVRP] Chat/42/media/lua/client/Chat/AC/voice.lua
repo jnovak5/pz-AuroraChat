@@ -129,6 +129,12 @@ end
 local femaleVoicePools = {
     whisper   = { "VoiceFemaleWhisperPsst", "VoiceFemaleWhisperHey" },
     mewhisper = { "VoiceFemaleWhisperPsst", "VoiceFemaleWhisperHey" },
+    low       = { "VoiceFemaleWhisperHey", "VoiceFemaleSighBored" },
+    melow     = { "VoiceFemaleWhisperHey", "VoiceFemaleSighBored" },
+    say       = { "VoiceFemaleWhisperHey", "VoiceFemaleSighBored", "VoiceFemaleSighReliefed" },
+    mesay     = { "VoiceFemaleWhisperHey", "VoiceFemaleSighBored", "VoiceFemaleSighReliefed" },
+    loud      = { "VoiceFemaleLureCmon", "VoiceFemaleShoutHey" },
+    meloud    = { "VoiceFemaleLureCmon", "VoiceFemaleShoutHey" },
     shout     = { "VoiceFemaleShoutHey" },
     meshout   = { "VoiceFemaleShoutHey" },
     yell      = { "VoiceFemaleShoutHey" },
@@ -138,6 +144,12 @@ local femaleVoicePools = {
 local maleVoicePools = {
     whisper   = { "VoiceMaleWhisperPsst", "VoiceMaleWhisperHey" },
     mewhisper = { "VoiceMaleWhisperPsst", "VoiceMaleWhisperHey" },
+    low       = { "VoiceMaleWhisperHey", "VoiceMaleSighBored" },
+    melow     = { "VoiceMaleWhisperHey", "VoiceMaleSighBored" },
+    say       = { "VoiceMaleWhisperHey", "VoiceMaleSighBored", "VoiceMaleSighReliefed" },
+    mesay     = { "VoiceMaleWhisperHey", "VoiceMaleSighBored", "VoiceMaleSighReliefed" },
+    loud      = { "VoiceMaleLureCmon", "VoiceMaleShoutHey" },
+    meloud    = { "VoiceMaleLureCmon", "VoiceMaleShoutHey" },
     shout     = { "VoiceMaleShoutHey" },
     meshout   = { "VoiceMaleShoutHey" },
     yell      = { "VoiceMaleShoutHey" },
@@ -145,6 +157,12 @@ local maleVoicePools = {
 }
 
 -- Specialized contextual & emotional voice events
+local femaleCmonPool = { "VoiceFemaleLureCmon" }
+local maleCmonPool = { "VoiceMaleLureCmon" }
+local femaleShoutHeyPool = { "VoiceFemaleShoutHey" }
+local maleShoutHeyPool = { "VoiceMaleShoutHey" }
+local femaleSoftHeyPool = { "VoiceFemaleWhisperHey" }
+local maleSoftHeyPool = { "VoiceMaleWhisperHey" }
 local femaleSadPool = { "VoiceFemaleSighSad" }
 local maleSadPool = { "VoiceMaleSighSad" }
 local femaleReliefPool = { "VoiceFemaleSighReliefed" }
@@ -153,6 +171,8 @@ local femaleDangerPool = { "VoiceFemaleShoutHey", "VoiceFemaleLureCmon" }
 local maleDangerPool = { "VoiceMaleShoutHey", "VoiceMaleLureCmon" }
 local femaleStealthPool = { "VoiceFemaleWhisperPsst" }
 local maleStealthPool = { "VoiceMaleWhisperPsst" }
+local femaleCoughPool = { "VoiceFemaleCough", "VoiceFemaleMuffledCough" }
+local maleCoughPool = { "VoiceMaleCough", "VoiceMaleMuffledCough" }
 
 --- Get volume factor based on chat volume type
 local function getVolumeFactor(chatType)
@@ -240,19 +260,80 @@ local function analyzeSentiment(text, player, chatType)
             sentiment.pitchMod = sentiment.pitchMod + 0.08
             sentiment.rateMod = sentiment.rateMod + 0.12
             sentiment.volumeMod = sentiment.volumeMod * 1.20
+            sentiment.overrideSound = "shout_hey"
         end
     end
 
     -- 2. Keyword & Context Sentiment Matching
-    if string.find(lowerText, "watch out") or string.find(lowerText, "look out") or string.find(lowerText, "behind you")
+    if string.find(lowerText, "cmon") or string.find(lowerText, "c'mon") or string.find(lowerText, "come on")
+    or string.find(lowerText, "over here") or string.find(lowerText, "follow me") or string.find(lowerText, "this way")
+    or string.find(lowerText, "hurry") or string.find(lowerText, "lets go") or string.find(lowerText, "let's go")
+    or string.find(lowerText, "move it") or (string.find(lowerText, "move") and string.find(lowerText, "!")) then
+        sentiment.emotion = "cmon"
+        sentiment.volumeMod = sentiment.volumeMod * 1.10
+        sentiment.overrideSound = "cmon"
+
+    elseif string.find(lowerText, "watch out") or string.find(lowerText, "look out") or string.find(lowerText, "behind you")
     or string.find(lowerText, "incoming") or string.find(lowerText, "horde") or string.find(lowerText, "trapped")
     or string.find(lowerText, "surrounded") or string.find(lowerText, "get down") or string.find(lowerText, "duck")
-    or (string.find(lowerText, "run") and string.find(lowerText, "!")) then
+    or string.find(lowerText, "take cover") or string.find(lowerText, "zombies") or (string.find(lowerText, "run") and string.find(lowerText, "!")) then
         sentiment.emotion = "danger"
         sentiment.pitchMod = sentiment.pitchMod + 0.12
         sentiment.rateMod = sentiment.rateMod + 0.15
         sentiment.volumeMod = sentiment.volumeMod * 1.25
         sentiment.overrideSound = "danger"
+
+    elseif string.find(lowerText, "hey!") or string.find(lowerText, "heads up") or string.find(lowerText, "look here")
+    or string.find(lowerText, "listen up") or (string.find(lowerText, "hey") and string.find(lowerText, "!")) then
+        sentiment.emotion = "shout_hey"
+        sentiment.pitchMod = sentiment.pitchMod + 0.08
+        sentiment.volumeMod = sentiment.volumeMod * 1.20
+        sentiment.overrideSound = "shout_hey"
+
+    elseif lowerText:match("^hey%s") or lowerText:match("^hey$") or lowerText:match("^hey%p")
+    or lowerText:match("^hi%s") or lowerText:match("^hi$") or lowerText:match("^hi%p")
+    or lowerText:match("^hello") or lowerText:match("^yo%s") or lowerText:match("^yo$") or lowerText:match("^yo%p") then
+        sentiment.emotion = "soft_hey"
+        sentiment.pitchMod = sentiment.pitchMod + 0.04
+        sentiment.overrideSound = "soft_hey"
+
+    elseif string.find(lowerText, "shh") or string.find(lowerText, "quiet") or string.find(lowerText, "hush")
+    or string.find(lowerText, "sneak") or string.find(lowerText, "silent") or string.find(lowerText, "dont make a sound")
+    or string.find(lowerText, "don't make a sound") or string.find(lowerText, "keep it down") or string.find(lowerText, "freeze")
+    or string.find(lowerText, "psst") or string.find(lowerText, "pst") then
+        sentiment.emotion = "stealth"
+        sentiment.pitchMod = sentiment.pitchMod - 0.02
+        sentiment.rateMod = sentiment.rateMod - 0.10
+        sentiment.volumeMod = sentiment.volumeMod * 0.70
+        sentiment.overrideSound = "stealth"
+
+    elseif string.find(lowerText, "sad") or string.find(lowerText, "crying") or string.find(lowerText, "tears")
+    or string.find(lowerText, "rest in peace") or string.find(lowerText, "rip") or string.find(lowerText, "mourn")
+    or string.find(lowerText, "grief") or string.find(lowerText, "hopeless") or string.find(lowerText, "broke my heart")
+    or string.find(lowerText, "heartbroken") or string.find(lowerText, "forgive me") or string.find(lowerText, "so sorry")
+    or string.find(lowerText, "i'm sorry") or string.find(lowerText, "im sorry") or string.find(lowerText, "oh no")
+    or string.find(lowerText, ":%(") or string.find(lowerText, ":%-(") then
+        sentiment.emotion = "sadness"
+        sentiment.pitchMod = sentiment.pitchMod - 0.08
+        sentiment.rateMod = sentiment.rateMod - 0.08
+        sentiment.volumeMod = sentiment.volumeMod * 0.85
+        sentiment.overrideSound = "sad"
+
+    elseif string.find(lowerText, "sigh") or string.find(lowerText, "%*sigh%*") or string.find(lowerText, "tired")
+    or string.find(lowerText, "exhausted") or string.find(lowerText, "finally") or string.find(lowerText, "made it")
+    or string.find(lowerText, "whew") or string.find(lowerText, "phew") or string.find(lowerText, "safe now")
+    or string.find(lowerText, "survived") or string.find(lowerText, "thank god") or string.find(lowerText, "thank goodness")
+    or string.find(lowerText, "catching my breath") then
+        sentiment.emotion = "relief"
+        sentiment.pitchMod = sentiment.pitchMod - 0.04
+        sentiment.rateMod = sentiment.rateMod - 0.06
+        sentiment.volumeMod = sentiment.volumeMod * 0.90
+        sentiment.overrideSound = "relief"
+
+    elseif string.find(lowerText, "cough") or string.find(lowerText, "%*cough%*") or string.find(lowerText, "sneeze")
+    or string.find(lowerText, "%*sneeze%*") or string.find(lowerText, "achoo") then
+        sentiment.emotion = "cough"
+        sentiment.overrideSound = "cough"
 
     elseif string.find(lowerText, "haha") or string.find(lowerText, "hehe") or string.find(lowerText, "lmao")
     or string.find(lowerText, "rofl") or string.find(lowerText, "lol") or string.find(lowerText, "yay")
@@ -266,36 +347,6 @@ local function analyzeSentiment(text, player, chatType)
         sentiment.pitchMod = sentiment.pitchMod + 0.10
         sentiment.rateMod = sentiment.rateMod + 0.05
         sentiment.volumeMod = sentiment.volumeMod * 1.08
-
-    elseif string.find(lowerText, "shh") or string.find(lowerText, "quiet") or string.find(lowerText, "hush")
-    or string.find(lowerText, "sneak") or string.find(lowerText, "silent") or string.find(lowerText, "dont make a sound")
-    or string.find(lowerText, "don't make a sound") or string.find(lowerText, "freeze") then
-        sentiment.emotion = "stealth"
-        sentiment.pitchMod = sentiment.pitchMod - 0.02
-        sentiment.rateMod = sentiment.rateMod - 0.10
-        sentiment.volumeMod = sentiment.volumeMod * 0.70
-        sentiment.overrideSound = "stealth"
-
-    elseif string.find(lowerText, "sad") or string.find(lowerText, "crying") or string.find(lowerText, "tears")
-    or string.find(lowerText, "rest in peace") or string.find(lowerText, "rip") or string.find(lowerText, "mourn")
-    or string.find(lowerText, "grief") or string.find(lowerText, "hopeless") or string.find(lowerText, "broke my heart")
-    or string.find(lowerText, "heartbroken") or string.find(lowerText, "forgive me") or string.find(lowerText, ":%(")
-    or string.find(lowerText, ":%-(") then
-        sentiment.emotion = "sadness"
-        sentiment.pitchMod = sentiment.pitchMod - 0.08
-        sentiment.rateMod = sentiment.rateMod - 0.08
-        sentiment.volumeMod = sentiment.volumeMod * 0.85
-        sentiment.overrideSound = "sad"
-
-    elseif string.find(lowerText, "sigh") or string.find(lowerText, "%*sigh%*") or string.find(lowerText, "tired")
-    or string.find(lowerText, "exhausted") or string.find(lowerText, "finally") or string.find(lowerText, "made it")
-    or string.find(lowerText, "whew") or string.find(lowerText, "phew") or string.find(lowerText, "safe now")
-    or string.find(lowerText, "survived") or string.find(lowerText, "catching my breath") then
-        sentiment.emotion = "relief"
-        sentiment.pitchMod = sentiment.pitchMod - 0.04
-        sentiment.rateMod = sentiment.rateMod - 0.06
-        sentiment.volumeMod = sentiment.volumeMod * 0.90
-        sentiment.overrideSound = "relief"
 
     elseif string.find(lowerText, "fuck") or string.find(lowerText, "shit") or string.find(lowerText, "bastard")
     or string.find(lowerText, "damn it") or string.find(lowerText, "dammit") or string.find(lowerText, "shut up")
@@ -456,13 +507,22 @@ function AC.Voice.PlayChatVoice(player, chatType, text, isMuffled, pos)
 
     local isFemale = player and player.isFemale and player:isFemale()
     local pools = isFemale and femaleVoicePools or maleVoicePools
-    local pool = pools[chatType]
+    local pool = pools[chatType] or pools.say
 
     -- 3. Execute Sentiment & Context Analysis on the extracted spoken dialogue
     local sentiment = analyzeSentiment(spokenDialogue, player, chatType)
 
     local chosenSound = nil
-    if sentiment.overrideSound == "sad" then
+    if sentiment.overrideSound == "cmon" then
+        local cmonPool = isFemale and femaleCmonPool or maleCmonPool
+        chosenSound = cmonPool[ZombRand(#cmonPool) + 1]
+    elseif sentiment.overrideSound == "shout_hey" then
+        local heyPool = isFemale and femaleShoutHeyPool or maleShoutHeyPool
+        chosenSound = heyPool[ZombRand(#heyPool) + 1]
+    elseif sentiment.overrideSound == "soft_hey" then
+        local heyPool = isFemale and femaleSoftHeyPool or maleSoftHeyPool
+        chosenSound = heyPool[ZombRand(#heyPool) + 1]
+    elseif sentiment.overrideSound == "sad" then
         local sadPool = isFemale and femaleSadPool or maleSadPool
         chosenSound = sadPool[ZombRand(#sadPool) + 1]
     elseif sentiment.overrideSound == "relief" then
@@ -474,6 +534,9 @@ function AC.Voice.PlayChatVoice(player, chatType, text, isMuffled, pos)
     elseif sentiment.overrideSound == "stealth" then
         local stealthPool = isFemale and femaleStealthPool or maleStealthPool
         chosenSound = stealthPool[ZombRand(#stealthPool) + 1]
+    elseif sentiment.overrideSound == "cough" then
+        local coughPool = isFemale and femaleCoughPool or maleCoughPool
+        chosenSound = coughPool[ZombRand(#coughPool) + 1]
     elseif pool and #pool > 0 then
         chosenSound = pool[ZombRand(#pool) + 1]
     end
