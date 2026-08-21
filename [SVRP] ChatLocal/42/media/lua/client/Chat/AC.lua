@@ -81,8 +81,21 @@ function AC.Override(skipDisable)
     return false
 end
 
+function AC.CanHearAll(player)
+    player = player or (getPlayer and getPlayer())
+    if not player then return false end
+    if player.isHearAll and player:isHearAll() then
+        return true
+    end
+    if AC.Override and AC.Override() then
+        return true
+    end
+    return false
+end
+
 function AC.CanSeePlayer(player, allowSelf, distance)
     if not distance then distance = 10 end
+    if AC.CanHearAll and AC.CanHearAll() then return true end
     if AC.Override() then return true end
     if not player then return false end
     local me = getPlayer()

@@ -13,6 +13,7 @@ function AC.Parsing.CapitalizeFirst(text)
 end
 
 function AC.Parsing.ScrambleTextByDistance(text, distance, clearRange, maxRange)
+    if AC.CanHearAll and AC.CanHearAll() then return text end
     if not text or text == "" or distance <= clearRange then
         return text
     end
@@ -325,6 +326,7 @@ function AC.Parsing.GetRandomWordsFromMessage(message, percentChancePerWord)
 end
 
 function AC.Parsing.AdjustForDeaf(parsedMessage)
+    if AC.CanHearAll and AC.CanHearAll() then return end
     if AC.Meta.CanSpeak("asl") and parsedMessage.language == "asl" then return end
     for _, part in ipairs(parsedMessage.parts) do
         if part.type == "text" then
@@ -344,6 +346,7 @@ end
 AC.Parsing.HoH_BottomRange = 0.35
 AC.Parsing.HoH_MaxFail = 0.8
 function AC.Parsing.AdjustForHardOfHearing(parsedMessage, rangeRatio)
+    if AC.CanHearAll and AC.CanHearAll() then return end
     if rangeRatio < AC.Parsing.HoH_BottomRange then return end
     if AC.Meta.CanSpeak("asl") and parsedMessage.language == "asl" then return end
     local failChance = (rangeRatio - AC.Parsing.HoH_BottomRange) / (1 - AC.Parsing.HoH_BottomRange) * AC.Parsing.HoH_MaxFail * 100
@@ -363,6 +366,7 @@ function AC.Parsing.AdjustForHardOfHearing(parsedMessage, rangeRatio)
 end
 
 function AC.Parsing.AdjustForUnknownLanguage(parsedMessage)
+    if AC.CanHearAll and AC.CanHearAll() then return end
     local canPartiallyUnderstand = AC.Meta.CanPartiallyUnderstand(parsedMessage.language)
     for i=1, #parsedMessage.parts do
         if parsedMessage.parts[i].type == "text" then

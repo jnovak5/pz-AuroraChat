@@ -254,8 +254,9 @@ function AC.Handlers.AddLineInChat(chatMessage, tabID)
     pcall(function() isFromDiscord = chatMessage:isFromDiscord() end)
     if isFromDiscord then
         local myPlayer = getPlayer()
+        local isHearAll = AC.CanHearAll(myPlayer)
         local radios = ARU_Utils.getPlayerRadios(myPlayer, true, false, true)
-        if #radios == 0 and not AC.Override() then
+        if #radios == 0 and not AC.Override() and not isHearAll then
             pcall(function() chatMessage:setText("") end)
             return true
         end
@@ -344,6 +345,7 @@ function AC.Handlers.AddLineInChat(chatMessage, tabID)
     end
 
     local myPlayer = getPlayer()
+    local isHearAll = AC.CanHearAll(myPlayer)
     local isMe = myPlayer and (myPlayer:getUsername() == parsedMessage.playerUsername)
     local chattingPlayer = nil
 
@@ -494,19 +496,28 @@ function AC.Handlers.AddLineInChat(chatMessage, tabID)
             chatType = AC.ChatTypes["low"]
             local recPlayer = getPlayerFromUsername(chatMessage:getAuthor())
             if not recPlayer then
-                pcall(function() chatMessage:setText("") end)
-                return true
+                if not isHearAll then
+                    pcall(function() chatMessage:setText("") end)
+                    return true
+                end
             end
             if not isHearAll and not AC.Meta.IsInRange(myPlayer, recPlayer, chatType.xyRange * 1.5, chatType.zRange) then
                 pcall(function() chatMessage:setText("") end)
                 return true
             end
-            pos = {x = recPlayer:getX(), y = recPlayer:getY(), z = recPlayer:getZ()}
-            local dx = myPlayer:getX() - pos.x
-            local dy = myPlayer:getY() - pos.y
-            zDist = math.abs(myPlayer:getZ() - pos.z)
-            horizontalDist = math.sqrt(dx * dx + dy * dy)
-            effectiveDist = horizontalDist + zDist * 8.0
+            if recPlayer then
+                pos = {x = recPlayer:getX(), y = recPlayer:getY(), z = recPlayer:getZ()}
+                local dx = myPlayer:getX() - pos.x
+                local dy = myPlayer:getY() - pos.y
+                zDist = math.abs(myPlayer:getZ() - pos.z)
+                horizontalDist = math.sqrt(dx * dx + dy * dy)
+                effectiveDist = horizontalDist + zDist * 8.0
+            else
+                pos = parsedMessage.pos or {x = myPlayer:getX(), y = myPlayer:getY(), z = myPlayer:getZ()}
+                zDist = 0
+                horizontalDist = 0
+                effectiveDist = 0
+            end
         elseif parsedMessage.isNpc then
             pos = {x = myPlayer:getX(), y = myPlayer:getY(), z = myPlayer:getZ()}
         elseif chattingPlayer then
@@ -691,7 +702,7 @@ function AC.Handlers.AddLineInChat(chatMessage, tabID)
         doInOOC = true
     else
         doInGeneral = true
-        if parsedMessage.isOwnRadio or (parsedMessage.radioFrequency and AC.Override()) then
+        if parsedMessage.isOwnRadio or (parsedMessage.radioFrequency and (AC.Override() or isHearAll)) then
             doInRadio = true
         end
 
@@ -800,7 +811,7 @@ function AC.Handlers.AddPrivateMessage(otherPlayerUsername, message)
         parsedMessage.language = AC.Meta.GetCurrentLanguage(parsedMessage.playerUsername)
     end
     local sandbox = SandboxVars.SVRPChat or {}
-    local isHearAll = myPlayer.isHearAll and myPlayer:isHearAll() or false
+    local isHearAll = AC.CanHearAll(myPlayer)
     if isHearAll then
         -- Skip all hard of hearing, deaf, and language checks
     elseif AC.Meta.CanUnderstand(parsedMessage.language) and safeHasTrait(myPlayer, "HardOfHearing") and sandbox.EnableHardOfHearing then

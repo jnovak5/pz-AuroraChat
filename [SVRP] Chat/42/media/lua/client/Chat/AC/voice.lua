@@ -485,38 +485,52 @@ local function playVoiceClip(player, playerKey, soundName, volume, pitch)
     local emitter = player.getEmitter and player:getEmitter()
 
     if emitter then
-        pcall(function()
-            local soundId = emitter:playSound(soundName)
-            if soundId ~= nil then
-                played = true
-                AC.Voice.ActiveSoundIds[playerKey] = { emitter = emitter, soundId = soundId }
+        local soundId = nil
+        -- 1. Try local sound playback so it doesn't broadcast duplicate network audio packets to other clients
+        -- (Since all clients already receive the chat message and trigger voice chatter locally)
+        if emitter.playSoundLocal then
+            pcall(function() soundId = emitter:playSoundLocal(soundName) end)
+        elseif emitter.playSoundImpl then
+            pcall(function() soundId = emitter:playSoundImpl(soundName, false) end)
+        elseif player.playSoundLocal then
+            pcall(function() soundId = player:playSoundLocal(soundName) end)
+        end
 
-                if emitter.setVolume then
-                    pcall(function() emitter:setVolume(soundId, volume or 1.0) end)
-                end
-                if emitter.setPitch and pitch then
-                    pcall(function() emitter:setPitch(soundId, pitch) end)
-                end
+        if soundId == nil or soundId == 0 then
+            pcall(function() soundId = emitter:playSound(soundName) end)
+        end
 
-                -- Apply character's chosen named voice (Bob, Hank, James, Chris / Kate, Casey-Jo, Maryanne, Janine)
-                local desc = player.getDescriptor and player:getDescriptor()
-                if desc and emitter.setParameterValueByName then
-                    local vType = desc.getVoiceType and desc:getVoiceType()
-                    local vPitch = desc.getVoicePitch and desc:getVoicePitch()
-                    if vType ~= nil then
-                        pcall(function() emitter:setParameterValueByName(soundId, "CharacterVoiceType", tonumber(vType) or 0) end)
-                    end
-                    if vPitch ~= nil then
-                        pcall(function() emitter:setParameterValueByName(soundId, "CharacterVoicePitch", tonumber(vPitch) or 0) end)
-                    end
+        if soundId ~= nil and soundId ~= 0 then
+            played = true
+            AC.Voice.ActiveSoundIds[playerKey] = { emitter = emitter, soundId = soundId }
+
+            if emitter.setVolume then
+                pcall(function() emitter:setVolume(soundId, volume or 1.0) end)
+            end
+            if emitter.setPitch and pitch then
+                pcall(function() emitter:setPitch(soundId, pitch) end)
+            end
+
+            -- Apply character's chosen named voice (Bob, Hank, James, Chris / Kate, Casey-Jo, Maryanne, Janine)
+            local desc = player.getDescriptor and player:getDescriptor()
+            if desc and emitter.setParameterValueByName then
+                local vType = desc.getVoiceType and desc:getVoiceType()
+                local vPitch = desc.getVoicePitch and desc:getVoicePitch()
+                if vType ~= nil then
+                    pcall(function() emitter:setParameterValueByName(soundId, "CharacterVoiceType", tonumber(vType) or 0) end)
+                end
+                if vPitch ~= nil then
+                    pcall(function() emitter:setParameterValueByName(soundId, "CharacterVoicePitch", tonumber(vPitch) or 0) end)
                 end
             end
-        end)
+        end
     end
 
     if not played then
         pcall(function()
-            if player.playSound then
+            if player.playSoundLocal then
+                player:playSoundLocal(soundName)
+            elseif player.playSound then
                 player:playSound(soundName)
             elseif player.getSquare and getSoundManager() then
                 getSoundManager():PlayWorldSound(soundName, player:getSquare(), 0.0, 15.0, volume or 1.0, false)
@@ -546,9 +560,10 @@ function AC.Voice.PlayChatVoice(player, chatType, text, isMuffled, pos)
         return -- No spoken words in this message (e.g. pure /me body language or silent action)
     end
 
-    local playerKey = (player and player.getUsername and player:getUsername())
+    local playerKey = (player and player.getUsername and player:getUsername() and player:getUsername() ~= "" and player:getUsername())
+        or (player and player.getDescriptor and player:getDescriptor() and player:getDescriptor():getForename())
         or (player and player.getOnlineID and tostring(player:getOnlineID()))
-        or (pos and (tostring(pos.x) .. "_" .. tostring(pos.y)))
+        or (pos and (tostring(math.floor(pos.x)) .. "_" .. tostring(math.floor(pos.y))))
         or (spokenDialogue and ("txt_" .. spokenDialogue:sub(1, 15)))
         or "unknown"
     local now = getTimestampMs()

@@ -5,6 +5,8 @@ local PlayerDB = {}
 
 local function canSee(player, otherPlayer, xyRange, zRange)
     if not player or not otherPlayer then return false end
+    if player.isHearAll and player:isHearAll() then return true end
+    if player.isSeeEveryone and player:isSeeEveryone() then return true end
     xyRange = xyRange + .99
     if player:getDistanceSq(otherPlayer) > xyRange*xyRange then return false end
     if math.abs(player:getZ() - otherPlayer:getZ()) > zRange then return false end

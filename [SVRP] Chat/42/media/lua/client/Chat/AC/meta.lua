@@ -235,6 +235,7 @@ function AC.Meta.RemoveKnownLanguage(language)
 end
 
 function AC.Meta.CanSpeak(language)
+    if AC.CanHearAll and AC.CanHearAll() then return true end
     if AC.Override() then return true end
     local known = AC.Meta.GetKnownLanguages()
     for i=1, #known do
@@ -244,6 +245,7 @@ function AC.Meta.CanSpeak(language)
 end
 
 function AC.Meta.CanUnderstand(language)
+    if AC.CanHearAll and AC.CanHearAll() then return true end
     if AC.Override() then return true end
     local known = AC.Meta.GetKnownLanguages()
     for i=1, #known do
@@ -253,6 +255,7 @@ function AC.Meta.CanUnderstand(language)
 end
 
 function AC.Meta.CanPartiallyUnderstand(language)
+    if AC.CanHearAll and AC.CanHearAll() then return true end
     if AC.Override() then return true end
     local known = AC.Meta.GetKnownLanguages()
     for _, l in ipairs(known) do
@@ -275,6 +278,7 @@ function AC.Meta.SetCurrentLanguage(language)
 end
 
 function AC.Meta.IsInRange(myPlayer, chattingPlayer, xyRange, zRange)
+    if AC.CanHearAll and AC.CanHearAll(myPlayer) then return true end
     if AC.Override() then return true end
     xyRange = xyRange + 0.99
     if myPlayer:getDistanceSq(chattingPlayer) > xyRange * xyRange or math.abs(myPlayer:getZ() - chattingPlayer:getZ()) > zRange then
@@ -284,6 +288,7 @@ function AC.Meta.IsInRange(myPlayer, chattingPlayer, xyRange, zRange)
 end
 
 function AC.Meta.IsInPosRange(myPlayer, pos, xyRange, zRange)
+    if AC.CanHearAll and AC.CanHearAll(myPlayer) then return true end
     if AC.Override() then return true end
     xyRange = xyRange + 0.99
     local xDist = myPlayer:getX() - pos.x
