@@ -29,29 +29,96 @@ AC.Voice.NativePitchStyles = {
     { id = 2, name = "High / Bright Pitch" },
 }
 
+AC.Voice.enabled = nil
+
+--- Stop any currently playing voice audio clips on the local client
+function AC.Voice.StopAllActiveSounds()
+    if not AC.Voice.ActiveSoundIds then return end
+    for playerKey, data in pairs(AC.Voice.ActiveSoundIds) do
+        if data then
+            pcall(function()
+                if type(data) == "table" and data.emitter and data.soundId then
+                    if data.emitter.stopSound then
+                        data.emitter:stopSound(data.soundId)
+                    end
+                elseif type(data) == "number" then
+                    local myPlayer = getPlayer()
+                    if myPlayer and myPlayer.getEmitter then
+                        local em = myPlayer:getEmitter()
+                        if em and em.stopSound then
+                            em:stopSound(data)
+                        end
+                    end
+                end
+            end)
+        end
+    end
+    AC.Voice.ActiveSoundIds = {}
+end
+
+--- Synchronize the chatbox button icon with current enabled state
+function AC.Voice.UpdateChatButton()
+    if ISChat.instance and ISChat.instance.voiceChatterButton then
+        local enabled = AC.Voice.IsEnabled()
+        if enabled then
+            ISChat.instance.voiceChatterButton:setImage(getTexture("media/ui/AC_voice_on.png"))
+        else
+            ISChat.instance.voiceChatterButton:setImage(getTexture("media/ui/AC_voice_off.png"))
+        end
+    end
+end
+
 --- Check if voice chatter is enabled for local player
 function AC.Voice.IsEnabled()
-    local myPlayer = getPlayer()
-    if not myPlayer then return true end
-    local modData = myPlayer:getModData()
-    if modData and modData._AC_VoiceChatterDisabled ~= nil then
-        return not modData._AC_VoiceChatterDisabled
+    if AC.Voice.enabled ~= nil then
+        return AC.Voice.enabled
     end
+    if AC.Meta and AC.Meta.GetVoiceChatter then
+        local pref = AC.Meta.GetVoiceChatter()
+        if pref ~= nil then
+            AC.Voice.enabled = (pref == true)
+            return AC.Voice.enabled
+        end
+    end
+    local myPlayer = getPlayer()
+    if myPlayer then
+        local modData = myPlayer:getModData()
+        if modData and modData._AC_VoiceChatterDisabled ~= nil then
+            AC.Voice.enabled = not modData._AC_VoiceChatterDisabled
+            return AC.Voice.enabled
+        end
+    end
+    AC.Voice.enabled = true
     return true
 end
 
 --- Set voice chatter enabled state for local player
 function AC.Voice.SetEnabled(enabled)
+    AC.Voice.enabled = (enabled == true)
+    if AC.Meta and AC.Meta.SetVoiceChatterPref then
+        AC.Meta.SetVoiceChatterPref(AC.Voice.enabled)
+    end
     local myPlayer = getPlayer()
     if myPlayer then
         local modData = myPlayer:getModData()
-        modData._AC_VoiceChatterDisabled = not enabled
+        if modData then
+            modData._AC_VoiceChatterDisabled = not AC.Voice.enabled
+        end
     end
+    if not AC.Voice.enabled then
+        AC.Voice.StopAllActiveSounds()
+    end
+    AC.Voice.UpdateChatButton()
 end
 
 --- Toggle voice chatter on/off and notify player
-function AC.Voice.ToggleVoiceAudio()
-    local newState = not AC.Voice.IsEnabled()
+function AC.Voice.ToggleVoiceAudio(explicitState)
+    local newState
+    if type(explicitState) == "boolean" then
+        newState = explicitState
+    else
+        newState = not AC.Voice.IsEnabled()
+    end
     AC.Voice.SetEnabled(newState)
     if newState then
         AC_Utils.addInfoToChat("Voice audio chatter enabled.")
@@ -422,7 +489,7 @@ local function playVoiceClip(player, playerKey, soundName, volume, pitch)
             local soundId = emitter:playSound(soundName)
             if soundId ~= nil then
                 played = true
-                AC.Voice.ActiveSoundIds[playerKey] = soundId
+                AC.Voice.ActiveSoundIds[playerKey] = { emitter = emitter, soundId = soundId }
 
                 if emitter.setVolume then
                     pcall(function() emitter:setVolume(soundId, volume or 1.0) end)

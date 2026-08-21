@@ -21,6 +21,7 @@ AC.Meta.ChatPreferences = AC.Meta.ChatPreferences or {
     OverheadTypingIndicator = true,
     SaveLastChat = false,
     ChatTheme = "midnight",
+    VoiceChatter = true,
 }
 
 AC.Meta.Themes = {
@@ -110,6 +111,8 @@ local function readChatPrefs()
     end
     file:close()
 end
+
+readChatPrefs()
 
 function AC.Meta.GetActiveTheme()
     local themeKey = (AC.Meta.ChatPreferences and AC.Meta.ChatPreferences.ChatTheme) or "midnight"
@@ -542,6 +545,24 @@ end
 
 function AC.Meta.SetAdminHideOverheads(enabled)
     writeChatPref("AdminHideOverheads", enabled)
+end
+
+function AC.Meta.GetVoiceChatter()
+    local pref = getChatPref("VoiceChatter")
+    if pref ~= nil then return pref end
+    return true
+end
+
+function AC.Meta.SetVoiceChatterPref(enabled)
+    writeChatPref("VoiceChatter", enabled)
+end
+
+function AC.Meta.SetVoiceChatter(enabled)
+    if AC.Voice and AC.Voice.SetEnabled then
+        AC.Voice.SetEnabled(enabled)
+    else
+        writeChatPref("VoiceChatter", enabled)
+    end
 end
 
 local radioSyncOption = nil

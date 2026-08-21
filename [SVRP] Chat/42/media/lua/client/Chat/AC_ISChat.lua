@@ -426,10 +426,15 @@ end
 
 function ISChat:onVoiceChatterButtonClick()
     local newState = AC.Voice.ToggleVoiceAudio()
-    if newState then
-        self.voiceChatterButton:setImage(getTexture("media/ui/AC_voice_on.png"))
-    else
-        self.voiceChatterButton:setImage(getTexture("media/ui/AC_voice_off.png"))
+    if self and self.voiceChatterButton then
+        if newState then
+            self.voiceChatterButton:setImage(getTexture("media/ui/AC_voice_on.png"))
+        else
+            self.voiceChatterButton:setImage(getTexture("media/ui/AC_voice_off.png"))
+        end
+    end
+    if AC.Voice and AC.Voice.UpdateChatButton then
+        AC.Voice.UpdateChatButton()
     end
 end
 
