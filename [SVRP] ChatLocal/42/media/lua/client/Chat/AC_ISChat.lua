@@ -323,12 +323,31 @@ function ISChat:onGearButtonClick()
     local context = getPlayerContextMenu(0)
     if context then
         local myPlayer = getPlayer()
+        local isStaff = AC_Utils and AC_Utils.isStaff and AC_Utils.isStaff(myPlayer)
+
+        -- If not staff/admin, sanitize the context menu so no admin/staff streams or admin tools appear
+        if not isStaff and context.options then
+            for _, opt in ipairs(context.options) do
+                if opt and opt.subOption then
+                    local sub = context.subOption[opt.subOption]
+                    if sub and sub.options then
+                        for i = #sub.options, 1, -1 do
+                            local subOpt = sub.options[i]
+                            if subOpt and (subOpt.name == "Staff" or subOpt.name == "Admin" or subOpt.name == "Server" or subOpt.name == "Server Chat" or subOpt.name == "Admin Chat") then
+                                table.remove(sub.options, i)
+                            end
+                        end
+                    end
+                end
+            end
+        end
+
         local players = getOnlinePlayers()
         AC.Meta.CreateCombatContext(context)
         AC.Meta.CreateActionsContext(context, myPlayer, players)
         AC.Meta.CreateCharacterContext(context, myPlayer)
         AC.Meta.CreateChatSettingsContext(context)
-        if AC.Override(true) then
+        if isStaff and AC.Override(true) then
             AC.Meta.CreateAdminContext(context, myPlayer, players)
         end
     end

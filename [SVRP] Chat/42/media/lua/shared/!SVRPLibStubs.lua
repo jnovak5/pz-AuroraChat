@@ -9,20 +9,28 @@ AC_Utils.MagicSpace = " "
 --- @param player IsoPlayer
 --- @return boolean
 function AC_Utils.isStaff(player)
-    if not isClient() and not isServer() then return true end -- SP
+    player = player or (getPlayer and getPlayer())
     if not player then return false end
+    if not isClient() and not isServer() then
+        return (getDebug and getDebug()) or (player.isAccessLevel and (player:isAccessLevel("admin") or player:isAccessLevel("moderator") or player:isAccessLevel("overseer") or player:isAccessLevel("gm") or player:isAccessLevel("observer"))) or false
+    end
     local accessLevel = player.getAccessLevel and player:getAccessLevel()
-    if not accessLevel or accessLevel == "" then return false end
-    return string.lower(accessLevel) ~= "none"
+    if type(accessLevel) == "string" and accessLevel ~= "" then
+        local lower = string.lower(accessLevel)
+        return lower == "admin" or lower == "moderator" or lower == "overseer" or lower == "gm" or lower == "observer"
+    end
+    return false
 end
 
 --- Returns true if the player is a moderator or admin
 --- @param player IsoPlayer|nil will use getPlayer() if nil
 --- @return boolean
 function AC_Utils.canModerate(player)
-    if not isClient() and not isServer() then return true end -- SP
-    if not player then player = getPlayer() end
+    player = player or (getPlayer and getPlayer())
     if not player then return false end
+    if not isClient() and not isServer() then
+        return (getDebug and getDebug()) or (player.isAccessLevel and (player:isAccessLevel("admin") or player:isAccessLevel("moderator"))) or false
+    end
     local accessLevel = player.getAccessLevel and player:getAccessLevel()
     if not accessLevel or accessLevel == "" then return false end
     local lower = string.lower(accessLevel)

@@ -118,24 +118,37 @@ end
 local fntSize = getTextManager():getFontFromEnum(UIFont.Small):getLineHeight()
 function AC.Indicator.DrawTypingInChat(chatInstance)
     local myPlayer = getPlayer()
-    local myUsername = myPlayer and myPlayer:getUsername()
+    if not myPlayer then return end
+    local myUsername = myPlayer:getUsername()
     local typers = {}
     for username, _ in pairs(AC.Indicator.players) do
         if username ~= myUsername then
-            local name = AC.Meta.GetName(username)
-            if name == username then
-                local player = getPlayerFromUsername(username)
-                if player and player:getDescriptor() then
-                    local f = player:getDescriptor():getForename() or ""
-                    local s = player:getDescriptor():getSurname() or ""
-                    if s ~= "" then
-                        name = f .. " " .. s
-                    elseif f ~= "" then
-                        name = f
-                    end
+            local player = getPlayerFromUsername(username)
+            local inRange = true
+            -- Proximity check: ensure the typing player is actually loaded and within speech range
+            if player then
+                local distSq = AC.GetDistanceSq(myPlayer, player)
+                local zDist = math.abs(myPlayer:getZ() - player:getZ())
+                if distSq > (25 * 25) or zDist > 2 then
+                    inRange = false
                 end
             end
-            table.insert(typers, name)
+
+            if inRange then
+                local name = AC.Meta.GetName(username)
+                if name == username then
+                    if player and player:getDescriptor() then
+                        local f = player:getDescriptor():getForename() or ""
+                        local s = player:getDescriptor():getSurname() or ""
+                        if s ~= "" then
+                            name = f .. " " .. s
+                        elseif f ~= "" then
+                            name = f
+                        end
+                    end
+                end
+                table.insert(typers, name)
+            end
         end
     end
 

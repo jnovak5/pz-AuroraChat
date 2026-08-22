@@ -70,55 +70,55 @@ for type, typeData in pairs(AC.ChatTypes) do
     end
 end
 
+function AC.isStaff(player)
+    player = player or (getPlayer and getPlayer())
+    if not player then return false end
+    if not isClient() and not isServer() then
+        return (getDebug and getDebug()) == true
+    end
+    local accessLevel = player.getAccessLevel and player:getAccessLevel()
+    if type(accessLevel) == "string" and accessLevel ~= "" then
+        local lower = string.lower(accessLevel)
+        return lower == "admin" or lower == "moderator" or lower == "overseer" or lower == "gm" or lower == "observer"
+    end
+    return false
+end
+
 function AC.Override(skipDisable)
     if AC.Meta and AC.Meta.DisableOverride and not skipDisable then return false end
-    
-    local myPlayer = getPlayer and getPlayer()
-    if myPlayer and AC_Utils and AC_Utils.isStaff and AC_Utils.isStaff(myPlayer) then
-        return true
-    end
-
-    local accessLevel = (myPlayer and myPlayer.getAccessLevel and myPlayer:getAccessLevel()) or (getAccessLevel and getAccessLevel())
-    if type(accessLevel) == "string" and accessLevel ~= "" and string.lower(accessLevel) ~= "none" then
-        return true
-    end
-    
-    return false
+    return AC.isStaff()
 end
 
 function AC.CanHearAll(player)
     player = player or (getPlayer and getPlayer())
     if not player then return false end
 
-    -- Check if player has HearAll, SeeEveryone, or staff modes active (vanilla PZ, ASAL mod, or cheat menus)
-    if player.isHearAll and player:isHearAll() then return true end
-    if player.isHearAllChat and player:isHearAllChat() then return true end
-    if player.isHearEveryone and player:isHearEveryone() then return true end
-    if player.isSeeEveryone and player:isSeeEveryone() then return true end
-    if player.isGhostMode and player:isGhostMode() then return true end
-    if player.isGodMod and player:isGodMod() then return true end
-    if player.isInvisible and player:isInvisible() then return true end
+    -- Regular non-staff players can NEVER hear-all
+    if not AC.isStaff(player) then
+        return false
+    end
 
-    -- Check ModData flags (e.g. from Admin Settings at Login, ASAL, cheat menu)
+    if AC.Meta and AC.Meta.DisableOverride then
+        return false
+    end
+
+    -- If verified staff, check if they have hear-all, ghost, or god modes active
+    if player.isHearAll and player:isHearAll() == true then return true end
+    if player.isHearAllChat and player:isHearAllChat() == true then return true end
+    if player.isHearEveryone and player:isHearEveryone() == true then return true end
+    if player.isSeeEveryone and player:isSeeEveryone() == true then return true end
+    if player.isGhostMode and player:isGhostMode() == true then return true end
+    if player.isGodMod and player:isGodMod() == true then return true end
+    if player.isInvisible and player:isInvisible() == true then return true end
+
     if player.getModData then
         local md = player:getModData()
-        if md and (md.isHearAll or md.HearAll or md.CanHearAll or md.bHearAll or md.HearEveryone or md.hearEveryone) then
+        if md and (md.isHearAll == true or md.HearAll == true or md.CanHearAll == true or md.bHearAll == true or md.HearEveryone == true or md.hearEveryone == true) then
             return true
         end
     end
 
-    -- Check staff / admin override
-    if AC.Override and AC.Override() then
-        return true
-    end
-
-    if AC_Utils and AC_Utils.isStaff and AC_Utils.isStaff(player) then
-        if not (AC.Meta and AC.Meta.DisableOverride) then
-            return true
-        end
-    end
-
-    return false
+    return true -- Staff with override enabled can hear all
 end
 
 function AC.GetDistanceSq(playerA, playerB)
@@ -130,11 +130,15 @@ end
 
 function AC.CanSeePlayer(player, allowSelf, distance)
     if not distance then distance = 10 end
-    if AC.CanHearAll and AC.CanHearAll() then return true end
-    if AC.Override() then return true end
     if not player then return false end
     local me = getPlayer()
     if not allowSelf and player == me then return false end
+
+    -- Verified staff with override enabled can see all
+    if AC.isStaff(me) and not (AC.Meta and AC.Meta.DisableOverride) then
+        return true
+    end
+
     if not me:CanSee(player) then return false end
     if player:isGhostMode() then return false end
     if AC.GetDistanceSq(me, player) > distance * distance then return false end
