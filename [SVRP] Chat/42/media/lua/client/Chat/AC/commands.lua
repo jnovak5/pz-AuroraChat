@@ -657,6 +657,59 @@ function AC.Commands.MedicalCheck(args)
     end
 end
 
+function AC.Commands.ApplyInjuryLocal(bodyPartStr, injury)
+    local player = getPlayer()
+    if not player then return end
+
+    local bodyPartType = BodyPartType.FromString(bodyPartStr)
+    if not bodyPartType then return end
+
+    local bodyDamage = player:getBodyDamage()
+    if not bodyDamage then return end
+
+    local bodyPart = bodyDamage:getBodyPart(bodyPartType)
+    if not bodyPart then return end
+
+    if injury == "Bleeding" then bodyPart:setBleedingTime(10)
+    elseif injury == "Bullet" then bodyPart:setHaveBullet(true, 0)
+    elseif injury == "Burned" then bodyPart:setBurnTime(50)
+    elseif injury == "Deep Wound" then bodyPart:generateDeepWound()
+    elseif injury == "Fracture" then bodyPart:setFractureTime(21)
+    elseif injury == "Glass Shards" then bodyPart:generateDeepShardWound()
+    elseif injury == "Infected" then bodyPart:setWoundInfectionLevel(10)
+    elseif injury == "Scratched" then bodyPart:setScratched(true, true)
+    elseif injury == "Laceration" then bodyPart:setCut(true)
+    elseif injury == "Bite" then
+        bodyPart:SetBitten(true)
+        bodyPart:SetInfected(false)
+        bodyPart:SetFakeInfected(false)
+    elseif injury == "Cold" then bodyDamage:setColdStrength(100.0)
+    elseif injury == "Sickness" then bodyDamage:setFoodSicknessLevel(100.0)
+    end
+    bodyDamage:AddDamage(bodyPartType, 15.0)
+    AC_Utils.addInfoToChat("<RGB:1.0,0.0,0.0>Injury applied!")
+end
+
+function AC.Commands.ApplyAilmentLocal(ailment)
+    local player = getPlayer()
+    if not player then return end
+
+    local bodyDamage = player:getBodyDamage()
+    if not bodyDamage then return end
+
+    if ailment == "Cold" then
+        bodyDamage:setColdStrength(100.0)
+        bodyDamage:setHasACold(true)
+    elseif ailment == "Sickness" then
+        if player:getStats() and CharacterStat and CharacterStat.FOOD_SICKNESS then
+            player:getStats():set(CharacterStat.FOOD_SICKNESS, 40.0)
+        elseif bodyDamage.setFoodSicknessLevel then
+            bodyDamage:setFoodSicknessLevel(40.0)
+        end
+    end
+    AC_Utils.addInfoToChat("<RGB:1.0,0.0,0.0>Ailment applied!")
+end
+
 function AC.Commands.Injure(args)
     if not args or args == "" then
         AC_Utils.addErrorToChat("Usage: /injure bodypart injury")
@@ -682,8 +735,11 @@ function AC.Commands.Injure(args)
         return
     end
 
-    sendClientCommand(getPlayer(), "AC", "Injure", {bodyPartStr, injury})
-    AC_Utils.addInfoToChat("<RGB:1.0,0.0,0.0>Injury applied!")
+    if isClient() then
+        sendClientCommand(getPlayer(), "AC", "Injure", {bodyPartStr, injury})
+    else
+        AC.Commands.ApplyInjuryLocal(bodyPartStr, injury)
+    end
 end
 
 function AC.Commands.Ailment(args)
@@ -698,8 +754,11 @@ function AC.Commands.Ailment(args)
         return
     end
 
-    sendClientCommand(getPlayer(), "AC", "Ailment", {ailment})
-    AC_Utils.addInfoToChat("<RGB:1.0,0.0,0.0>Ailment applied!")
+    if isClient() then
+        sendClientCommand(getPlayer(), "AC", "Ailment", {ailment})
+    else
+        AC.Commands.ApplyAilmentLocal(ailment)
+    end
 end
 
 function AC.Commands.RadioSync(args)

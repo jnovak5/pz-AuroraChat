@@ -23,12 +23,128 @@ local function canSee(player, otherPlayer, xyRange, zRange)
     return true
 end
 
+local function getChatRangeAndType(text)
+    local sandbox = SandboxVars.SVRPChatLocal or SandboxVars.SVRPChat or {}
+    if not text or text == "" then return "say", (sandbox.RangeXYSay or 20), (sandbox.RangeZSay or 2) end
+    local clean = text:gsub("^%s+", "")
+    if clean:sub(1,1) == "/" then
+        local firstWord = clean:match("^/(%w+)")
+        if firstWord then
+            firstWord = string.lower(firstWord)
+            if firstWord == "whisper" or firstWord == "w" then
+                return "whisper", (sandbox.RangeXYWhisper or 2), (sandbox.RangeZWhisper or 0)
+            elseif firstWord == "low" or firstWord == "l" or firstWord == "quiet" or firstWord == "q" then
+                return "low", (sandbox.RangeXYLow or 6), (sandbox.RangeZLow or 0)
+            elseif firstWord == "say" then
+                return "say", (sandbox.RangeXYSay or 20), (sandbox.RangeZSay or 2)
+            elseif firstWord == "loud" or firstWord == "yell" or firstWord == "y" then
+                return "loud", (sandbox.RangeXYLoud or 45), (sandbox.RangeZLoud or 4)
+            elseif firstWord == "shout" or firstWord == "s" then
+                return "shout", (sandbox.RangeXYShout or 80), (sandbox.RangeZShout or 7)
+            elseif firstWord == "ooc" or firstWord == "all" or firstWord == "roll" or firstWord == "card" or firstWord == "event" or firstWord == "status" or firstWord == "env" or firstWord == "me" or firstWord == "do" or firstWord == "it" or firstWord == "emote" then
+                if firstWord == "me" or firstWord == "do" or firstWord == "it" or firstWord == "emote" then
+                    if clean:find('"') or clean:find('“') then
+                        return "say", (sandbox.RangeXYSay or 20), (sandbox.RangeZSay or 2)
+                    end
+                end
+                return nil, 0, 0
+            end
+        end
+    end
+    return "say", (sandbox.RangeXYSay or 20), (sandbox.RangeZSay or 2)
+end
+
+local function dispatchVoiceChatter(sendingPlayer, text, x, y, z)
+    local sandbox = SandboxVars.SVRPChatLocal or SandboxVars.SVRPChat or {}
+    if sandbox.EnableVoiceChatter == false then return end
+    if not sendingPlayer or not text or text == "" then return end
+
+    local chatTypeStr, xyRange, zRange = getChatRangeAndType(text)
+    if not chatTypeStr or xyRange <= 0 then return end
+
+    local onlinePlayers = getOnlinePlayers()
+    if not onlinePlayers or onlinePlayers:size() == 0 then return end
+
+    local speakerUsername = sendingPlayer:getUsername()
+    local sx = x or sendingPlayer:getX()
+    local sy = y or sendingPlayer:getY()
+    local sz = z or sendingPlayer:getZ()
+    local speakerSq = sendingPlayer:getCurrentSquare() or (getCell() and getCell():getGridSquare(sx, sy, sz))
+    local speakerOutside = speakerSq and speakerSq:isOutside()
+
+    for i = 0, onlinePlayers:size() - 1 do
+        local targetPlayer = onlinePlayers:get(i)
+        local targetUsername = targetPlayer:getUsername()
+
+        -- Check server-side voice preference for this target player
+        local voicePref = PlayerDB.PlayerVoicePrefs and PlayerDB.PlayerVoicePrefs[targetUsername]
+        local isVoiceEnabled = (voicePref ~= false)
+
+        if isVoiceEnabled then
+            local tx, ty, tz = targetPlayer:getX(), targetPlayer:getY(), targetPlayer:getZ()
+            local dx = sx - tx
+            local dy = sy - ty
+            local dist = math.sqrt(dx * dx + dy * dy)
+            local zDist = math.abs(sz - tz)
+
+            -- Acoustic wall dampening on server
+            local wallPenalty = 0
+            local targetSq = targetPlayer:getCurrentSquare() or (getCell() and getCell():getGridSquare(tx, ty, tz))
+            if speakerSq and targetSq then
+                local targetOutside = targetSq:isOutside()
+                if speakerOutside ~= targetOutside then
+                    if chatTypeStr == "whisper" or chatTypeStr == "low" then
+                        wallPenalty = 9999
+                    elseif chatTypeStr == "say" then
+                        wallPenalty = 12.0
+                    else
+                        wallPenalty = 8.0
+                    end
+                elseif not speakerOutside and not targetOutside then
+                    local sBuilding = speakerSq:getBuilding()
+                    local tBuilding = targetSq:getBuilding()
+                    if sBuilding and tBuilding and sBuilding ~= tBuilding then
+                        if chatTypeStr == "whisper" or chatTypeStr == "low" then
+                            wallPenalty = 9999
+                        else
+                            wallPenalty = 18.0
+                        end
+                    end
+                end
+            end
+
+            local effectiveDist = dist + wallPenalty
+            local rangeMult = (chatTypeStr == "whisper" or chatTypeStr == "low") and 1.2 or 1.4
+            local maxRange = xyRange * rangeMult + 0.99
+
+            local canHear = false
+            if targetPlayer.isHearAll and targetPlayer:isHearAll() then
+                canHear = true
+            elseif effectiveDist <= maxRange and zDist <= zRange then
+                canHear = true
+            end
+
+            if canHear then
+                local isDifferentZ = (zDist > 0)
+                sendServerCommand(targetPlayer, "AC", "PlayVoiceChatter", {
+                    speakerUsername,
+                    chatTypeStr,
+                    text,
+                    isDifferentZ,
+                    { x = sx, y = sy, z = sz }
+                })
+            end
+        end
+    end
+end
+
 local function doLog(sendingPlayer, args)
     local username = sendingPlayer:getUsername()
     local forname = sendingPlayer:getDescriptor():getForename()
     local x, y, z, text, lang = args[1], args[2], args[3], args[4], args[5]
     local logMessage = string.format("%s (%s) @ %s,%s,%s: [%s] %s", username, forname, x, y, z, lang, text)
     writeLog("ReadableChat", logMessage)
+    dispatchVoiceChatter(sendingPlayer, text, x, y, z)
 end
 
 local function doPrivateLog(sendingPlayer, args)
@@ -37,6 +153,14 @@ local function doPrivateLog(sendingPlayer, args)
     local x, y, z, text, lang = args[1], args[2], args[3], args[4], args[5]
     local logMessage = string.format("%s (%s) @ %s,%s,%s: [%s] %s", username, forname, x, y, z, lang, text)
     writeLog("PrivateChat", logMessage)
+end
+
+local function SetVoiceChatterPref(player, enabled)
+    if not player then return end
+    PlayerDB.PlayerVoicePrefs = PlayerDB.PlayerVoicePrefs or {}
+    PlayerDB.PlayerVoicePrefs[player:getUsername()] = (enabled == true)
+    ModData.add("AC_PlayerVoicePrefs", PlayerDB.PlayerVoicePrefs)
+    sendServerCommand("AC", "SetVoiceChatterPref", {player:getUsername(), (enabled == true)})
 end
 
 local function SetPlayerColor(player, r, g, b)
@@ -142,6 +266,10 @@ CommandHandlers.doLog = function(sendingPlayer, args)
     doLog(sendingPlayer, args)
 end
 
+CommandHandlers.SetVoiceChatterPref = function(sendingPlayer, args)
+    SetVoiceChatterPref(sendingPlayer, args and args[1])
+end
+
 CommandHandlers.SetPlayerColor = function(sendingPlayer, args)
     SetPlayerColor(sendingPlayer, args[1], args[2], args[3])
 end
@@ -235,39 +363,25 @@ CommandHandlers.PrivateChat = function(sendingPlayer, args)
 end
 
 CommandHandlers.Injure = function(sendingPlayer, args)
+    local sandbox = SandboxVars.SVRPChatLocal or SandboxVars.SVRPChat
+    if sandbox and sandbox.EnableSelfInjury == false then
+        return
+    end
     local bodyPartStr, injury = args[1], args[2]
     local bodyPartType = BodyPartType.FromString(bodyPartStr)
     if bodyPartType then
-        local bodyDamage = sendingPlayer:getBodyDamage()
-        local bodyPart = bodyDamage:getBodyPart(bodyPartType)
-        if injury == "Bleeding" then bodyPart:setBleedingTime(10)
-        elseif injury == "Bullet" then bodyPart:setHaveBullet(true, 0)
-        elseif injury == "Burned" then bodyPart:setBurnTime(50)
-        elseif injury == "Deep Wound" then bodyPart:generateDeepWound()
-        elseif injury == "Fracture" then bodyPart:setFractureTime(21)
-        elseif injury == "Glass Shards" then bodyPart:generateDeepShardWound()
-        elseif injury == "Infected" then bodyPart:setWoundInfectionLevel(10)
-        elseif injury == "Scratched" then bodyPart:setScratched(true, true)
-        elseif injury == "Laceration" then bodyPart:setCut(true)
-        elseif injury == "Bite" then
-            bodyPart:SetBitten(true)
-            bodyPart:SetInfected(false)
-            bodyPart:SetFakeInfected(false)
-        elseif injury == "Cold" then bodyDamage:setColdStrength(100.0)
-        elseif injury == "Sickness" then bodyDamage:setFoodSicknessLevel(100.0)
-        end
-        bodyDamage:AddDamage(bodyPartType, 15.0)
+        sendServerCommand(sendingPlayer, "AC", "ApplyInjury", {bodyPartStr, injury})
     end
 end
 
 CommandHandlers.Ailment = function(sendingPlayer, args)
+    local sandbox = SandboxVars.SVRPChatLocal or SandboxVars.SVRPChat
+    if sandbox and sandbox.EnableSelfInjury == false then
+        return
+    end
     local ailment = args[1]
-    local bodyDamage = sendingPlayer:getBodyDamage()
-    if ailment == "Cold" then
-        bodyDamage:setColdStrength(100.0)
-        bodyDamage:setHasACold(true)
-    elseif ailment == "Sickness" then
-        sendingPlayer:getStats():set(CharacterStat.FOOD_SICKNESS, 40.0)
+    if ailment == "Cold" or ailment == "Sickness" then
+        sendServerCommand(sendingPlayer, "AC", "ApplyAilment", {ailment})
     end
 end
 
@@ -670,6 +784,7 @@ local function ProcessLastSeenTimes()
     collectUsernames(PlayerDB.PlayerNames)
     collectUsernames(PlayerDB.PlayerAfk)
     collectUsernames(PlayerDB.PlayerStatus)
+    collectUsernames(PlayerDB.PlayerVoicePrefs)
     collectUsernames(PlayerDB.CharacterBioStorage)
     collectUsernames(PlayerDB.CharacterPortraitStorage)
 
@@ -700,6 +815,7 @@ local function ProcessLastSeenTimes()
             if PlayerDB.PlayerNames then PlayerDB.PlayerNames[username] = nil end
             if PlayerDB.PlayerAfk then PlayerDB.PlayerAfk[username] = nil end
             if PlayerDB.PlayerStatus then PlayerDB.PlayerStatus[username] = nil end
+            if PlayerDB.PlayerVoicePrefs then PlayerDB.PlayerVoicePrefs[username] = nil end
             if PlayerDB.CharacterBioStorage then PlayerDB.CharacterBioStorage[username] = nil end
             if PlayerDB.CharacterPortraitStorage then PlayerDB.CharacterPortraitStorage[username] = nil end
         end
@@ -711,6 +827,7 @@ local function ProcessLastSeenTimes()
     ModData.add("AC_PlayerNames", PlayerDB.PlayerNames)
     ModData.add("AC_PlayerAfk", PlayerDB.PlayerAfk)
     ModData.add("AC_PlayerStatus", PlayerDB.PlayerStatus)
+    ModData.add("AC_PlayerVoicePrefs", PlayerDB.PlayerVoicePrefs)
     ModData.add("AC_CharacterBioStorage", PlayerDB.CharacterBioStorage)
     ModData.add("AC_CharacterPortraitStorage", PlayerDB.CharacterPortraitStorage)
     ModData.add("AC_PlayerEvents", PlayerDB.PlayerEvents)
@@ -724,6 +841,7 @@ local function OnInitGlobalModData(isNewGame)
     PlayerDB.PlayerNames    = ModData.getOrCreate("AC_PlayerNames")
     PlayerDB.PlayerAfk      = ModData.getOrCreate("AC_PlayerAfk")
     PlayerDB.PlayerStatus   = ModData.getOrCreate("AC_PlayerStatus")
+    PlayerDB.PlayerVoicePrefs = ModData.getOrCreate("AC_PlayerVoicePrefs")
     PlayerDB.CharacterBioStorage = ModData.getOrCreate("AC_CharacterBioStorage")
     PlayerDB.CharacterPortraitStorage = ModData.getOrCreate("AC_CharacterPortraitStorage")
     PlayerDB.PlayerEvents   = ModData.getOrCreate("AC_PlayerEvents")

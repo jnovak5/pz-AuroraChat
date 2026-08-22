@@ -27,6 +27,8 @@ function AC.Events.OnReceiveGlobalModData(key, modData)
     elseif key == "AC_PlayerEvents" then
         AC.PlayerEvents = AC.PlayerEvents or {}
         AC.PlayerEvents.ActiveEvents = modData or {}
+    elseif key == "AC_PlayerVoicePrefs" then
+        AC.PlayerVoicePrefs = modData or {}
     end
 end
 
@@ -37,6 +39,11 @@ function AC.Events.OnConnected()
     ModData.request("AC_PlayerNames")
     ModData.request("AC_PlayerStatus")
     ModData.request("AC_PlayerEvents")
+    ModData.request("AC_PlayerVoicePrefs")
+
+    if isClient() and getPlayer() and AC.Voice and AC.Voice.IsEnabled then
+        sendClientCommand(getPlayer(), "AC", "SetVoiceChatterPref", { AC.Voice.IsEnabled() })
+    end
 end
 
 function AC.Events.onServerCommand(module, command, args)
@@ -115,6 +122,41 @@ function AC.Events.onServerCommand(module, command, args)
         end)
         modal:initialise()
         modal:addToUIManager()
+    elseif command == "ApplyInjury" then
+        local bodyPartStr, injury = args[1], args[2]
+        if AC.Commands and AC.Commands.ApplyInjuryLocal then
+            AC.Commands.ApplyInjuryLocal(bodyPartStr, injury)
+        end
+    elseif command == "ApplyAilment" then
+        local ailment = args[1]
+        if AC.Commands and AC.Commands.ApplyAilmentLocal then
+            AC.Commands.ApplyAilmentLocal(ailment)
+        end
+    elseif command == "SetVoiceChatterPref" then
+        local player = args[1]
+        local enabled = args[2]
+        AC.PlayerVoicePrefs = AC.PlayerVoicePrefs or {}
+        AC.PlayerVoicePrefs[player] = enabled
+    elseif command == "PlayVoiceChatter" then
+        local speakerUsername = args[1]
+        local chatType = args[2]
+        local text = args[3]
+        local isDifferentZ = args[4]
+        local pos = args[5]
+        if AC.Voice and AC.Voice.IsEnabled and AC.Voice.IsEnabled() then
+            local speakerPlayer = nil
+            local allPlayers = getOnlinePlayers()
+            if allPlayers then
+                for i=0, allPlayers:size()-1 do
+                    local p = allPlayers:get(i)
+                    if p:getUsername() == speakerUsername then
+                        speakerPlayer = p
+                        break
+                    end
+                end
+            end
+            AC.Voice.PlayChatVoice(speakerPlayer, chatType, text, isDifferentZ, pos, speakerUsername)
+        end
     elseif command == "AddKnownLanguage" then
         local languageData = AC.Languages[args[1]]
         if languageData then

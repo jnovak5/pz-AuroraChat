@@ -7,7 +7,7 @@ AC.ChatTypes = {}
 AC.ChatTypes["whisper"] = {
     name = "Whisper",
     command = {"whisper", "w"},
-    xyRange = sandbox.RangeXYWhisper or 4,
+    xyRange = sandbox.RangeXYWhisper or 2,
     zRange = sandbox.RangeZWhisper or 0,
     questionPrefix = "whisper asks",
     exclamationPrefix = "whisper exclaims",
@@ -17,7 +17,7 @@ AC.ChatTypes["whisper"] = {
 AC.ChatTypes["low"] = {
     name = "Low",
     command = {"low", "l", "quiet", "q"},
-    xyRange = sandbox.RangeXYLow or 12,
+    xyRange = sandbox.RangeXYLow or 6,
     zRange = sandbox.RangeZLow or 0,
     questionPrefix = "quietly asks",
     exclamationPrefix = "quietly exclaims",
@@ -27,7 +27,7 @@ AC.ChatTypes["low"] = {
 AC.ChatTypes["say"] = {
     name = "Say",
     command = {"say", ""},
-    xyRange = sandbox.RangeXYSay or 35,
+    xyRange = sandbox.RangeXYSay or 20,
     zRange = sandbox.RangeZSay or 2,
     questionPrefix = "asks",
     exclamationPrefix = "exclaims",
@@ -37,7 +37,7 @@ AC.ChatTypes["say"] = {
 AC.ChatTypes["loud"] = {
     name = "Loud",
     command = {"loud", "yell", "y"},
-    xyRange = sandbox.RangeXYLoud or 65,
+    xyRange = sandbox.RangeXYLoud or 45,
     zRange = sandbox.RangeZLoud or 4,
     questionPrefix = "loudly asks",
     exclamationPrefix = "loudly exclaims",
@@ -47,7 +47,7 @@ AC.ChatTypes["loud"] = {
 AC.ChatTypes["shout"] = {
     name = "Shout",
     command = {"shout", "s"},
-    xyRange = sandbox.RangeXYShout or 100,
+    xyRange = sandbox.RangeXYShout or 80,
     zRange = sandbox.RangeZShout or 7,
     questionPrefix = "shouts",
     exclamationPrefix = "shouts",
@@ -60,23 +60,23 @@ function AC.RefreshChatRanges()
     local sb = (SandboxVars and (SandboxVars.SVRPChat or SandboxVars.SVRPChat)) or {}
     if AC.ChatTypes then
         if AC.ChatTypes["whisper"] then
-            AC.ChatTypes["whisper"].xyRange = sb.RangeXYWhisper or 4
+            AC.ChatTypes["whisper"].xyRange = sb.RangeXYWhisper or 2
             AC.ChatTypes["whisper"].zRange = sb.RangeZWhisper or 0
         end
         if AC.ChatTypes["low"] then
-            AC.ChatTypes["low"].xyRange = sb.RangeXYLow or 12
+            AC.ChatTypes["low"].xyRange = sb.RangeXYLow or 6
             AC.ChatTypes["low"].zRange = sb.RangeZLow or 0
         end
         if AC.ChatTypes["say"] then
-            AC.ChatTypes["say"].xyRange = sb.RangeXYSay or 35
+            AC.ChatTypes["say"].xyRange = sb.RangeXYSay or 20
             AC.ChatTypes["say"].zRange = sb.RangeZSay or 2
         end
         if AC.ChatTypes["loud"] then
-            AC.ChatTypes["loud"].xyRange = sb.RangeXYLoud or 65
+            AC.ChatTypes["loud"].xyRange = sb.RangeXYLoud or 45
             AC.ChatTypes["loud"].zRange = sb.RangeZLoud or 4
         end
         if AC.ChatTypes["shout"] then
-            AC.ChatTypes["shout"].xyRange = sb.RangeXYShout or 100
+            AC.ChatTypes["shout"].xyRange = sb.RangeXYShout or 80
             AC.ChatTypes["shout"].zRange = sb.RangeZShout or 7
         end
     end

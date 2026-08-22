@@ -18,6 +18,71 @@ local function safeHasTrait(player, traitStr)
     return false
 end
 
+local function getAcousticWallPenalty(myPlayer, otherPlayer, otherPos, chatTypeStr)
+    if not myPlayer then return 0 end
+    local mySq = myPlayer:getCurrentSquare() or (getCell() and getCell():getGridSquare(myPlayer:getX(), myPlayer:getY(), myPlayer:getZ()))
+    if not mySq then return 0 end
+
+    local otherSq = nil
+    if otherPlayer and otherPlayer.getCurrentSquare then
+        otherSq = otherPlayer:getCurrentSquare()
+    elseif otherPlayer and otherPlayer.getSquare then
+        otherSq = otherPlayer:getSquare()
+    elseif otherPos and otherPos.x and otherPos.y and getCell() then
+        otherSq = getCell():getGridSquare(otherPos.x, otherPos.y, otherPos.z or myPlayer:getZ())
+    end
+
+    if not otherSq then return 0 end
+
+    local myOutside = mySq:isOutside()
+    local otherOutside = otherSq:isOutside()
+
+    -- Case 1: One player is inside a building and the other is outside
+    if myOutside ~= otherOutside then
+        if chatTypeStr == "whisper" or chatTypeStr == "low" then
+            return 9999 -- Quiet and whisper cannot penetrate building walls
+        elseif chatTypeStr == "say" then
+            return 12.0 -- Heavy exterior wall dampening (+12 tiles)
+        elseif chatTypeStr == "loud" then
+            return 10.0
+        elseif chatTypeStr == "shout" then
+            return 8.0
+        end
+    end
+
+    -- Case 2: Both are inside buildings
+    if not myOutside and not otherOutside then
+        local myBuilding = mySq:getBuilding()
+        local otherBuilding = otherSq:getBuilding()
+
+        -- Different buildings (two separate exterior walls)
+        if myBuilding and otherBuilding and myBuilding ~= otherBuilding then
+            if chatTypeStr == "whisper" or chatTypeStr == "low" then
+                return 9999
+            elseif chatTypeStr == "say" then
+                return 25.0
+            else
+                return 18.0
+            end
+        end
+
+        -- Same building, but different rooms (interior wall)
+        local myRoom = mySq:getRoom()
+        local otherRoom = otherSq:getRoom()
+        if myRoom and otherRoom and myRoom ~= otherRoom then
+            if chatTypeStr == "whisper" then
+                return 9999
+            elseif chatTypeStr == "low" then
+                return 6.0
+            else
+                return 4.0
+            end
+        end
+    end
+
+    return 0
+end
+
 function AC.Handlers.SpecialCommand(message)
     if message:sub(1,1) == "/" then
         local firstSpace = message:find(" ")
@@ -501,7 +566,7 @@ function AC.Handlers.AddLineInChat(chatMessage, tabID)
                     return true
                 end
             end
-            if not isHearAll and not AC.Meta.IsInRange(myPlayer, recPlayer, chatType.xyRange * 1.5, chatType.zRange) then
+            if not isHearAll and not AC.Meta.IsInRange(myPlayer, recPlayer, chatType.xyRange * 1.2, chatType.zRange) then
                 pcall(function() chatMessage:setText("") end)
                 return true
             end
@@ -527,14 +592,17 @@ function AC.Handlers.AddLineInChat(chatMessage, tabID)
             horizontalDist = math.sqrt(dx * dx + dy * dy)
             isDifferentZ = (zDist > 0)
 
+            -- Acoustic wall dampening penalty
+            local wallPenalty = getAcousticWallPenalty(myPlayer, chattingPlayer, nil, parsedMessage.chatType)
+
             -- Check if voice can be heard across floors
             local canHearVoiceAcrossZ = false
             if isDifferentZ then
-                if parsedMessage.chatType == "say" and zDist <= 1 and horizontalDist <= (chatType.xyRange * 1.5) then
+                if parsedMessage.chatType == "say" and zDist <= 1 and horizontalDist <= (chatType.xyRange * 1.4) then
                     canHearVoiceAcrossZ = true
-                elseif parsedMessage.chatType == "loud" and zDist <= 2 and horizontalDist <= (chatType.xyRange * 1.5) then
+                elseif parsedMessage.chatType == "loud" and zDist <= 2 and horizontalDist <= (chatType.xyRange * 1.4) then
                     canHearVoiceAcrossZ = true
-                elseif parsedMessage.chatType == "shout" and zDist <= 4 and horizontalDist <= (chatType.xyRange * 1.5) then
+                elseif parsedMessage.chatType == "shout" and zDist <= 4 and horizontalDist <= (chatType.xyRange * 1.4) then
                     canHearVoiceAcrossZ = true
                 end
             end
@@ -548,7 +616,7 @@ function AC.Handlers.AddLineInChat(chatMessage, tabID)
                 and (parsedMessage.chatModifier ~= "staff")
                 and (not parsedMessage.isPrivate)
 
-            if isGeneralDialogue then
+            if not isClient() and isGeneralDialogue then
                 local voicePos = pos or (chattingPlayer and {x = chattingPlayer:getX(), y = chattingPlayer:getY(), z = chattingPlayer:getZ()})
                 local voiceType = parsedMessage.chatType or "say"
                 if not isDifferentZ then
@@ -563,11 +631,12 @@ function AC.Handlers.AddLineInChat(chatMessage, tabID)
             if (parsedMessage.chatType == "whisper" or parsedMessage.chatType == "low") and zDist > 0 then
                 floorPenalty = 9999
             end
-            effectiveDist = horizontalDist + floorPenalty
-            local maxRange = chatType.maxRange or (chatType.xyRange * 1.5 + 0.99)
+            effectiveDist = horizontalDist + floorPenalty + wallPenalty
+            local rangeMult = (parsedMessage.chatType == "whisper" or parsedMessage.chatType == "low") and 1.2 or 1.4
+            local maxRange = chatType.maxRange or (chatType.xyRange * rangeMult + 0.99)
 
             -- If player is on different Z level or out of range, do not show text in chat window or overhead (unless admin hear-all)
-            if not isHearAll and (isDifferentZ or effectiveDist > maxRange or zDist > chatType.zRange) then
+            if not isHearAll and (effectiveDist > maxRange or zDist > chatType.zRange) then
                 pcall(function() chatMessage:setText("") end)
                 return true
             end
@@ -578,13 +647,24 @@ function AC.Handlers.AddLineInChat(chatMessage, tabID)
             local dy = myPlayer:getY() - pos.y
             zDist = math.abs(myPlayer:getZ() - (pos.z or myPlayer:getZ()))
             horizontalDist = math.sqrt(dx * dx + dy * dy)
-            effectiveDist = horizontalDist + zDist * 8.0
-            if not isHearAll and not AC.Meta.IsInPosRange(myPlayer, parsedMessage.pos, chatType.xyRange * 1.5, chatType.zRange) then
+
+            -- Acoustic wall dampening penalty
+            local wallPenalty = getAcousticWallPenalty(myPlayer, nil, pos, parsedMessage.chatType)
+
+            local floorPenalty = zDist * 8.0
+            if (parsedMessage.chatType == "whisper" or parsedMessage.chatType == "low") and zDist > 0 then
+                floorPenalty = 9999
+            end
+            effectiveDist = horizontalDist + floorPenalty + wallPenalty
+            local rangeMult = (parsedMessage.chatType == "whisper" or parsedMessage.chatType == "low") and 1.2 or 1.4
+            local maxRange = chatType.maxRange or (chatType.xyRange * rangeMult + 0.99)
+
+            if not isHearAll and (effectiveDist > maxRange or zDist > chatType.zRange) then
                 pcall(function() chatMessage:setText("") end)
                 return true
             end
 
-            -- Also trigger voice chatter for pos-based messages
+            -- Also trigger voice chatter for pos-based messages in singleplayer
             local isGeneralDialogue = (not parsedMessage.radioFrequency)
                 and (not parsedMessage.isOwnRadio)
                 and (not parsedMessage.fromRecorder)
@@ -593,7 +673,7 @@ function AC.Handlers.AddLineInChat(chatMessage, tabID)
                 and (parsedMessage.chatModifier ~= "staff")
                 and (not parsedMessage.isPrivate)
 
-            if isGeneralDialogue then
+            if not isClient() and isGeneralDialogue then
                 local isDifferentZ = (zDist > 0)
                 AC.Voice.PlayChatVoice(nil, parsedMessage.chatType or "say", rawText, isDifferentZ, pos, parsedMessage.playerUsername)
             end
@@ -606,7 +686,8 @@ function AC.Handlers.AddLineInChat(chatMessage, tabID)
 
         if not isMe and parsedMessage.chatModifier ~= "ooc" and not isHearAll then
             local clearRange = chatType.clearRange or chatType.xyRange
-            local maxRange = chatType.maxRange or (chatType.xyRange * 1.5)
+            local rangeMult = (parsedMessage.chatType == "whisper" or parsedMessage.chatType == "low") and 1.2 or 1.4
+            local maxRange = chatType.maxRange or (chatType.xyRange * rangeMult)
             if zDist > 0 then
                 local zMuffle = math.min(0.6, 0.25 * zDist)
                 for _, part in ipairs(parsedMessage.parts) do
@@ -617,7 +698,7 @@ function AC.Handlers.AddLineInChat(chatMessage, tabID)
             else
                 for _, part in ipairs(parsedMessage.parts) do
                     if part.text then
-                        part.text = AC.Parsing.ScrambleTextByDistance(part.text, horizontalDist, clearRange, maxRange)
+                        part.text = AC.Parsing.ScrambleTextByDistance(part.text, effectiveDist, clearRange, maxRange)
                     end
                 end
             end

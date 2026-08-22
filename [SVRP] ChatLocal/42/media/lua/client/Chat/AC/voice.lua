@@ -106,6 +106,9 @@ function AC.Voice.SetEnabled(enabled)
         if modData then
             modData._AC_VoiceChatterDisabled = not AC.Voice.enabled
         end
+        if isClient() then
+            sendClientCommand(myPlayer, "AC", "SetVoiceChatterPref", { AC.Voice.enabled })
+        end
     end
     if not AC.Voice.enabled then
         AC.Voice.StopAllActiveSounds()
@@ -523,6 +526,7 @@ end
 --- NOTE: Uses unattached / standalone emitters so it NEVER sends network sound packets in multiplayer.
 local function playVoiceClip(player, playerKey, soundName, volume, pitch, pos)
     if not soundName then return end
+    if not AC.Voice.IsEnabled() then return end
 
     -- 1. Stop any currently playing voice clip for this character to prevent overlapping voices
     if AC.Voice.ActiveSoundIds and AC.Voice.ActiveSoundIds[playerKey] then
@@ -544,15 +548,15 @@ local function playVoiceClip(player, playerKey, soundName, volume, pitch, pos)
     local played = false
     local emitter = nil
 
-    -- 2. Obtain a client-side standalone FMOD sound emitter (non-networked)
-    if IsoWorld and IsoWorld.instance and IsoWorld.instance.getFreeEmitter then
+    -- 2. Obtain a client-side standalone FMOD sound emitter (strictly local / non-networked)
+    if getSoundManager and getSoundManager().createSoundEmitter then
+        pcall(function() emitter = getSoundManager():createSoundEmitter() end)
+    end
+    if not emitter and IsoWorld and IsoWorld.instance and IsoWorld.instance.getFreeEmitter then
         pcall(function() emitter = IsoWorld.instance:getFreeEmitter(px, py, pz) end)
         if not emitter then
             pcall(function() emitter = IsoWorld.instance:getFreeEmitter() end)
         end
-    end
-    if not emitter and getSoundManager and getSoundManager().createSoundEmitter then
-        pcall(function() emitter = getSoundManager():createSoundEmitter() end)
     end
 
     if emitter then
@@ -592,9 +596,13 @@ local function playVoiceClip(player, playerKey, soundName, volume, pitch, pos)
     -- 3. Fallback ONLY if standalone emitter was not created or completely failed
     if not emitter and not played then
         local sq = (player and player.getSquare and player:getSquare()) or (getCell() and getCell():getGridSquare(px, py, pz))
-        if sq and getSoundManager() and getSoundManager().PlayWorldSound then
+        if sq and getSoundManager() and getSoundManager().PlayWorldSoundLocal then
             pcall(function()
-                getSoundManager():PlayWorldSound(soundName, sq, 0.0, 15.0, volume or 1.0, false)
+                getSoundManager():PlayWorldSoundLocal(soundName, sq, 0.0, 15.0, volume or 1.0, false)
+            end)
+        elseif getSoundManager() and getSoundManager().PlaySoundLocal then
+            pcall(function()
+                getSoundManager():PlaySoundLocal(soundName, false, volume or 1.0)
             end)
         elseif getSoundManager() and getSoundManager().PlaySound then
             pcall(function()
