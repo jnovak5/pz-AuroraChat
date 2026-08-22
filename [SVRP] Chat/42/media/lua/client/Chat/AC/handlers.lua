@@ -752,7 +752,11 @@ function AC.Handlers.AddLineInChat(chatMessage, tabID)
         elseif parsedMessage.chatModifier == "alert" then
             colorRGB = {r = 1.0, g = 0.4, b = 0.4}
         end
-        local overheadRadius = isHearAll and 9999.0 or 30.0
+        local chatTypeObj = AC.ChatTypes[parsedMessage.chatType] or AC.ChatTypes["say"]
+        local typeRange = chatTypeObj and chatTypeObj.xyRange or 20.0
+        local rangeMult = (parsedMessage.chatType == "whisper" or parsedMessage.chatType == "low") and 1.2 or 1.4
+        local effectiveRange = chatTypeObj and (chatTypeObj.maxRange or (typeRange * rangeMult + 0.99)) or 20.0
+        local overheadRadius = isHearAll and 9999.0 or effectiveRange
         if not AC.PlayerChatTimes then AC.PlayerChatTimes = {} end; AC.PlayerChatTimes[chattingPlayer:getUsername()] = getTimeInMillis(); pcall(function() chattingPlayer:addLineChatElement(textOnlyMessage .. "", colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, overheadRadius, "") end)
     end
 

@@ -327,14 +327,19 @@ function ISChat:onGearButtonClick()
 
         -- If not staff/admin, sanitize the context menu so no admin/staff streams or admin tools appear
         if not isStaff and context.options then
-            for _, opt in ipairs(context.options) do
-                if opt and opt.subOption then
-                    local sub = context.subOption[opt.subOption]
-                    if sub and sub.options then
-                        for i = #sub.options, 1, -1 do
-                            local subOpt = sub.options[i]
-                            if subOpt and (subOpt.name == "Staff" or subOpt.name == "Admin" or subOpt.name == "Server" or subOpt.name == "Server Chat" or subOpt.name == "Admin Chat") then
-                                table.remove(sub.options, i)
+            for i = #context.options, 1, -1 do
+                local opt = context.options[i]
+                if opt then
+                    if opt.name == "Staff" or opt.name == "Admin" or opt.name == "Server" or opt.name == "Server Chat" or opt.name == "Admin Chat" then
+                        table.remove(context.options, i)
+                    elseif opt.subOption and context.getSubMenu then
+                        local sub = context:getSubMenu(opt.subOption)
+                        if sub and sub.options then
+                            for j = #sub.options, 1, -1 do
+                                local subOpt = sub.options[j]
+                                if subOpt and (subOpt.name == "Staff" or subOpt.name == "Admin" or subOpt.name == "Server" or subOpt.name == "Server Chat" or subOpt.name == "Admin Chat") then
+                                    table.remove(sub.options, j)
+                                end
                             end
                         end
                     end

@@ -125,11 +125,15 @@ function AC.Indicator.DrawTypingInChat(chatInstance)
         if username ~= myUsername then
             local player = getPlayerFromUsername(username)
             local inRange = true
-            -- Proximity check: ensure the typing player is actually loaded and within speech range
-            if player then
-                local distSq = AC.GetDistanceSq(myPlayer, player)
-                local zDist = math.abs(myPlayer:getZ() - player:getZ())
-                if distSq > (25 * 25) or zDist > 2 then
+            -- Proximity check: ensure the typing player is actually loaded and within speech range (unless admin hear-all)
+            if not (AC.CanHearAll and AC.CanHearAll(myPlayer)) then
+                if player then
+                    local distSq = AC.GetDistanceSq(myPlayer, player)
+                    local zDist = math.abs(myPlayer:getZ() - player:getZ())
+                    if distSq > (25 * 25) or zDist > 2 then
+                        inRange = false
+                    end
+                else
                     inRange = false
                 end
             end

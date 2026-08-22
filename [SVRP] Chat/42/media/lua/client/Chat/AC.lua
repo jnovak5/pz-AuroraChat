@@ -74,7 +74,7 @@ function AC.isStaff(player)
     player = player or (getPlayer and getPlayer())
     if not player then return false end
     if not isClient() and not isServer() then
-        return (getDebug and getDebug()) == true
+        return (getDebug and getDebug()) or (player.isAccessLevel and (player:isAccessLevel("admin") or player:isAccessLevel("moderator") or player:isAccessLevel("overseer") or player:isAccessLevel("gm") or player:isAccessLevel("observer"))) or false
     end
     local accessLevel = player.getAccessLevel and player:getAccessLevel()
     if type(accessLevel) == "string" and accessLevel ~= "" then
@@ -89,12 +89,43 @@ function AC.Override(skipDisable)
     return AC.isStaff()
 end
 
+function AC.EnforceUserLimits(player)
+    player = player or (getPlayer and getPlayer())
+    if not player then return end
+    if not AC.isStaff(player) then
+        if player.setHearAll then
+            pcall(function() player:setHearAll(false) end)
+        end
+        if player.setHearAllChat then
+            pcall(function() player:setHearAllChat(false) end)
+        end
+        if player.setHearEveryone then
+            pcall(function() player:setHearEveryone(false) end)
+        end
+        if player.setSeeEveryone then
+            pcall(function() player:setSeeEveryone(false) end)
+        end
+        if player.getModData then
+            local md = player:getModData()
+            if md then
+                md.isHearAll = nil
+                md.HearAll = nil
+                md.CanHearAll = nil
+                md.bHearAll = nil
+                md.HearEveryone = nil
+                md.hearEveryone = nil
+            end
+        end
+    end
+end
+
 function AC.CanHearAll(player)
     player = player or (getPlayer and getPlayer())
     if not player then return false end
 
-    -- Regular non-staff players can NEVER hear-all
+    -- Regular non-staff players can NEVER hear-all or hear-everyone
     if not AC.isStaff(player) then
+        AC.EnforceUserLimits(player)
         return false
     end
 

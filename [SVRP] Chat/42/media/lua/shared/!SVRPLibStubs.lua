@@ -180,7 +180,7 @@ function AC_FakeMessage:isServerAlert()
 end
 function AC_FakeMessage:getTextWithPrefix()
     local message = self:getText()
-    if ISChat.instance.showTimestamp and self.datetimeStr then
+    if ISChat.instance.showTimestamp and self.datetimeStr and self.datetimeStr ~= "" then
         message = "<RGB:0.4,0.4,0.4>[" .. self.datetimeStr .. "] " .. message
     end
     if ISChat.instance.chatFont then

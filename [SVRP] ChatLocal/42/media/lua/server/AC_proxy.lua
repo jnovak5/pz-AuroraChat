@@ -15,8 +15,38 @@ local function isStaffPlayer(player)
     return false
 end
 
+local function enforceServerUserLimits(player)
+    if not player then return end
+    if not isStaffPlayer(player) then
+        if player.setHearAll then
+            pcall(function() player:setHearAll(false) end)
+        end
+        if player.setHearAllChat then
+            pcall(function() player:setHearAllChat(false) end)
+        end
+        if player.setHearEveryone then
+            pcall(function() player:setHearEveryone(false) end)
+        end
+        if player.setSeeEveryone then
+            pcall(function() player:setSeeEveryone(false) end)
+        end
+        if player.getModData then
+            local md = player:getModData()
+            if md then
+                md.isHearAll = nil
+                md.HearAll = nil
+                md.CanHearAll = nil
+                md.bHearAll = nil
+                md.HearEveryone = nil
+                md.hearEveryone = nil
+            end
+        end
+    end
+end
+
 local function canSee(player, otherPlayer, xyRange, zRange)
     if not player or not otherPlayer then return false end
+    enforceServerUserLimits(player)
     
     -- Staff can see typing indicators if in staff mode
     if isStaffPlayer(player) then
@@ -131,8 +161,16 @@ local function dispatchVoiceChatter(sendingPlayer, text, x, y, z)
             local rangeMult = (chatTypeStr == "whisper" or chatTypeStr == "low") and 1.2 or 1.4
             local maxRange = xyRange * rangeMult + 0.99
 
+            enforceServerUserLimits(targetPlayer)
             local canHear = false
-            if targetPlayer.isHearAll and targetPlayer:isHearAll() then
+            if isStaffPlayer(targetPlayer) and (
+                (targetPlayer.isHearAll and targetPlayer:isHearAll() == true) or
+                (targetPlayer.isHearAllChat and targetPlayer:isHearAllChat() == true) or
+                (targetPlayer.isHearEveryone and targetPlayer:isHearEveryone() == true) or
+                (targetPlayer.isSeeEveryone and targetPlayer:isSeeEveryone() == true) or
+                (targetPlayer.isGhostMode and targetPlayer:isGhostMode() == true) or
+                (targetPlayer.isGodMod and targetPlayer:isGodMod() == true)
+            ) then
                 canHear = true
             elseif effectiveDist <= maxRange and zDist <= zRange then
                 canHear = true
