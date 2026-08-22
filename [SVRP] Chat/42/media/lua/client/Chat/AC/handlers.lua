@@ -552,9 +552,9 @@ function AC.Handlers.AddLineInChat(chatMessage, tabID)
                 local voicePos = pos or (chattingPlayer and {x = chattingPlayer:getX(), y = chattingPlayer:getY(), z = chattingPlayer:getZ()})
                 local voiceType = parsedMessage.chatType or "say"
                 if not isDifferentZ then
-                    AC.Voice.PlayChatVoice(chattingPlayer, voiceType, rawText, false, voicePos)
+                    AC.Voice.PlayChatVoice(chattingPlayer, voiceType, rawText, false, voicePos, parsedMessage.playerUsername)
                 elseif canHearVoiceAcrossZ then
-                    AC.Voice.PlayChatVoice(chattingPlayer, voiceType, rawText, true, voicePos)
+                    AC.Voice.PlayChatVoice(chattingPlayer, voiceType, rawText, true, voicePos, parsedMessage.playerUsername)
                 end
             end
 
@@ -595,7 +595,7 @@ function AC.Handlers.AddLineInChat(chatMessage, tabID)
 
             if isGeneralDialogue then
                 local isDifferentZ = (zDist > 0)
-                AC.Voice.PlayChatVoice(nil, parsedMessage.chatType or "say", rawText, isDifferentZ, pos)
+                AC.Voice.PlayChatVoice(nil, parsedMessage.chatType or "say", rawText, isDifferentZ, pos, parsedMessage.playerUsername)
             end
         else
             if not isHearAll then

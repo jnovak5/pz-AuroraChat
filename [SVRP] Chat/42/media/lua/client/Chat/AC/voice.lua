@@ -323,7 +323,10 @@ local function hashText(str)
 end
 
 --- Get consistent, robust player identifier key for deduplication and active sound tracking
-local function getPlayerKey(player, pos, text)
+local function getPlayerKey(player, pos, text, username)
+    if username and username ~= "" then
+        return "user_" .. tostring(username)
+    end
     if player then
         local uName = player.getUsername and player:getUsername()
         if uName and uName ~= "" then return "user_" .. uName end
@@ -555,9 +558,9 @@ local function playVoiceClip(player, playerKey, soundName, volume, pitch, pos)
     if emitter then
         pcall(function() emitter:setPos(px, py, pz) end)
         local soundId = nil
-        pcall(function() soundId = emitter:playSound(soundName) end)
+        local success = pcall(function() soundId = emitter:playSound(soundName) end)
 
-        if soundId ~= nil and soundId ~= 0 then
+        if success and soundId ~= nil then
             played = true
             AC.Voice.ActiveSoundIds[playerKey] = { emitter = emitter, soundId = soundId }
 
@@ -586,8 +589,8 @@ local function playVoiceClip(player, playerKey, soundName, volume, pitch, pos)
         end
     end
 
-    -- 3. Fallback if standalone emitter failed
-    if not played then
+    -- 3. Fallback ONLY if standalone emitter was not created or completely failed
+    if not emitter and not played then
         local sq = (player and player.getSquare and player:getSquare()) or (getCell() and getCell():getGridSquare(px, py, pz))
         if sq and getSoundManager() and getSoundManager().PlayWorldSound then
             pcall(function()
@@ -607,7 +610,8 @@ end
 --- @param text string
 --- @param isMuffled boolean
 --- @param pos table|nil
-function AC.Voice.PlayChatVoice(player, chatType, text, isMuffled, pos)
+--- @param username string|nil
+function AC.Voice.PlayChatVoice(player, chatType, text, isMuffled, pos, username)
     if not AC.Voice.IsEnabled() then return end
 
     local sandbox = SandboxVars.SVRPChat or SandboxVars.SVRPChat or {}
@@ -622,16 +626,15 @@ function AC.Voice.PlayChatVoice(player, chatType, text, isMuffled, pos)
         return -- No spoken words in this message (e.g. pure /me body language or silent action)
     end
 
-    local playerKey = getPlayerKey(player, pos, spokenDialogue)
+    local playerKey = getPlayerKey(player, pos, spokenDialogue, username)
     local now = getTimestampMs()
 
     -- 1. Exact Message Deduplication (prevents multiple tabs from re-triggering for the same message)
-    if spokenDialogue and spokenDialogue ~= "" then
-        local lastText = AC.Voice.LastMessageTexts and AC.Voice.LastMessageTexts[playerKey]
-        local lastTextTime = AC.Voice.LastPlayTimes[playerKey] or 0
-        if lastText == spokenDialogue and (now - lastTextTime) < 2500 then
-            return
-        end
+    AC.Voice.RecentSpoken = AC.Voice.RecentSpoken or {}
+    local msgKey = playerKey .. "::" .. spokenDialogue
+    local lastMsgTime = AC.Voice.RecentSpoken[msgKey] or 0
+    if (now - lastMsgTime) < 2500 then
+        return
     end
 
     -- 2. Debounce: Minimum cooldown (800ms) between voice triggers for the same player
@@ -640,6 +643,7 @@ function AC.Voice.PlayChatVoice(player, chatType, text, isMuffled, pos)
         return
     end
 
+    AC.Voice.RecentSpoken[msgKey] = now
     AC.Voice.LastPlayTimes[playerKey] = now
     AC.Voice.LastMessageTexts = AC.Voice.LastMessageTexts or {}
     AC.Voice.LastMessageTexts[playerKey] = spokenDialogue
