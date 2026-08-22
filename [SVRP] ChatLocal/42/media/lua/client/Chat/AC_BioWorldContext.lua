@@ -99,7 +99,9 @@ Events.OnFillWorldObjectContextMenu.Add(function(playerIndex, context, worldObje
             end
 
             local voiceChatter = AC.Voice and AC.Voice.IsEnabled and AC.Voice.IsEnabled()
-            rpContext:addOption((voiceChatter and "Disable" or "Enable") .. " Voice Audio Chatter", not voiceChatter, AC.Voice.ToggleVoiceAudio)
+            rpContext:addOption((voiceChatter and "Disable" or "Enable") .. " Voice Audio Chatter", nil, function()
+                AC.Voice.ToggleVoiceAudio()
+            end)
 
             rpContext:addOption("Go AFK / Return", nil, AC.Commands.GoAFK)
         end

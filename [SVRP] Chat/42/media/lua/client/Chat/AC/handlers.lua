@@ -536,8 +536,6 @@ function AC.Handlers.AddLineInChat(chatMessage, tabID)
                     canHearVoiceAcrossZ = true
                 elseif parsedMessage.chatType == "shout" and zDist <= 4 and horizontalDist <= (chatType.xyRange * 1.5) then
                     canHearVoiceAcrossZ = true
-                elseif parsedMessage.chatType == "low" and zDist <= 1 and horizontalDist <= (chatType.xyRange * 1.0) then
-                    canHearVoiceAcrossZ = true
                 end
             end
 
@@ -562,9 +560,7 @@ function AC.Handlers.AddLineInChat(chatMessage, tabID)
 
             -- Floor attenuation penalty (+8m per Z-level difference)
             local floorPenalty = zDist * 8.0
-            if parsedMessage.chatType == "whisper" and zDist > 0 then
-                floorPenalty = 9999
-            elseif parsedMessage.chatType == "low" and zDist > 1 then
+            if (parsedMessage.chatType == "whisper" or parsedMessage.chatType == "low") and zDist > 0 then
                 floorPenalty = 9999
             end
             effectiveDist = horizontalDist + floorPenalty
@@ -675,7 +671,8 @@ function AC.Handlers.AddLineInChat(chatMessage, tabID)
         elseif parsedMessage.chatModifier == "alert" then
             colorRGB = {r = 1.0, g = 0.4, b = 0.4}
         end
-        if not AC.PlayerChatTimes then AC.PlayerChatTimes = {} end; AC.PlayerChatTimes[chattingPlayer:getUsername()] = getTimeInMillis(); pcall(function() chattingPlayer:addLineChatElement(textOnlyMessage .. "", colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, 30.0, "") end)
+        local overheadRadius = isHearAll and 9999.0 or 30.0
+        if not AC.PlayerChatTimes then AC.PlayerChatTimes = {} end; AC.PlayerChatTimes[chattingPlayer:getUsername()] = getTimeInMillis(); pcall(function() chattingPlayer:addLineChatElement(textOnlyMessage .. "", colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, overheadRadius, "") end)
     end
 
     if parsedMessage.chatModifier == "alert" then

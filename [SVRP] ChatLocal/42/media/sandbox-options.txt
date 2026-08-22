@@ -47,8 +47,8 @@ option SVRPChatLocal.EnableBuffs
 
 option SVRPChatLocal.RangeXYWhisper
 {
-  type = integer, min = 0, max = 100,
-  default = 1,
+  type = integer, min = 0, max = 200,
+  default = 4,
 
   page = SVRPChatLocal,
   translation = SVRPChatLocal.RangeXYWhisper,
@@ -65,8 +65,8 @@ option SVRPChatLocal.RangeZWhisper
 
 option SVRPChatLocal.RangeXYLow
 {
-  type = integer, min = 0, max = 100,
-  default = 5,
+  type = integer, min = 0, max = 200,
+  default = 12,
 
   page = SVRPChatLocal,
   translation = SVRPChatLocal.RangeXYLow,
@@ -83,8 +83,8 @@ option SVRPChatLocal.RangeZLow
 
 option SVRPChatLocal.RangeXYSay
 {
-  type = integer, min = 0, max = 100,
-  default = 10,
+  type = integer, min = 0, max = 200,
+  default = 35,
 
   page = SVRPChatLocal,
   translation = SVRPChatLocal.RangeXYSay,
@@ -93,7 +93,7 @@ option SVRPChatLocal.RangeXYSay
 option SVRPChatLocal.RangeZSay
 {
   type = integer, min = 0, max = 7,
-  default = 1,
+  default = 2,
 
   page = SVRPChatLocal,
   translation = SVRPChatLocal.RangeZSay,
@@ -101,8 +101,8 @@ option SVRPChatLocal.RangeZSay
 
 option SVRPChatLocal.RangeXYLoud
 {
-  type = integer, min = 0, max = 100,
-  default = 20,
+  type = integer, min = 0, max = 200,
+  default = 65,
 
   page = SVRPChatLocal,
   translation = SVRPChatLocal.RangeXYLoud,
@@ -119,8 +119,8 @@ option SVRPChatLocal.RangeZLoud
 
 option SVRPChatLocal.RangeXYShout
 {
-  type = integer, min = 0, max = 100,
-  default = 30,
+  type = integer, min = 0, max = 200,
+  default = 100,
 
   page = SVRPChatLocal,
   translation = SVRPChatLocal.RangeXYShout,

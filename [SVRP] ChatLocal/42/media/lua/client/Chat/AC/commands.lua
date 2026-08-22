@@ -788,10 +788,10 @@ end
 
 function AC.Commands.ToggleVoiceChatter(args)
     local arg = args and args:gsub("^%s*(.-)%s*$", "%1"):lower() or ""
-    if arg == "on" then
+    if arg == "on" or arg == "enable" or arg == "true" or arg == "1" then
         AC.Voice.SetEnabled(true)
         AC_Utils.addInfoToChat("Voice audio chatter enabled.")
-    elseif arg == "off" then
+    elseif arg == "off" or arg == "disable" or arg == "false" or arg == "0" then
         AC.Voice.SetEnabled(false)
         AC_Utils.addInfoToChat("Voice audio chatter disabled.")
     else

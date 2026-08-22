@@ -186,12 +186,14 @@ function ISChat:createChildren()
     self.voiceChatterButton.borderColor.a = 0.0
     self.voiceChatterButton.backgroundColor.a = 0.0
     self.voiceChatterButton.backgroundColorMouseOver.a = 0.3
-    if AC.Voice and AC.Voice.IsEnabled and AC.Voice.IsEnabled() then
+    local isVoiceOn = AC.Voice and AC.Voice.IsEnabled and AC.Voice.IsEnabled()
+    if isVoiceOn then
         self.voiceChatterButton:setImage(getTexture("media/ui/AC_voice_on.png"))
+        self.voiceChatterButton.tooltip = "Voice Audio Chatter: Enabled (Click to Disable)"
     else
         self.voiceChatterButton:setImage(getTexture("media/ui/AC_voice_off.png"))
+        self.voiceChatterButton.tooltip = "Voice Audio Chatter: Disabled (Click to Enable)"
     end
-    self.voiceChatterButton.tooltip = "Toggle Voice Audio Chatter"
     self.voiceChatterButton:setUIName("toggle voice audio chatter")
     self:addChild(self.voiceChatterButton)
     self.voiceChatterButton:setVisible(true)

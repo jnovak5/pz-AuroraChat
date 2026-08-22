@@ -62,8 +62,10 @@ function AC.Voice.UpdateChatButton()
         local enabled = AC.Voice.IsEnabled()
         if enabled then
             ISChat.instance.voiceChatterButton:setImage(getTexture("media/ui/AC_voice_on.png"))
+            ISChat.instance.voiceChatterButton.tooltip = "Voice Audio Chatter: Enabled (Click to Disable)"
         else
             ISChat.instance.voiceChatterButton:setImage(getTexture("media/ui/AC_voice_off.png"))
+            ISChat.instance.voiceChatterButton.tooltip = "Voice Audio Chatter: Disabled (Click to Enable)"
         end
     end
 end
@@ -292,9 +294,11 @@ local function extractSpokenDialogue(text, chatType)
     end
 
     -- 2. If no quotes are found:
-    -- If it's an action/emote command (/me, /do, /it, /emote) or enclosed in asterisks *...*, there is no spoken dialogue
+    -- If it's an action/emote command (/me, /do, /it, /emote, /roll, /status, /env, /event) or enclosed in asterisks *...*, there is no spoken dialogue
     local isActionChat = (chatType == "me" or chatType == "do" or chatType == "it" or chatType == "emote")
-        or clean:match("^/me%s") or clean:match("^/do%s") or clean:match("^/it%s") or clean:match("^%*.*%*$")
+        or clean:match("^/me%s") or clean:match("^/do%s") or clean:match("^/it%s")
+        or clean:match("^/roll") or clean:match("^/status") or clean:match("^/env") or clean:match("^/event")
+        or clean:match("^%*.*%*$")
 
     if isActionChat then
         return nil -- Purely flavor / action narration, do not speak
@@ -307,6 +311,41 @@ local function extractSpokenDialogue(text, chatType)
 end
 
 AC.Voice.ExtractSpokenDialogue = extractSpokenDialogue
+
+--- Deterministic string hash function to synchronize voice clip and pitch across all clients
+local function hashText(str)
+    if not str or str == "" then return 1 end
+    local hash = 0
+    for i = 1, #str do
+        hash = (hash * 31 + string.byte(str, i)) % 1000000007
+    end
+    return math.abs(hash)
+end
+
+--- Get consistent, robust player identifier key for deduplication and active sound tracking
+local function getPlayerKey(player, pos, text)
+    if player then
+        local uName = player.getUsername and player:getUsername()
+        if uName and uName ~= "" then return "user_" .. uName end
+        local oId = player.getOnlineID and player:getOnlineID()
+        if oId and oId >= 0 then return "oid_" .. tostring(oId) end
+        local desc = player.getDescriptor and player:getDescriptor()
+        if desc then
+            local fname = desc.getForename and desc:getForename() or ""
+            local sname = desc.getSurname and desc:getSurname() or ""
+            if fname ~= "" or sname ~= "" then return "name_" .. fname .. "_" .. sname end
+        end
+        local pNum = player.getPlayerNum and player:getPlayerNum()
+        if pNum ~= nil then return "pnum_" .. tostring(pNum) end
+    end
+    if pos and pos.x and pos.y then
+        return string.format("pos_%d_%d", math.floor(pos.x), math.floor(pos.y))
+    end
+    if text and text ~= "" then
+        return "txt_" .. tostring(text:sub(1, 20))
+    end
+    return "global_default"
+end
 
 --- Analyze message text, punctuation, and player condition to determine sentiment, pitch, and voice sound
 local function analyzeSentiment(text, player, chatType)
@@ -477,28 +516,46 @@ local function analyzeSentiment(text, player, chatType)
     return sentiment
 end
 
---- Play a voice sound with pitch & volume modulation on player emitter
-local function playVoiceClip(player, playerKey, soundName, volume, pitch)
-    if not player or not soundName then return end
+--- Play a voice sound with pitch & volume modulation using a client-side 3D positional emitter
+--- NOTE: Uses unattached / standalone emitters so it NEVER sends network sound packets in multiplayer.
+local function playVoiceClip(player, playerKey, soundName, volume, pitch, pos)
+    if not soundName then return end
+
+    -- 1. Stop any currently playing voice clip for this character to prevent overlapping voices
+    if AC.Voice.ActiveSoundIds and AC.Voice.ActiveSoundIds[playerKey] then
+        local prev = AC.Voice.ActiveSoundIds[playerKey]
+        if prev and prev.emitter and prev.soundId then
+            pcall(function()
+                if prev.emitter.stopSound then
+                    prev.emitter:stopSound(prev.soundId)
+                end
+            end)
+        end
+        AC.Voice.ActiveSoundIds[playerKey] = nil
+    end
+
+    local px = (player and player.getX and player:getX()) or (pos and pos.x) or 0
+    local py = (player and player.getY and player:getY()) or (pos and pos.y) or 0
+    local pz = (player and player.getZ and player:getZ()) or (pos and pos.z) or 0
 
     local played = false
-    local emitter = player.getEmitter and player:getEmitter()
+    local emitter = nil
+
+    -- 2. Obtain a client-side standalone FMOD sound emitter (non-networked)
+    if IsoWorld and IsoWorld.instance and IsoWorld.instance.getFreeEmitter then
+        pcall(function() emitter = IsoWorld.instance:getFreeEmitter(px, py, pz) end)
+        if not emitter then
+            pcall(function() emitter = IsoWorld.instance:getFreeEmitter() end)
+        end
+    end
+    if not emitter and getSoundManager and getSoundManager().createSoundEmitter then
+        pcall(function() emitter = getSoundManager():createSoundEmitter() end)
+    end
 
     if emitter then
+        pcall(function() emitter:setPos(px, py, pz) end)
         local soundId = nil
-        -- 1. Try local sound playback so it doesn't broadcast duplicate network audio packets to other clients
-        -- (Since all clients already receive the chat message and trigger voice chatter locally)
-        if emitter.playSoundLocal then
-            pcall(function() soundId = emitter:playSoundLocal(soundName) end)
-        elseif emitter.playSoundImpl then
-            pcall(function() soundId = emitter:playSoundImpl(soundName, false) end)
-        elseif player.playSoundLocal then
-            pcall(function() soundId = player:playSoundLocal(soundName) end)
-        end
-
-        if soundId == nil or soundId == 0 then
-            pcall(function() soundId = emitter:playSound(soundName) end)
-        end
+        pcall(function() soundId = emitter:playSound(soundName) end)
 
         if soundId ~= nil and soundId ~= 0 then
             played = true
@@ -512,30 +569,35 @@ local function playVoiceClip(player, playerKey, soundName, volume, pitch)
             end
 
             -- Apply character's chosen named voice (Bob, Hank, James, Chris / Kate, Casey-Jo, Maryanne, Janine)
-            local desc = player.getDescriptor and player:getDescriptor()
-            if desc and emitter.setParameterValueByName then
-                local vType = desc.getVoiceType and desc:getVoiceType()
-                local vPitch = desc.getVoicePitch and desc:getVoicePitch()
+            local vType = AC.Voice.GetNativeVoice(player)
+            local vPitch = AC.Voice.GetNativePitch(player)
+            if emitter.setParameterValueByName then
                 if vType ~= nil then
                     pcall(function() emitter:setParameterValueByName(soundId, "CharacterVoiceType", tonumber(vType) or 0) end)
                 end
                 if vPitch ~= nil then
-                    pcall(function() emitter:setParameterValueByName(soundId, "CharacterVoicePitch", tonumber(vPitch) or 0) end)
+                    pcall(function() emitter:setParameterValueByName(soundId, "CharacterVoicePitch", tonumber(vPitch) or 1) end)
                 end
+            end
+
+            if emitter.tick then
+                pcall(function() emitter:tick() end)
             end
         end
     end
 
+    -- 3. Fallback if standalone emitter failed
     if not played then
-        pcall(function()
-            if player.playSoundLocal then
-                player:playSoundLocal(soundName)
-            elseif player.playSound then
-                player:playSound(soundName)
-            elseif player.getSquare and getSoundManager() then
-                getSoundManager():PlayWorldSound(soundName, player:getSquare(), 0.0, 15.0, volume or 1.0, false)
-            end
-        end)
+        local sq = (player and player.getSquare and player:getSquare()) or (getCell() and getCell():getGridSquare(px, py, pz))
+        if sq and getSoundManager() and getSoundManager().PlayWorldSound then
+            pcall(function()
+                getSoundManager():PlayWorldSound(soundName, sq, 0.0, 15.0, volume or 1.0, false)
+            end)
+        elseif getSoundManager() and getSoundManager().PlaySound then
+            pcall(function()
+                getSoundManager():PlaySound(soundName, false, volume or 1.0)
+            end)
+        end
     end
 end
 
@@ -560,12 +622,7 @@ function AC.Voice.PlayChatVoice(player, chatType, text, isMuffled, pos)
         return -- No spoken words in this message (e.g. pure /me body language or silent action)
     end
 
-    local playerKey = (player and player.getUsername and player:getUsername() and player:getUsername() ~= "" and player:getUsername())
-        or (player and player.getDescriptor and player:getDescriptor() and player:getDescriptor():getForename())
-        or (player and player.getOnlineID and tostring(player:getOnlineID()))
-        or (pos and (tostring(math.floor(pos.x)) .. "_" .. tostring(math.floor(pos.y))))
-        or (spokenDialogue and ("txt_" .. spokenDialogue:sub(1, 15)))
-        or "unknown"
+    local playerKey = getPlayerKey(player, pos, spokenDialogue)
     local now = getTimestampMs()
 
     -- 1. Exact Message Deduplication (prevents multiple tabs from re-triggering for the same message)
@@ -593,34 +650,35 @@ function AC.Voice.PlayChatVoice(player, chatType, text, isMuffled, pos)
 
     -- 3. Execute Sentiment & Context Analysis on the extracted spoken dialogue
     local sentiment = analyzeSentiment(spokenDialogue, player, chatType)
+    local seed = hashText(spokenDialogue)
 
     local chosenSound = nil
     if sentiment.overrideSound == "cmon" then
         local cmonPool = isFemale and femaleCmonPool or maleCmonPool
-        chosenSound = cmonPool[ZombRand(#cmonPool) + 1]
+        chosenSound = cmonPool[(seed % #cmonPool) + 1]
     elseif sentiment.overrideSound == "shout_hey" then
         local heyPool = isFemale and femaleShoutHeyPool or maleShoutHeyPool
-        chosenSound = heyPool[ZombRand(#heyPool) + 1]
+        chosenSound = heyPool[(seed % #heyPool) + 1]
     elseif sentiment.overrideSound == "soft_hey" then
         local heyPool = isFemale and femaleSoftHeyPool or maleSoftHeyPool
-        chosenSound = heyPool[ZombRand(#heyPool) + 1]
+        chosenSound = heyPool[(seed % #heyPool) + 1]
     elseif sentiment.overrideSound == "sad" then
         local sadPool = isFemale and femaleSadPool or maleSadPool
-        chosenSound = sadPool[ZombRand(#sadPool) + 1]
+        chosenSound = sadPool[(seed % #sadPool) + 1]
     elseif sentiment.overrideSound == "relief" then
         local reliefPool = isFemale and femaleReliefPool or maleReliefPool
-        chosenSound = reliefPool[ZombRand(#reliefPool) + 1]
+        chosenSound = reliefPool[(seed % #reliefPool) + 1]
     elseif sentiment.overrideSound == "danger" then
         local dangerPool = isFemale and femaleDangerPool or maleDangerPool
-        chosenSound = dangerPool[ZombRand(#dangerPool) + 1]
+        chosenSound = dangerPool[(seed % #dangerPool) + 1]
     elseif sentiment.overrideSound == "stealth" then
         local stealthPool = isFemale and femaleStealthPool or maleStealthPool
-        chosenSound = stealthPool[ZombRand(#stealthPool) + 1]
+        chosenSound = stealthPool[(seed % #stealthPool) + 1]
     elseif sentiment.overrideSound == "cough" then
         local coughPool = isFemale and femaleCoughPool or maleCoughPool
-        chosenSound = coughPool[ZombRand(#coughPool) + 1]
+        chosenSound = coughPool[(seed % #coughPool) + 1]
     elseif pool and #pool > 0 then
-        chosenSound = pool[ZombRand(#pool) + 1]
+        chosenSound = pool[(seed % #pool) + 1]
     end
 
     -- If no contextual/emotional voice sound applies (e.g. normal conversational typing), keep silent and natural
@@ -635,24 +693,11 @@ function AC.Voice.PlayChatVoice(player, chatType, text, isMuffled, pos)
     end
     volume = math.max(0.15, math.min(1.60, volume))
 
-    -- 5. Calculate Final Pitch (Base Organic Variation + Sentiment Modulation)
-    local basePitch = 0.96 + (ZombRand(8) / 100)
+    -- 5. Calculate Final Pitch (Deterministic Organic Variation + Sentiment Modulation)
+    local pitchSeed = hashText(spokenDialogue .. "_pitch")
+    local basePitch = 0.96 + ((pitchSeed % 8) / 100)
     local pitch = math.max(0.75, math.min(1.35, basePitch + (sentiment.pitchMod or 0.0)))
 
-    if player then
-        print(string.format("[SVRP Voice] Playing '%s' on player '%s' (vol=%.2f, pitch=%.2f, emotion=%s)", tostring(chosenSound), tostring(playerKey), volume, pitch, sentiment.emotion or "neutral"))
-        playVoiceClip(player, playerKey, chosenSound, volume, pitch)
-    elseif pos and pos.x and pos.y then
-        print(string.format("[SVRP Voice] Playing '%s' at pos (%s, %s) (vol=%.2f, emotion=%s)", tostring(chosenSound), tostring(pos.x), tostring(pos.y), volume, sentiment.emotion or "neutral"))
-        local sq = getCell() and getCell():getGridSquare(pos.x, pos.y, pos.z or 0)
-        if sq then
-            pcall(function()
-                getSoundManager():PlayWorldSound(chosenSound, sq, 0.0, 15.0, volume, false)
-            end)
-        else
-            pcall(function()
-                getSoundManager():PlaySound(chosenSound, false, volume)
-            end)
-        end
-    end
+    print(string.format("[SVRP Voice] Playing '%s' for '%s' (vol=%.2f, pitch=%.2f, emotion=%s)", tostring(chosenSound), tostring(playerKey), volume, pitch, sentiment.emotion or "neutral"))
+    playVoiceClip(player, playerKey, chosenSound, volume, pitch, pos)
 end

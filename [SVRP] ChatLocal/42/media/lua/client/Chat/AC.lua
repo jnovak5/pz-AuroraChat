@@ -71,11 +71,16 @@ for type, typeData in pairs(AC.ChatTypes) do
 end
 
 function AC.Override(skipDisable)
-    if AC.Meta.DisableOverride and not skipDisable then return false end
+    if AC.Meta and AC.Meta.DisableOverride and not skipDisable then return false end
     
-    local accessLevel = getAccessLevel()
-    if type(accessLevel) == "string" then
-        return string.lower(accessLevel) == "admin"
+    local myPlayer = getPlayer and getPlayer()
+    if myPlayer and AC_Utils and AC_Utils.isStaff and AC_Utils.isStaff(myPlayer) then
+        return true
+    end
+
+    local accessLevel = (myPlayer and myPlayer.getAccessLevel and myPlayer:getAccessLevel()) or (getAccessLevel and getAccessLevel())
+    if type(accessLevel) == "string" and accessLevel ~= "" and string.lower(accessLevel) ~= "none" then
+        return true
     end
     
     return false
@@ -84,12 +89,40 @@ end
 function AC.CanHearAll(player)
     player = player or (getPlayer and getPlayer())
     if not player then return false end
-    if player.isHearAll and player:isHearAll() then
+
+    -- Check if player has HearAll, SeeEveryone, or staff modes active (vanilla PZ, ASAL mod, or cheat menus)
+    if player.isHearAll and player:isHearAll() then return true end
+    if player.isHearAllChat and player:isHearAllChat() then return true end
+    if player.isHearEveryone and player:isHearEveryone() then return true end
+    if player.isSeeEveryone and player:isSeeEveryone() then return true end
+    if player.isGhostMode and player:isGhostMode() then return true end
+    if player.isGodMod and player:isGodMod() then return true end
+    if player.isInvisible and player:isInvisible() then return true end
+
+    -- Check ModData flags (e.g. from Admin Settings at Login, ASAL, cheat menu)
+    if player.getModData then
+        local md = player:getModData()
+        if md and (md.isHearAll or md.HearAll or md.CanHearAll or md.bHearAll or md.HearEveryone or md.hearEveryone) then
+            return true
+        end
+    end
+
+    -- Check ISChat admin streams
+    if ISChat and ISChat.allChatStreams then
         return true
     end
+
+    -- Check staff / admin override
     if AC.Override and AC.Override() then
         return true
     end
+
+    if AC_Utils and AC_Utils.isStaff and AC_Utils.isStaff(player) then
+        if not (AC.Meta and AC.Meta.DisableOverride) then
+            return true
+        end
+    end
+
     return false
 end
 

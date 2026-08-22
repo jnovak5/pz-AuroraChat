@@ -993,7 +993,9 @@ function AC.Meta.CreateChatSettingsContext(context)
     chatSettingsContext:addOption((overheadTypingIndicator and "Disable" or "Enable") .. " Overhead Typing Indicator", not overheadTypingIndicator, AC.Meta.SetOverheadTypingIndicator)
 
     local voiceChatter = AC.Voice and AC.Voice.IsEnabled and AC.Voice.IsEnabled()
-    chatSettingsContext:addOption((voiceChatter and "Disable" or "Enable") .. " Voice Audio Chatter", not voiceChatter, AC.Voice.ToggleVoiceAudio)
+    chatSettingsContext:addOption((voiceChatter and "Disable" or "Enable") .. " Voice Audio Chatter", nil, function()
+        AC.Voice.ToggleVoiceAudio()
+    end)
 
     local themeOption = chatSettingsContext:addOption("Chatbox Color Scheme", nil, nil)
     local themeContext = chatSettingsContext:getNew(chatSettingsContext)

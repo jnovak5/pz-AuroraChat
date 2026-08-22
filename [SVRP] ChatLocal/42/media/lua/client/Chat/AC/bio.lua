@@ -23,8 +23,8 @@ function AC.Bio.ShowBioOnPlayers()
         
         local shortBio = player:getModData()['_CharacterBioShortDescription'] or ""
         
-        local sandbox = SandboxVars.SVRPChatLocal or {}
-        local sayRange = sandbox.RangeXYSay or 20
+        local sandbox = (SandboxVars and (SandboxVars.SVRPChatLocal or SandboxVars.SVRPChat)) or {}
+        local sayRange = sandbox.RangeXYSay or 35
         if type(shortBio) == "string" and string.len(shortBio) > 1 and (player == me or (AC.CanSeePlayer(player, true, sayRange) and me:getDistanceSq(player) < (sayRange * sayRange))) then
             local alpha = AC.Visibility.GetPlayerAlpha(player)
             if alpha > 0.01 then

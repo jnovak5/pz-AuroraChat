@@ -6,11 +6,17 @@ local PlayerDB = {}
 local function canSee(player, otherPlayer, xyRange, zRange)
     if not player or not otherPlayer then return false end
     if player.isHearAll and player:isHearAll() then return true end
+    if player.isHearAllChat and player:isHearAllChat() then return true end
+    if player.isHearEveryone and player:isHearEveryone() then return true end
     if player.isSeeEveryone and player:isSeeEveryone() then return true end
+    if player.isGhostMode and player:isGhostMode() then return true end
+    if player.isGodMod and player:isGodMod() then return true end
+    if AC_Utils and AC_Utils.isStaff and AC_Utils.isStaff(player) then return true end
+    local accessLevel = player.getAccessLevel and player:getAccessLevel()
+    if accessLevel and accessLevel ~= "None" and accessLevel ~= "" then return true end
     xyRange = xyRange + .99
     if player:getDistanceSq(otherPlayer) > xyRange*xyRange then return false end
     if math.abs(player:getZ() - otherPlayer:getZ()) > zRange then return false end
-    if player:isGhostMode() and not otherPlayer:isGodMod() then return false end
     return true
 end
 

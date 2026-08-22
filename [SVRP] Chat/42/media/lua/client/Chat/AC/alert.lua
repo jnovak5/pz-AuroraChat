@@ -40,21 +40,44 @@ local function wrapText(text, font, maxWidth)
     return lines
 end
 
+--- Clean and normalize raw alert text by stripping BBCodes and server/author tags
+local function cleanAlertText(text)
+    if not text then return "" end
+    local clean = text:gsub("<[^>]+>", "")
+    clean = clean:gsub("^%[Server%]:?%s*", "")
+    clean = clean:gsub("%[Server%]", "")
+    clean = clean:gsub("^%[ALERT%]:?%s*", "")
+    clean = clean:gsub("%[ALERT%]", "")
+    clean = clean:gsub("%[UN:[^%]]-%]", "")
+    clean = clean:gsub("%[POS:[^%]]-%]", "")
+    clean = clean:gsub("^%s+", ""):gsub("%s+$", "")
+    return clean
+end
+
 AC.Alert.LastAlertText = nil
 AC.Alert.LastAlertTime = 0
+AC.Alert.LastSoundTime = 0
 
---- Play a clean, gentle notification chime for server announcements
+--- Play a clean, gentle notification chime for server announcements (debounced to prevent double sound)
 function AC.Alert.PlayAlertSound()
+    local now = getTimestampMs()
+    if (now - (AC.Alert.LastSoundTime or 0)) < 2000 then
+        return
+    end
+    AC.Alert.LastSoundTime = now
+
     pcall(function()
-        local player = getPlayer()
-        local emitter = player and player.getEmitter and player:getEmitter()
-        if emitter then
-            local sId = emitter:playSound("UIPauseMenuEnter")
-            if sId ~= nil and emitter.setVolume then
-                emitter:setVolume(sId, 0.50)
-            end
-        else
+        if getSoundManager and getSoundManager().playUISound then
             getSoundManager():playUISound("UIPauseMenuEnter")
+        else
+            local player = getPlayer()
+            local emitter = player and player.getEmitter and player:getEmitter()
+            if emitter then
+                local sId = emitter:playSound("UIPauseMenuEnter")
+                if sId ~= nil and emitter.setVolume then
+                    emitter:setVolume(sId, 0.50)
+                end
+            end
         end
     end)
 end
@@ -62,20 +85,22 @@ end
 --- Show a high-visibility server alert broadcast (server-wide)
 function AC.Alert.ShowServerMessage(text, author)
     if not text or text == "" then return end
+    local clean = cleanAlertText(text)
+    if clean == "" then return end
 
     local now = getTimestampMs()
-    if AC.Alert.LastAlertText == text and (now - AC.Alert.LastAlertTime) < 3000 then
+    if AC.Alert.LastAlertText == clean and (now - (AC.Alert.LastAlertTime or 0)) < 3000 then
         return
     end
-    AC.Alert.LastAlertText = text
+    AC.Alert.LastAlertText = clean
     AC.Alert.LastAlertTime = now
 
     AC.Alert.IsCell = false
-    AC.Alert.CurrentMessage = text
+    AC.Alert.CurrentMessage = clean
     AC.Alert.Author = (author and author ~= "" and author ~= "Server") and author or nil
 
     -- Display duration: minimum 10 seconds, up to 18 seconds for longer messages
-    local duration = math.min(18000, math.max(10000, string.len(text) * 120))
+    local duration = math.min(18000, math.max(10000, string.len(clean) * 120))
     AC.Alert.TotalDuration = duration
     AC.Alert.Timer = duration
 
@@ -84,7 +109,7 @@ function AC.Alert.ShowServerMessage(text, author)
     local maxBannerW = math.min(1200, math.floor(screenW * 0.75))
     local maxTextW = maxBannerW - 80
 
-    AC.Alert.Lines = wrapText(text, FONT_TITLE, maxTextW)
+    AC.Alert.Lines = wrapText(clean, FONT_TITLE, maxTextW)
 
     -- Play prominent attention-grabbing chime
     AC.Alert.PlayAlertSound()
@@ -93,19 +118,21 @@ end
 --- Show a high-visibility local area alert broadcast (50x50 tile cell)
 function AC.Alert.ShowCellMessage(text, author)
     if not text or text == "" then return end
+    local clean = cleanAlertText(text)
+    if clean == "" then return end
 
     local now = getTimestampMs()
-    if AC.Alert.LastAlertText == text and (now - AC.Alert.LastAlertTime) < 3000 then
+    if AC.Alert.LastAlertText == clean and (now - (AC.Alert.LastAlertTime or 0)) < 3000 then
         return
     end
-    AC.Alert.LastAlertText = text
+    AC.Alert.LastAlertText = clean
     AC.Alert.LastAlertTime = now
 
     AC.Alert.IsCell = true
-    AC.Alert.CurrentMessage = text
+    AC.Alert.CurrentMessage = clean
     AC.Alert.Author = (author and author ~= "" and author ~= "Server") and author or nil
 
-    local duration = math.min(18000, math.max(10000, string.len(text) * 120))
+    local duration = math.min(18000, math.max(10000, string.len(clean) * 120))
     AC.Alert.TotalDuration = duration
     AC.Alert.Timer = duration
 
@@ -113,7 +140,7 @@ function AC.Alert.ShowCellMessage(text, author)
     local maxBannerW = math.min(1200, math.floor(screenW * 0.75))
     local maxTextW = maxBannerW - 80
 
-    AC.Alert.Lines = wrapText(text, FONT_TITLE, maxTextW)
+    AC.Alert.Lines = wrapText(clean, FONT_TITLE, maxTextW)
 
     AC.Alert.PlayAlertSound()
 end
