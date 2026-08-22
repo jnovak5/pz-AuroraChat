@@ -25,7 +25,7 @@ function AC.Bio.ShowBioOnPlayers()
         
         local sandbox = (SandboxVars and (SandboxVars.SVRPChat or SandboxVars.SVRPChat)) or {}
         local sayRange = sandbox.RangeXYSay or 35
-        if type(shortBio) == "string" and string.len(shortBio) > 1 and (player == me or (AC.CanSeePlayer(player, true, sayRange) and me:getDistanceSq(player) < (sayRange * sayRange))) then
+        if type(shortBio) == "string" and string.len(shortBio) > 1 and (player == me or (AC.CanSeePlayer(player, true, sayRange) and AC.GetDistanceSq(me, player) < (sayRange * sayRange))) then
             local alpha = AC.Visibility.GetPlayerAlpha(player)
             if alpha > 0.01 then
                 local textWidth = getTextManager():MeasureStringX(UIFont.Small, shortBio)

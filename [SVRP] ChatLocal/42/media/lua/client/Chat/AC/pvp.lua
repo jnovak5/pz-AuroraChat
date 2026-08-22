@@ -46,7 +46,7 @@ function AC.Pvp.ShowPvpOnPlayers()
 
     for _, player in ipairs(playersToProcess) do
         if AC.Pvp.IsPvpEnabled(player) then
-            if player == me or (AC.CanSeePlayer(player, true, 20) and me:getDistanceSq(player) < 2500) then
+            if player == me or (AC.CanSeePlayer(player, true, 20) and AC.GetDistanceSq(me, player) < 2500) then
                 local alpha = AC.Visibility.GetPlayerAlpha(player)
                 if alpha > 0.01 then
                     local playerNum = me:getPlayerNum() or 0

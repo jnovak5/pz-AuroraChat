@@ -281,7 +281,7 @@ function AC.Meta.IsInRange(myPlayer, chattingPlayer, xyRange, zRange)
     if AC.CanHearAll and AC.CanHearAll(myPlayer) then return true end
     if AC.Override() then return true end
     xyRange = xyRange + 0.99
-    if myPlayer:getDistanceSq(chattingPlayer) > xyRange * xyRange or math.abs(myPlayer:getZ() - chattingPlayer:getZ()) > zRange then
+    if AC.GetDistanceSq(myPlayer, chattingPlayer) > xyRange * xyRange or math.abs(myPlayer:getZ() - chattingPlayer:getZ()) > zRange then
         return false
     end
     return true
@@ -420,7 +420,7 @@ function AC.Meta.InvitePrivate(username)
     if not username then return false end
     local target = getPlayerFromUsername(username)
     if not target or target == getPlayer() then return false end
-    if getPlayer():getDistanceSq(target) > 100 then return false end
+    if AC.GetDistanceSq(getPlayer(), target) > 100 then return false end
     if AC.Meta.PrivateWith then return false end
     sendClientCommand(getPlayer(), "AC", "InvitePrivate", {username})
     AC_Utils.addInfoToChat("You have invited " .. AC.Meta.GetName(username) .. " to a private chat.")
@@ -642,7 +642,7 @@ function AC.Meta.CreateActionsContext(context, myPlayer, players)
     end
     table.sort(focusablePlayers)
     table.sort(unfocusablePlayers)
-    table.sort(tradablePlayers, function (a,b) return myPlayer:getDistanceSq(a) < myPlayer:getDistanceSq(b) end)
+    table.sort(tradablePlayers, function (a,b) return AC.GetDistanceSq(myPlayer, a) < AC.GetDistanceSq(myPlayer, b) end)
 
     local focusOption = actionsContext:addOption("Focus On", nil, nil)
     if #focusablePlayers > 0 then

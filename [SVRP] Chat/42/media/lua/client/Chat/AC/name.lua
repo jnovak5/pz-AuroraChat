@@ -31,7 +31,7 @@ function AC.Name.ShowNamesOnPlayers()
     for i = 0, players:size() - 1 do
         local player = players:get(i)
         
-        if player ~= me and AC.CanSeePlayer(player, true, 20) and me:getDistanceSq(player) < 2500 then
+        if player ~= me and AC.CanSeePlayer(player, true, 20) and AC.GetDistanceSq(me, player) < 2500 then
             DrawPlayerName(player)
         end
     end

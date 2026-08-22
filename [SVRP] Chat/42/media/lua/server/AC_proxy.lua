@@ -13,9 +13,12 @@ local function canSee(player, otherPlayer, xyRange, zRange)
     if player.isGodMod and player:isGodMod() then return true end
     if AC_Utils and AC_Utils.isStaff and AC_Utils.isStaff(player) then return true end
     local accessLevel = player.getAccessLevel and player:getAccessLevel()
-    if accessLevel and accessLevel ~= "None" and accessLevel ~= "" then return true end
-    xyRange = xyRange + .99
-    if player:getDistanceSq(otherPlayer) > xyRange*xyRange then return false end
+    if accessLevel and accessLevel ~= "None" and accessLevel ~= "" and string.lower(accessLevel) ~= "none" then return true end
+    xyRange = (xyRange or 0) + .99
+    zRange = zRange or 0
+    local dx = player:getX() - otherPlayer:getX()
+    local dy = player:getY() - otherPlayer:getY()
+    if (dx * dx + dy * dy) > xyRange * xyRange then return false end
     if math.abs(player:getZ() - otherPlayer:getZ()) > zRange then return false end
     return true
 end
@@ -59,18 +62,21 @@ end
 local function NotifyTyping(sendingPlayer, command, args)
     local onlinePlayers = getOnlinePlayers()
     if not onlinePlayers or onlinePlayers:size() == 0 then return end
-    local xyRange, zRange
-    if command == "onCleared" then
-        xyRange = 50
-        zRange = 7
-    else
-        xyRange = args and args[1] or 0
-        zRange = args and args[2] or 0
-    end
     local username = sendingPlayer:getUsername()
-    for i=0, onlinePlayers:size()-1 do
+    if command == "onCleared" then
+        for i = 0, onlinePlayers:size() - 1 do
+            local player = onlinePlayers:get(i)
+            sendServerCommand(player, "AC", "onCleared", {username})
+        end
+        return
+    end
+    if command ~= "onTyping" then return end
+    local xyRange = args and args[1] or 0
+    local zRange = args and args[2] or 0
+    if xyRange <= 0 then return end
+    for i = 0, onlinePlayers:size() - 1 do
         local player = onlinePlayers:get(i)
-        if canSee(player, sendingPlayer, xyRange, zRange) then
+        if player:getUsername() ~= username and canSee(player, sendingPlayer, xyRange, zRange) then
             sendServerCommand(player, "AC", command, {username})
         end
     end

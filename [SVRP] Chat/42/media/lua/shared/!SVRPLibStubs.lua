@@ -11,8 +11,9 @@ AC_Utils.MagicSpace = " "
 function AC_Utils.isStaff(player)
     if not isClient() and not isServer() then return true end -- SP
     if not player then return false end
-    local accessLevel = player:getAccessLevel()
-    return accessLevel ~= "None"
+    local accessLevel = player.getAccessLevel and player:getAccessLevel()
+    if not accessLevel or accessLevel == "" then return false end
+    return string.lower(accessLevel) ~= "none"
 end
 
 --- Returns true if the player is a moderator or admin
@@ -21,8 +22,11 @@ end
 function AC_Utils.canModerate(player)
     if not isClient() and not isServer() then return true end -- SP
     if not player then player = getPlayer() end
-    local accessLevel = player:getAccessLevel()
-    return accessLevel == "Moderator" or accessLevel == "Admin"
+    if not player then return false end
+    local accessLevel = player.getAccessLevel and player:getAccessLevel()
+    if not accessLevel or accessLevel == "" then return false end
+    local lower = string.lower(accessLevel)
+    return lower == "moderator" or lower == "admin"
 end
 
 --- Add a AC_FakeMessage to the chat window

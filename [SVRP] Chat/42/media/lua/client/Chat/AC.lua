@@ -107,11 +107,6 @@ function AC.CanHearAll(player)
         end
     end
 
-    -- Check ISChat admin streams
-    if ISChat and ISChat.allChatStreams then
-        return true
-    end
-
     -- Check staff / admin override
     if AC.Override and AC.Override() then
         return true
@@ -126,6 +121,13 @@ function AC.CanHearAll(player)
     return false
 end
 
+function AC.GetDistanceSq(playerA, playerB)
+    if not playerA or not playerB then return 999999999 end
+    local dx = playerA:getX() - playerB:getX()
+    local dy = playerA:getY() - playerB:getY()
+    return (dx * dx) + (dy * dy)
+end
+
 function AC.CanSeePlayer(player, allowSelf, distance)
     if not distance then distance = 10 end
     if AC.CanHearAll and AC.CanHearAll() then return true end
@@ -135,7 +137,7 @@ function AC.CanSeePlayer(player, allowSelf, distance)
     if not allowSelf and player == me then return false end
     if not me:CanSee(player) then return false end
     if player:isGhostMode() then return false end
-    if me:getDistanceSq(player) > distance * distance then return false end
+    if AC.GetDistanceSq(me, player) > distance * distance then return false end
     return true
 end
 
@@ -172,19 +174,21 @@ end
 --- @param message string
 --- @return number,number the xyRange and zRange
 function AC.GetRangeFromMessage(message)
-    if message:len() < 2 then
+    if not message or message:len() == 0 then
         return 0,0
     end
     if message:sub(1,1) ~= "/" then
-        return AC.ChatTypes["say"].xyRange, AC.ChatTypes["say"].zRange
+        local sayType = AC.ChatTypes and AC.ChatTypes["say"]
+        return (sayType and sayType.xyRange) or 35, (sayType and sayType.zRange) or 2
     end
     local firstSpace = message:find(" ")
     if not firstSpace then
         return 0,0
     end
     local command = message:sub(1, firstSpace - 1)
-    if AC.ChatCommands[command] then
-        return AC.ChatTypes[AC.ChatCommands[command].type].xyRange, AC.ChatTypes[AC.ChatCommands[command].type].zRange
+    if AC.ChatCommands and AC.ChatCommands[command] then
+        local chatType = AC.ChatTypes and AC.ChatTypes[AC.ChatCommands[command].type]
+        return (chatType and chatType.xyRange) or 0, (chatType and chatType.zRange) or 0
     end
     return 0,0
 end
@@ -198,7 +202,7 @@ function AC.GetAllPlayersInRange(range, zRange)
     for i=0,online:size()-1 do
         local player = online:get(i)
         local zDist = math.abs(player:getZ() - me:getZ())
-        if player ~= me and me:getDistanceSq(player) <= range2 and zDist <= zRange and not player:isGhostMode() then
+        if player ~= me and AC.GetDistanceSq(me, player) <= range2 and zDist <= zRange and not player:isGhostMode() then
             table.insert(players, player)
         end
     end

@@ -53,7 +53,7 @@ function AC.Indicator.update()
         lastUpdate = ts
     end
 
-    if not isTyping and not isCleared and ts - lastUpdate > 4000 then
+    if not isTyping and not isCleared then
         sendClientCommand(getPlayer(), 'AC', 'onCleared', emptyObject)
         isCleared = true
         lastUpdate = ts
@@ -80,6 +80,7 @@ AC.Indicator.IndicatorHeight = getTextManager():MeasureStringY(UIFont.Small, "..
 AC.Indicator.UiElements = AC.Indicator.UiElements or {}
 function AC.Indicator.DrawOverheads()
     local me = getPlayer()
+    if not me then return end
     local c = math.floor(getTimestampMs()/1000) % 3
     local typingText = string.rep(".", c + 1)
     local textWidth = AC.Indicator.IndicatorWidth + 16
@@ -91,7 +92,7 @@ function AC.Indicator.DrawOverheads()
         if player and (player == me or me:CanSee(player)) then
             local alpha = AC.Visibility.GetPlayerAlpha(player)
             if alpha > 0.01 then
-                local playerNum = getPlayer():getPlayerNum() or 0
+                local playerNum = me:getPlayerNum() or 0
                 local x = math.floor(isoToScreenX(playerNum, player:getX(), player:getY(), player:getZ()))
                 local zoom = getCore():getZoom(playerNum)
                 local fallbackOffset = 185
@@ -116,25 +117,26 @@ end
 
 local fntSize = getTextManager():getFontFromEnum(UIFont.Small):getLineHeight()
 function AC.Indicator.DrawTypingInChat(chatInstance)
+    local myPlayer = getPlayer()
+    local myUsername = myPlayer and myPlayer:getUsername()
     local typers = {}
     for username, _ in pairs(AC.Indicator.players) do
-        local name = AC.Meta.GetName(username)
-        if name == username then
-            local player = getPlayerFromUsername(username)
-            if not player and getPlayer() and getPlayer():getUsername() == username then
-                player = getPlayer()
-            end
-            if player and player:getDescriptor() then
-                local f = player:getDescriptor():getForename() or ""
-                local s = player:getDescriptor():getSurname() or ""
-                if s ~= "" then
-                    name = f .. " " .. s
-                elseif f ~= "" then
-                    name = f
+        if username ~= myUsername then
+            local name = AC.Meta.GetName(username)
+            if name == username then
+                local player = getPlayerFromUsername(username)
+                if player and player:getDescriptor() then
+                    local f = player:getDescriptor():getForename() or ""
+                    local s = player:getDescriptor():getSurname() or ""
+                    if s ~= "" then
+                        name = f .. " " .. s
+                    elseif f ~= "" then
+                        name = f
+                    end
                 end
             end
+            table.insert(typers, name)
         end
-        table.insert(typers, name)
     end
 
     if #typers > 0 then

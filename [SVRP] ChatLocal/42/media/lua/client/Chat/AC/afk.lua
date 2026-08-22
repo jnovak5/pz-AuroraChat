@@ -43,7 +43,7 @@ function AC.Afk.ShowAfkOnPlayers()
     
     for _, player in ipairs(playersToProcess) do
         local username = player:getUsername()
-        if AC.Meta.IsAfk(username) and (player == me or (AC.CanSeePlayer(player, true, 20) and me:getDistanceSq(player) < 2500)) then
+        if AC.Meta.IsAfk(username) and (player == me or (AC.CanSeePlayer(player, true, 20) and AC.GetDistanceSq(me, player) < 2500)) then
             local alpha = AC.Visibility.GetPlayerAlpha(player)
             if alpha > 0.01 then
                 local playerNum = me:getPlayerNum() or 0
@@ -66,7 +66,7 @@ function AC.Afk.CheckLocalPlayersForAfk()
         if player ~= me and me:CanSee(player) then
             local username = player:getUsername()
             seen[username] = true
-            local dist = player:getDistanceSq(getPlayer())
+            local dist = AC.GetDistanceSq(player, me)
             if AC.Meta.IsAfk(username) and not AC.Afk.UsersAlertedAbout[username] and dist < AC.Afk.ALERT_AFK_DIST_SQ then
                 AC.Afk.AlertPlayerHasGoneAfk(player)
                 AC.Afk.UsersAlertedAbout[username] = true
