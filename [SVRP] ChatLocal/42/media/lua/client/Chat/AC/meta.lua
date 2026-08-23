@@ -32,6 +32,7 @@ AC.Meta.Themes = {
         border = {r = 0.22, g = 0.28, b = 0.38, a = 0.85},
         tabSelected = {r = 0.14, g = 0.18, b = 0.25, a = 0.90},
         tabUnselected = {r = 0.06, g = 0.07, b = 0.10, a = 0.70},
+        tabAccent = {r = 0.28, g = 0.68, b = 1.0, a = 1.0},
         textEntry = {r = 0.05, g = 0.06, b = 0.09, a = 0.90},
     },
     noir = {
@@ -41,6 +42,7 @@ AC.Meta.Themes = {
         border = {r = 0.35, g = 0.35, b = 0.35, a = 0.80},
         tabSelected = {r = 0.12, g = 0.12, b = 0.12, a = 0.90},
         tabUnselected = {r = 0.03, g = 0.03, b = 0.03, a = 0.70},
+        tabAccent = {r = 0.88, g = 0.90, b = 0.95, a = 1.0},
         textEntry = {r = 0.00, g = 0.00, b = 0.00, a = 0.85},
     },
     amber = {
@@ -50,6 +52,7 @@ AC.Meta.Themes = {
         border = {r = 0.45, g = 0.35, b = 0.20, a = 0.85},
         tabSelected = {r = 0.20, g = 0.16, b = 0.10, a = 0.90},
         tabUnselected = {r = 0.08, g = 0.06, b = 0.04, a = 0.70},
+        tabAccent = {r = 1.0, g = 0.72, b = 0.22, a = 1.0},
         textEntry = {r = 0.07, g = 0.05, b = 0.03, a = 0.90},
     }
 }

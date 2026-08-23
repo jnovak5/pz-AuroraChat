@@ -438,6 +438,18 @@ CommandHandlers.Ailment = function(sendingPlayer, args)
 end
 
 local function broadcastStaffMessage(sendingPlayer, text, command)
+    local access = sendingPlayer.getAccessLevel and sendingPlayer:getAccessLevel() or "None"
+    local color = staffColors[access] or "<RGB:0.35,0.75,1.0>"
+    local message = color .. "[" .. sendingPlayer:getUsername() .. "]" .. AC_Utils.MagicSpace .. "<RGB:1,1,1>" .. (text or "")
+    local allPlayers = getOnlinePlayers()
+    if not allPlayers or allPlayers:size() == 0 then return end
+    for i=0, allPlayers:size()-1 do
+        local player = allPlayers:get(i)
+        sendServerCommand(player, "AC", command, {sendingPlayer:getUsername(), message})
+    end
+end
+
+local function broadcastOverrideLog(sendingPlayer, text)
     local color = staffColors[sendingPlayer:getAccessLevel()] or "<RGB:0.8,0.8,0.8>"
     local message = color .. "[" .. sendingPlayer:getUsername() .. "]" .. AC_Utils.MagicSpace .. "<RGB:1,1,1>" .. (text or "")
     local allPlayers = getOnlinePlayers()
@@ -445,13 +457,13 @@ local function broadcastStaffMessage(sendingPlayer, text, command)
     for i=0, allPlayers:size()-1 do
         local player = allPlayers:get(i)
         if AC_Utils.isStaff(player) then
-            sendServerCommand(player, "AC", command, {sendingPlayer:getUsername(), message})
+            sendServerCommand(player, "AC", "Override", {sendingPlayer:getUsername(), message})
         end
     end
 end
 
 CommandHandlers.Override = function(sendingPlayer, args)
-    broadcastStaffMessage(sendingPlayer, args[1], "Override")
+    broadcastOverrideLog(sendingPlayer, args[1])
 end
 
 CommandHandlers.StaffChat = function(sendingPlayer, args)

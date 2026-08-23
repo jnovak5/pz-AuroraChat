@@ -47,7 +47,7 @@ function ISChat:initialise()
     ISChat.allChatStreams[7].tabID = 7
     ISChat.defaultTabStream[7] = ISChat.allChatStreams[7]
     
-    -- Remove the /all command from the chat UI
+    -- Remove the /all command from the chat UI, and admin stream if not staff
     for i = #ISChat.allChatStreams, 1, -1 do
         if ISChat.allChatStreams[i].command == "/all" then
             table.remove(ISChat.allChatStreams, i)
@@ -325,19 +325,19 @@ function ISChat:onGearButtonClick()
         local myPlayer = getPlayer()
         local isStaff = AC_Utils and AC_Utils.isStaff and AC_Utils.isStaff(myPlayer)
 
-        -- If not staff/admin, sanitize the context menu so no admin/staff streams or admin tools appear
+        -- If not staff/admin, sanitize the context menu so no admin streams or admin tools appear
         if not isStaff and context.options then
             for i = #context.options, 1, -1 do
                 local opt = context.options[i]
                 if opt then
-                    if opt.name == "Staff" or opt.name == "Admin" or opt.name == "Server" or opt.name == "Server Chat" or opt.name == "Admin Chat" then
+                    if opt.name == "Admin" or opt.name == "Server" or opt.name == "Server Chat" or opt.name == "Admin Chat" then
                         table.remove(context.options, i)
                     elseif opt.subOption and context.getSubMenu then
                         local sub = context:getSubMenu(opt.subOption)
                         if sub and sub.options then
                             for j = #sub.options, 1, -1 do
                                 local subOpt = sub.options[j]
-                                if subOpt and (subOpt.name == "Staff" or subOpt.name == "Admin" or subOpt.name == "Server" or subOpt.name == "Server Chat" or subOpt.name == "Admin Chat") then
+                                if subOpt and (subOpt.name == "Admin" or subOpt.name == "Server" or subOpt.name == "Server Chat" or subOpt.name == "Admin Chat") then
                                     table.remove(sub.options, j)
                                 end
                             end
@@ -386,7 +386,7 @@ function ISChat.onTabRemoved(tabTitle, tabID)
         AC.ISChatOriginal.onTabRemoved("Private", AC.PrivateTabId)
         AC.ISChatOriginal.onTabRemoved("Radio", AC.RadioTabId)
         AC.ISChatOriginal.onTabRemoved("OOC", AC.OocTabId)
-        AC.ISChatOriginal.onTabAdded("Staff", AC.StaffTabId)
+        AC.ISChatOriginal.onTabRemoved("Staff", AC.StaffTabId)
     elseif tabID == 1 then
         AC.ISChatOriginal.onTabRemoved(tabTitle, 6)
     else
@@ -650,17 +650,6 @@ function AC.ISTabPanel:render()
     local showPrivate = AC.Meta.HasPrivate(true)
     local showFocused = AC.Meta.HasFocus()
     local showRadio = ARU_Utils.AreAnyRadiosOn(getPlayer())
-    local showStaff = AC_Utils.isStaff(getPlayer())
-
-    if not showStaff and self.activeView.name == "Staff" then
-        for i,v in ipairs(self.viewList) do
-            if v.name == "Staff" then
-                local next = self.viewList[i % #self.viewList + 1].name
-                self:activateView(next)
-                break
-            end
-        end
-    end
 
     if not showPrivate and self.activeView.name == "Private" then
         for i,v in ipairs(self.viewList) do
@@ -717,6 +706,7 @@ function AC.ISTabPanel:render()
     local theme = AC.Meta and AC.Meta.GetActiveTheme and AC.Meta.GetActiveTheme()
     local selColor = theme and theme.tabSelected or {r=0.14, g=0.18, b=0.25, a=0.90}
     local unselColor = theme and theme.tabUnselected or {r=0.06, g=0.07, b=0.10, a=0.70}
+    local accentColor = theme and theme.tabAccent or {r=0.28, g=0.68, b=1.0, a=1.0}
     local x = inset
     if self.centerTabs and (self:getWidth() >= self:getWidthOfAllTabs()) then
         x = (self:getWidth() - self:getWidthOfAllTabs()) / 2
@@ -743,7 +733,6 @@ function AC.ISTabPanel:render()
         if  (showFocused or viewObject.name ~= "Focused")
         and (showRadio or viewObject.name ~= "Radio")
         and (showPrivate or viewObject.name ~= "Private")
-        and (showStaff or viewObject.name ~= "Staff")
         then
             tabWidth = self.equalTabWidth and self.maxLength or viewObject.tabWidth
             if tabDragSelected ~= -1 and i == (tabDragSelected + 1) then
@@ -757,18 +746,32 @@ function AC.ISTabPanel:render()
                     end
                 end
             end
-            if viewObject.name == self.activeView.name and not self.isDragging and not ISTabPanel.mouseOut then
+
+            local isSelected = (viewObject.name == self.activeView.name and not self.isDragging and not ISTabPanel.mouseOut)
+            local isMouseOverTab = (self:getMouseY() >= 0 and self:getMouseY() < self.tabHeight and self:isMouseOver() and self:getTabIndexAtX(self:getMouseX()) == i)
+
+            if isSelected then
+                -- Active Tab Background
                 self:drawTextureScaled(ISTabPanel.tabSelected, x, 0, tabWidth, self.tabHeight - 1, self.tabTransparency, selColor.r, selColor.g, selColor.b)
+                self:drawRect(x, 0, tabWidth, self.tabHeight - 1, 0.40 * self.tabTransparency, selColor.r, selColor.g, selColor.b)
+
+                -- Active Tab Bottom Accent Highlight Bar (3px vibrant indicator bar)
+                self:drawRect(x, self.tabHeight - 3, tabWidth, 3, 1.0 * self.tabTransparency, accentColor.r, accentColor.g, accentColor.b)
+
+                -- Active Tab Top subtle highlight line
+                self:drawRect(x, 0, tabWidth, 1, 0.50 * self.tabTransparency, accentColor.r, accentColor.g, accentColor.b)
+
                 self.shouldBlink = false
             else
+                -- Inactive Tab Background
                 self:drawTextureScaled(ISTabPanel.tabUnSelected, x, 0, tabWidth, self.tabHeight - 1, self.tabTransparency, unselColor.r, unselColor.g, unselColor.b)
-                if self:getMouseY() >= 0 and self:getMouseY() < self.tabHeight and self:isMouseOver() and self:getTabIndexAtX(self:getMouseX()) == i then
+                if isMouseOverTab then
                     viewObject.fade:setFadeIn(true)
                 else
                     viewObject.fade:setFadeIn(false)
                 end
                 viewObject.fade:update()
-                self:drawTextureScaled(ISTabPanel.tabSelected, x, 0, tabWidth, self.tabHeight - 1, 0.2 * viewObject.fade:fraction(), selColor.r, selColor.g, selColor.b)
+                self:drawTextureScaled(ISTabPanel.tabSelected, x, 0, tabWidth, self.tabHeight - 1, 0.25 * viewObject.fade:fraction(), selColor.r, selColor.g, selColor.b)
             end
 
             if self.shouldBlink then
@@ -777,8 +780,14 @@ function AC.ISTabPanel:render()
                               (unreadBlinking and self.blinkAlpha or (0.5 * self.tabTransparency)) * 0.8,
                               unreadBackgroundColor.r, unreadBackgroundColor.g, unreadBackgroundColor.b)
                 self:drawTextCentre(viewObject.name, x + (tabWidth / 2), 3, unreadTextColor.r, unreadTextColor.g, unreadTextColor.b, self.textTransparency, UIFont.Small)
+            elseif isSelected then
+                -- Active Tab Text: Full brightness white for instant visual pop
+                self:drawTextCentre(viewObject.name, x + (tabWidth / 2), 2, 1.0, 1.0, 1.0, 1.0, UIFont.Small)
             else
-                self:drawTextCentre(viewObject.name, x + (tabWidth / 2), 3, 1, 1, 1, self.textTransparency, UIFont.Small)
+                -- Inactive Tab Text: Softly dimmed for clear visual hierarchy (brightens on mouseover)
+                local textAlpha = isMouseOverTab and 0.95 or 0.70
+                local textCol = isMouseOverTab and 0.90 or 0.65
+                self:drawTextCentre(viewObject.name, x + (tabWidth / 2), 3, textCol, textCol, textCol + 0.05, textAlpha * self.textTransparency, UIFont.Small)
             end
             x = x + tabWidth + gap
         end
@@ -825,12 +834,10 @@ function AC.ISTabPanel:getTabIndexAtX(x, scrollX)
     local showFocused = AC.Meta.HasFocus()
     local showRadio = ARU_Utils.AreAnyRadiosOn(getPlayer())
     local showPrivate = AC.Meta.HasPrivate(true)
-    local showStaff = AC_Utils.isStaff(getPlayer())
     for index,viewObject in ipairs(self.viewList) do
         if  (showFocused or viewObject.name ~= "Focused")
         and (showRadio or viewObject.name ~= "Radio")
         and (showPrivate or viewObject.name ~= "Private")
-        and (showStaff or viewObject.name ~= "Staff")
         then
             local tabWidth = self.equalTabWidth and self.maxLength or viewObject.tabWidth
             if x >= left and x < left + tabWidth + gap then
@@ -846,7 +853,6 @@ function AC.ISTabPanel:getWidthOfAllTabs()
     local showFocused = AC.Meta.HasFocus()
     local showRadio = ARU_Utils.AreAnyRadiosOn(getPlayer())
     local showPrivate = AC.Meta.HasPrivate(true)
-    local showStaff = AC_Utils.isStaff(getPlayer())
 
     local w = 0
     local gap = 1
@@ -854,7 +860,6 @@ function AC.ISTabPanel:getWidthOfAllTabs()
         if  (showFocused or viewObject.name ~= "Focused")
         and (showRadio or viewObject.name ~= "Radio")
         and (showPrivate or viewObject.name ~= "Private")
-        and (showStaff or viewObject.name ~= "Staff")
         then
             w = w + (self.equalTabWidth and self.maxLength or viewObject.tabWidth) + gap
         end

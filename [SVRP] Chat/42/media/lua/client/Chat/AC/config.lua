@@ -249,6 +249,13 @@ AC.SpecialCommands["/setbeardcolor"] = {
     help = "Set beard color.",
     adminOnly = false,
 }
+AC.SpecialCommands["/staff"] = {
+    handler = "StaffChat",
+    tabHandlers = {},
+    usage = "/staff <message>",
+    help = "Send a message to the global Staff chat channel.",
+    adminOnly = false,
+}
 AC.SpecialCommands["/override"] = {
     handler = "Override",
     tabHandlers = {"OnOff"},

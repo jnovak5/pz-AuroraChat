@@ -481,6 +481,16 @@ function AC.Commands.SetBeardColor(args)
     triggerEvent("OnClothingUpdated", player)
 end
 
+function AC.Commands.StaffChat(args)
+    local player = getPlayer()
+    if not player then return end
+    if not args or args:gsub("^%s*(.-)%s*$", "%1") == "" then
+        AC_Utils.addErrorToChat("Usage: /staff <message>")
+        return
+    end
+    sendClientCommand(player, 'AC', 'StaffChat', {args})
+end
+
 function AC.Commands.Override(args)
     local onOff = args:gsub("^%s*(.-)%s*$", "%1")
     if onOff == "on" then

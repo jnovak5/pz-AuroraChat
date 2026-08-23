@@ -125,11 +125,9 @@ function AC.Handlers.SpecialCommand(message)
 end
 
 function AC.Handlers.HandleStaffTabCommand(message)
-    if not AC_Utils.isStaff(getPlayer()) then
-        AC_Utils.addErrorToChat("You are not staff")
-        return true
-    end
-    sendClientCommand(getPlayer(), 'AC', 'StaffChat', {message})
+    local player = getPlayer()
+    if not player then return true end
+    sendClientCommand(player, 'AC', 'StaffChat', {message})
     return true
 end
 
