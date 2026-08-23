@@ -736,7 +736,7 @@ function AC.Meta.CreateCharacterContext(context, myPlayer)
     characterContext:addOption("Edit Bio", nil, openEditBio)
 
     local sandbox = SandboxVars.SVRPChatLocal or SandboxVars.SVRPChat or {}
-    if sandbox.EnableModCharacter then
+    if sandbox.EnableModCharacter ~= false then
         characterContext:addOption("Set Name", nil, AC.MakeShowDialogPrompt("Input your new name", AC.Commands.SetName))
 
         local function predicateRazor(item)

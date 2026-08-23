@@ -399,8 +399,14 @@ function AC.Commands.GrowBeard()
         end
     end
 
-    local action = ISTrimBeard:new(player, targetStyle, nil, 0)
-    ISTimedActionQueue.add(action)
+    player:getHumanVisual():setBeardModel(targetStyle)
+    if targetStyle == "" then
+        player:getHumanVisual():setBeardColor(player:getHumanVisual():getNaturalBeardColor())
+    end
+    sendHumanVisual(player)
+    player:resetModel()
+    player:resetBeardGrowingTime()
+    triggerEvent("OnClothingUpdated", player)
     AC_Utils.addInfoToChat("Beard grew to stage " .. targetLevel .. "/3 (" .. targetStyle .. ")")
 end
 
@@ -437,8 +443,19 @@ function AC.Commands.GrowHair()
 
     targetStyle = targetStyle or (player:isFemale() and "Long2" or "Fabian")
 
-    local action = ISCutHair:new(player, targetStyle, nil, 0)
-    ISTimedActionQueue.add(action)
+    local newHairStyle = player:isFemale() and getHairStylesInstance():FindFemaleStyle(targetStyle) or getHairStylesInstance():FindMaleStyle(targetStyle)
+    if newHairStyle and newHairStyle:isAttachedHair() and not player:getHumanVisual():getNonAttachedHair() then
+        player:getHumanVisual():setNonAttachedHair(player:getHumanVisual():getHairModel())
+    end
+    if player:getHumanVisual():getNonAttachedHair() and newHairStyle and not newHairStyle:isAttachedHair() then
+        player:getHumanVisual():setNonAttachedHair(nil)
+    end
+
+    player:getHumanVisual():setHairModel(targetStyle)
+    sendHumanVisual(player)
+    player:resetModel()
+    player:resetHairGrowingTime()
+    triggerEvent("OnClothingUpdated", player)
     AC_Utils.addInfoToChat("Hair grew to stage " .. targetLevel .. "/3 (" .. targetStyle .. ")")
 end
 
@@ -446,20 +463,22 @@ function AC.Commands.SetHairColor(args)
     local color = AC.GetColor(args)
     if not color then return end
     local player = getPlayer()
+    if not player then return end
     player:getHumanVisual():setHairColor(ImmutableColor.new(color.r, color.g, color.b, 1))
-    sendVisual(player)
-    triggerEvent("OnClothingUpdated", player)
+    sendHumanVisual(player)
     player:resetModel()
+    triggerEvent("OnClothingUpdated", player)
 end
 
 function AC.Commands.SetBeardColor(args)
     local color = AC.GetColor(args)
     if not color then return end
     local player = getPlayer()
+    if not player then return end
     player:getHumanVisual():setBeardColor(ImmutableColor.new(color.r, color.g, color.b, 1))
-    sendVisual(player)
-    triggerEvent("OnClothingUpdated", player)
+    sendHumanVisual(player)
     player:resetModel()
+    triggerEvent("OnClothingUpdated", player)
 end
 
 function AC.Commands.Override(args)
