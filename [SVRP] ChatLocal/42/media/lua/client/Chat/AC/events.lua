@@ -274,5 +274,11 @@ Events.OnConnected.Add(AC.Events.OnConnected)
 Events.OnServerCommand.Add(AC.Events.onServerCommand)
 Events.OnTick.Add(AC.Indicator.update)
 Events.EveryOneMinute.Add(AC.Afk.CheckLocalPlayersForAfk)
-Events.OnGameStart.Add(function() if AC.EnforceUserLimits then AC.EnforceUserLimits() end end)
+Events.OnGameStart.Add(function()
+    if AC.EnforceUserLimits then AC.EnforceUserLimits() end
+    if AC.Voice and AC.Voice.UpdateChatButton then AC.Voice.UpdateChatButton() end
+    if isClient() and getPlayer() and AC.Voice and AC.Voice.IsEnabled then
+        sendClientCommand(getPlayer(), "AC", "SetVoiceChatterPref", { AC.Voice.IsEnabled() })
+    end
+end)
 Events.OnCreatePlayer.Add(function(playerNum) if AC.EnforceUserLimits then AC.EnforceUserLimits(getSpecificPlayer(playerNum)) end end)

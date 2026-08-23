@@ -73,7 +73,7 @@ end
 --- Check if voice chatter is enabled for local player
 function AC.Voice.IsEnabled()
     if AC.Voice.enabled ~= nil then
-        return AC.Voice.enabled
+        return AC.Voice.enabled == true
     end
     if AC.Meta and AC.Meta.GetVoiceChatter then
         local pref = AC.Meta.GetVoiceChatter()
@@ -86,7 +86,7 @@ function AC.Voice.IsEnabled()
     if myPlayer then
         local modData = myPlayer:getModData()
         if modData and modData._AC_VoiceChatterDisabled ~= nil then
-            AC.Voice.enabled = not modData._AC_VoiceChatterDisabled
+            AC.Voice.enabled = (modData._AC_VoiceChatterDisabled ~= true)
             return AC.Voice.enabled
         end
     end
@@ -96,21 +96,22 @@ end
 
 --- Set voice chatter enabled state for local player
 function AC.Voice.SetEnabled(enabled)
-    AC.Voice.enabled = (enabled == true)
+    local isBool = (enabled == true)
+    AC.Voice.enabled = isBool
     if AC.Meta and AC.Meta.SetVoiceChatterPref then
-        AC.Meta.SetVoiceChatterPref(AC.Voice.enabled)
+        AC.Meta.SetVoiceChatterPref(isBool)
     end
     local myPlayer = getPlayer()
     if myPlayer then
         local modData = myPlayer:getModData()
         if modData then
-            modData._AC_VoiceChatterDisabled = not AC.Voice.enabled
+            modData._AC_VoiceChatterDisabled = not isBool
         end
         if isClient() then
-            sendClientCommand(myPlayer, "AC", "SetVoiceChatterPref", { AC.Voice.enabled })
+            sendClientCommand(myPlayer, "AC", "SetVoiceChatterPref", { isBool })
         end
     end
-    if not AC.Voice.enabled then
+    if not isBool then
         AC.Voice.StopAllActiveSounds()
     end
     AC.Voice.UpdateChatButton()
@@ -528,15 +529,20 @@ local function playVoiceClip(player, playerKey, soundName, volume, pitch, pos)
     if not soundName then return end
     if not AC.Voice.IsEnabled() then return end
 
-    -- 1. Stop any currently playing voice clip for this character to prevent overlapping voices
+    -- 1. Check if currently playing voice clip for this character:
+    -- If already playing, do not cut them off or play overlapping sounds
     if AC.Voice.ActiveSoundIds and AC.Voice.ActiveSoundIds[playerKey] then
         local prev = AC.Voice.ActiveSoundIds[playerKey]
         if prev and prev.emitter and prev.soundId then
+            local isPlaying = false
             pcall(function()
-                if prev.emitter.stopSound then
-                    prev.emitter:stopSound(prev.soundId)
+                if prev.emitter.isPlaying and prev.emitter:isPlaying(prev.soundId) then
+                    isPlaying = true
                 end
             end)
+            if isPlaying then
+                return
+            end
         end
         AC.Voice.ActiveSoundIds[playerKey] = nil
     end
@@ -637,17 +643,33 @@ function AC.Voice.PlayChatVoice(player, chatType, text, isMuffled, pos, username
     local playerKey = getPlayerKey(player, pos, spokenDialogue, username)
     local now = getTimestampMs()
 
-    -- 1. Exact Message Deduplication (prevents multiple tabs from re-triggering for the same message)
-    AC.Voice.RecentSpoken = AC.Voice.RecentSpoken or {}
-    local msgKey = playerKey .. "::" .. spokenDialogue
-    local lastMsgTime = AC.Voice.RecentSpoken[msgKey] or 0
-    if (now - lastMsgTime) < 2500 then
+    -- 1. Check if speaker is already playing audio (prevents overlapping clips)
+    if AC.Voice.ActiveSoundIds and AC.Voice.ActiveSoundIds[playerKey] then
+        local prev = AC.Voice.ActiveSoundIds[playerKey]
+        if prev and prev.emitter and prev.soundId then
+            local isPlaying = false
+            pcall(function()
+                if prev.emitter.isPlaying and prev.emitter:isPlaying(prev.soundId) then
+                    isPlaying = true
+                end
+            end)
+            if isPlaying then
+                return
+            end
+        end
+    end
+
+    -- 2. Per-Speaker Cooldown (4.0s): Guarantees long messages, multiple chunks, or sentences in the same paragraph only trigger ONE voice line
+    local lastTime = AC.Voice.LastPlayTimes[playerKey] or 0
+    if (now - lastTime) < 4000 then
         return
     end
 
-    -- 2. Debounce: Minimum cooldown (800ms) between voice triggers for the same player
-    local lastTime = AC.Voice.LastPlayTimes[playerKey] or 0
-    if (now - lastTime) < 800 then
+    -- 3. Message Deduplication (6.0s window per message content)
+    AC.Voice.RecentSpoken = AC.Voice.RecentSpoken or {}
+    local msgKey = playerKey .. "::" .. spokenDialogue:sub(1, 40)
+    local lastMsgTime = AC.Voice.RecentSpoken[msgKey] or 0
+    if (now - lastMsgTime) < 6000 then
         return
     end
 

@@ -65,9 +65,9 @@ local function writeChatPrefs()
         elseif type(v) == "number" then
             v = tostring(v)
         elseif type(v) == "string" then
-            -- do nothing
+            v = v:gsub("[\r\n]", "")
         else
-            print("AC: Unknown type for chat preference " .. k .. ": " .. type(v))
+            print("AC: Unknown type for chat preference " .. tostring(k) .. ": " .. type(v))
             v = ""
         end
         file:write(k .. "=" .. v .. "\n")
@@ -89,23 +89,26 @@ local function readChatPrefs()
     if not file then return end
     local line = file:readLine()
     while line do
-        local split = string.split(line, "=")
-        if #split == 2 then
-            local val = split[2]
-            if val == "true" then
-                val = true
-            elseif val == "false" then
-                val = false
-            else
-                local r, g, b = val:match("^(%d+%.?%d*),(%d+%.?%d*),(%d+%.?%d*)$")
-                if r and g and b then
-                    local rgb = string.split(val, ",")
-                    val = {r = tonumber(rgb[1]), g = tonumber(rgb[2]), b = tonumber(rgb[3])}
-                elseif val:match("^%d+$") then
-                    val = tonumber(val)
+        line = line:gsub("[\r\n]", ""):gsub("^%s*(.-)%s*$", "%1")
+        if line ~= "" and not line:match("^#") then
+            local split = string.split(line, "=")
+            if #split >= 2 then
+                local key = split[1]:gsub("^%s*(.-)%s*$", "%1")
+                local val = split[2]:gsub("^%s*(.-)%s*$", "%1")
+                if val == "true" then
+                    val = true
+                elseif val == "false" then
+                    val = false
+                else
+                    local r, g, b = val:match("^(%d+%.?%d*),(%d+%.?%d*),(%d+%.?%d*)$")
+                    if r and g and b then
+                        val = {r = tonumber(r), g = tonumber(g), b = tonumber(b)}
+                    elseif val:match("^%-?%d+$") then
+                        val = tonumber(val)
+                    end
                 end
+                AC.Meta.ChatPreferences[key] = val
             end
-            AC.Meta.ChatPreferences[split[1]] = val
         end
         line = file:readLine()
     end
