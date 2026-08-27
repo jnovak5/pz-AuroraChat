@@ -925,7 +925,7 @@ function AC.Meta.CreateCharacterContext(context, myPlayer)
             injureSelfContext:addSubMenu(groupOption, groupContext)
 
             for _, bodyPartStr in ipairs(group.parts) do
-                local bodyPart = BodyPartType.FromString(bodyPartStr)
+                local bodyPart = AC.GetBodyPartTypeFromString(bodyPartStr)
                 local bodyPartOption = groupContext:addOption(BodyPartType.getDisplayName(bodyPart), nil, nil)
                 local bodyPartContext = groupContext:getNew(groupContext)
                 groupContext:addSubMenu(bodyPartOption, bodyPartContext)

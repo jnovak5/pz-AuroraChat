@@ -170,10 +170,23 @@ function AC.CanSeePlayer(player, allowSelf, distance)
         return true
     end
 
-    if not me:CanSee(player) then return false end
-    if player:isGhostMode() then return false end
     if AC.GetDistanceSq(me, player) > distance * distance then return false end
+    if player:isGhostMode() then return false end
+    if not me:CanSee(player) then return false end
     return true
+end
+
+function AC.GetBodyPartTypeFromString(bodyPartStr)
+    if BodyPartType.FromString then
+        return BodyPartType.FromString(bodyPartStr)
+    end
+    for i=0, BodyPartType.MAX:index()-1 do
+        local bpt = BodyPartType.FromIndex(i)
+        if BodyPartType.ToString(bpt) == bodyPartStr then
+            return bpt
+        end
+    end
+    return nil
 end
 
 function AC.GetBodyParts()

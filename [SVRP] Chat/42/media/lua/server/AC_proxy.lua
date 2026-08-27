@@ -68,7 +68,7 @@ local function canSee(player, otherPlayer, xyRange, zRange)
 end
 
 local function getChatRangeAndType(text)
-    local sandbox = SandboxVars.SVRPChat or SandboxVars.SVRPChat or {}
+    local sandbox = SandboxVars.SVRPChatLocal or SandboxVars.SVRPChat or {}
     if not text or text == "" then return "say", (sandbox.RangeXYSay or 20), (sandbox.RangeZSay or 2) end
     local clean = text:gsub("^%s+", "")
     if clean:sub(1,1) == "/" then
@@ -99,7 +99,7 @@ local function getChatRangeAndType(text)
 end
 
 local function dispatchVoiceChatter(sendingPlayer, text, x, y, z)
-    local sandbox = SandboxVars.SVRPChat or SandboxVars.SVRPChat or {}
+    local sandbox = SandboxVars.SVRPChatLocal or SandboxVars.SVRPChat or {}
     if sandbox.EnableVoiceChatter == false then return end
     if not sendingPlayer or not text or text == "" then return end
 
@@ -415,19 +415,28 @@ CommandHandlers.PrivateChat = function(sendingPlayer, args)
 end
 
 CommandHandlers.Injure = function(sendingPlayer, args)
-    local sandbox = SandboxVars.SVRPChat or SandboxVars.SVRPChat
+    local sandbox = SandboxVars.SVRPChatLocal or SandboxVars.SVRPChat
     if sandbox and sandbox.EnableSelfInjury == false then
         return
     end
     local bodyPartStr, injury = args[1], args[2]
-    local bodyPartType = BodyPartType.FromString(bodyPartStr)
+    local bodyPartType = BodyPartType.FromString and BodyPartType.FromString(bodyPartStr)
+    if not bodyPartType then
+        for i=0, BodyPartType.MAX:index()-1 do
+            local bpt = BodyPartType.FromIndex(i)
+            if BodyPartType.ToString(bpt) == bodyPartStr then
+                bodyPartType = bpt
+                break
+            end
+        end
+    end
     if bodyPartType then
         sendServerCommand(sendingPlayer, "AC", "ApplyInjury", {bodyPartStr, injury})
     end
 end
 
 CommandHandlers.Ailment = function(sendingPlayer, args)
-    local sandbox = SandboxVars.SVRPChat or SandboxVars.SVRPChat
+    local sandbox = SandboxVars.SVRPChatLocal or SandboxVars.SVRPChat
     if sandbox and sandbox.EnableSelfInjury == false then
         return
     end

@@ -5,7 +5,7 @@ AC.Bio = AC.Bio or {}
 AC.Bio.OverheadUiElements = AC.Bio.OverheadUiElements or {}
 
 function AC.Bio.ShowBioOnPlayers()
-    local sandbox = SandboxVars.SVRPChat or {}
+    local sandbox = SandboxVars.SVRPChatLocal or {}
     if not sandbox.EnableBioShortDescription then return end
     
     local zoom = getCore():getZoom(0)
@@ -23,7 +23,7 @@ function AC.Bio.ShowBioOnPlayers()
         
         local shortBio = player:getModData()['_CharacterBioShortDescription'] or ""
         
-        local sandbox = (SandboxVars and (SandboxVars.SVRPChat or SandboxVars.SVRPChat)) or {}
+        local sandbox = (SandboxVars and (SandboxVars.SVRPChatLocal or SandboxVars.SVRPChat)) or {}
         local sayRange = sandbox.RangeXYSay or 35
         if type(shortBio) == "string" and string.len(shortBio) > 1 and (player == me or (AC.CanSeePlayer(player, true, sayRange) and AC.GetDistanceSq(me, player) < (sayRange * sayRange))) then
             local alpha = AC.Visibility.GetPlayerAlpha(player)

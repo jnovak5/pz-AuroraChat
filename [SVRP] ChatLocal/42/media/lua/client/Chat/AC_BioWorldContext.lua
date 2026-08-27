@@ -1,11 +1,17 @@
 if isServer() and not isClient() then return end
 
 local function onBioMenu(clickedPlayer, isMe)
-    if isMe then
-        AC_ISBioUI.Open(clickedPlayer)
-    else
-        AC_ISBioInspectUI.Open(clickedPlayer)
-    end
+    local FONT_SCALE = getTextManager():getFontHeight(UIFont.Small) / 14
+    local core = getCore()
+    local width = 400 * FONT_SCALE
+    local height = 600 * FONT_SCALE
+    
+    local ISWriteBio = require "Chat/AC_ISWriteBio"
+    if ISWriteBio.instance then ISWriteBio.instance:close() end
+    local ui = ISWriteBio:new((core:getScreenWidth() - width)/2, (core:getScreenHeight() - height)/2, width, height, clickedPlayer, isMe)
+    ui:initialise()
+    ui:addToUIManager()
+    ui:setVisible(true)
 end
 
 Events.OnFillWorldObjectContextMenu.Add(function(playerIndex, context, worldObjects, test)

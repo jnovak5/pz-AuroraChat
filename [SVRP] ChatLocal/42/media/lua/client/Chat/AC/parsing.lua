@@ -417,6 +417,9 @@ function AC.Parsing.FormatPart(part, omitStart)
     if text and omitStart then
         text = text:sub(omitStart + 1, text:len())
     end
+    if text then
+        text = text:gsub("<", "&lt;"):gsub(">", "&gt;")
+    end
     
     if part.type == "text" then
         local sayColor = AC.Meta.GetSayColor()

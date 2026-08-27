@@ -332,7 +332,7 @@ function AC.Commands.Help()
 end
 
 function AC.Commands.SendPM(args)
-    local sandbox = SandboxVars.SVRPChat or {}
+    local sandbox = SandboxVars.SVRPChatLocal or {}
     if not sandbox.EnablePM and not AC.Override(true) then
         AC_Utils.addErrorToChat("Private messages are disabled.")
         return
@@ -690,7 +690,7 @@ function AC.Commands.ApplyInjuryLocal(bodyPartStr, injury)
     local player = getPlayer()
     if not player then return end
 
-    local bodyPartType = BodyPartType.FromString(bodyPartStr)
+    local bodyPartType = AC.GetBodyPartTypeFromString(bodyPartStr)
     if not bodyPartType then return end
 
     local bodyDamage = player:getBodyDamage()
@@ -699,24 +699,25 @@ function AC.Commands.ApplyInjuryLocal(bodyPartStr, injury)
     local bodyPart = bodyDamage:getBodyPart(bodyPartType)
     if not bodyPart then return end
 
-    if injury == "Bleeding" then bodyPart:setBleedingTime(10)
-    elseif injury == "Bullet" then bodyPart:setHaveBullet(true, 0)
-    elseif injury == "Burned" then bodyPart:setBurnTime(50)
-    elseif injury == "Deep Wound" then bodyPart:generateDeepWound()
-    elseif injury == "Fracture" then bodyPart:setFractureTime(21)
-    elseif injury == "Glass Shards" then bodyPart:generateDeepShardWound()
-    elseif injury == "Infected" then bodyPart:setWoundInfectionLevel(10)
-    elseif injury == "Scratched" then bodyPart:setScratched(true, true)
-    elseif injury == "Laceration" then bodyPart:setCut(true)
-    elseif injury == "Bite" then
-        bodyPart:SetBitten(true)
-        bodyPart:SetInfected(false)
-        bodyPart:SetFakeInfected(false)
-    elseif injury == "Cold" then bodyDamage:setColdStrength(100.0)
-    elseif injury == "Sickness" then bodyDamage:setFoodSicknessLevel(100.0)
+    local actionMap = {
+        ["Bleeding"] = "bleeding",
+        ["Bullet"] = "bullet",
+        ["Burned"] = "burned",
+        ["Deep Wound"] = "deepWound",
+        ["Fracture"] = "fracture",
+        ["Glass Shards"] = "glass",
+        ["Infected"] = "infected",
+        ["Scratched"] = "scratched",
+        ["Laceration"] = "cut",
+        ["Bite"] = "bite"
+    }
+
+    local action = actionMap[injury]
+    if action then
+        local args = { bodyPartIndex = BodyPartType.ToIndex(bodyPart:getType()), action = action, id = player:getOnlineID() }
+        sendClientCommand(player, "player", "onHealthCheatCurrentPlayer", args)
+        AC_Utils.addInfoToChat("<RGB:1.0,0.0,0.0>Injury applied!")
     end
-    bodyDamage:AddDamage(bodyPartType, 15.0)
-    AC_Utils.addInfoToChat("<RGB:1.0,0.0,0.0>Injury applied!")
 end
 
 function AC.Commands.ApplyAilmentLocal(ailment)
@@ -736,6 +737,7 @@ function AC.Commands.ApplyAilmentLocal(ailment)
             bodyDamage:setFoodSicknessLevel(40.0)
         end
     end
+    if player.sendPlayerExtraInfo then player:sendPlayerExtraInfo() end
     AC_Utils.addInfoToChat("<RGB:1.0,0.0,0.0>Ailment applied!")
 end
 
@@ -752,7 +754,7 @@ function AC.Commands.Injure(args)
     end
     local bodyPartStr = parts[1]:gsub("^%s*(.-)%s*$", "%1")
     local injury = parts[2]:gsub("^%s*(.-)%s*$", "%1")
-    local bodyPartType = BodyPartType.FromString(bodyPartStr)
+    local bodyPartType = AC.GetBodyPartTypeFromString(bodyPartStr)
 
     if not bodyPartType then
         AC_Utils.addErrorToChat("Invalid body part.")
@@ -831,7 +833,7 @@ function AC.Commands.SetStatus(args)
 end
 
 function AC.Commands.PrivateChat(args)
-    local sandbox = SandboxVars.SVRPChat or {}
+    local sandbox = SandboxVars.SVRPChatLocal or {}
     if not sandbox.EnablePrivate then
         AC_Utils.addErrorToChat("Private chat is disabled.")
         return
@@ -862,7 +864,7 @@ function AC.Commands.StopPrivateChat()
 end
 
 function AC.Commands.Coords()
-    local sandbox = SandboxVars.SVRPChat or {}
+    local sandbox = SandboxVars.SVRPChatLocal or {}
     if not sandbox.AllowPlayerCoords and not AC.Override() then
         AC_Utils.addErrorToChat("Coordinates are disabled.")
         return

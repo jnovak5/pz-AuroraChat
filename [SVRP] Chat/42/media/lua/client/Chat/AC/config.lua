@@ -1,6 +1,6 @@
 if isServer() and not isClient() then return end
 AC = AC or {}
-local sandbox = (SandboxVars and (SandboxVars.SVRPChat or SandboxVars.SVRPChat)) or {}
+local sandbox = (SandboxVars and (SandboxVars.SVRPChatLocal or SandboxVars.SVRPChat)) or {}
 
 -- Define chat types with generous, immersive ranges
 AC.ChatTypes = {}
@@ -57,7 +57,7 @@ AC.ChatTypes["shout"] = {
 
 --- Synchronize chat ranges dynamically whenever sandbox settings are loaded
 function AC.RefreshChatRanges()
-    local sb = (SandboxVars and (SandboxVars.SVRPChat or SandboxVars.SVRPChat)) or {}
+    local sb = (SandboxVars and (SandboxVars.SVRPChatLocal or SandboxVars.SVRPChat)) or {}
     if AC.ChatTypes then
         if AC.ChatTypes["whisper"] then
             AC.ChatTypes["whisper"].xyRange = sb.RangeXYWhisper or 2

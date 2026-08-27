@@ -420,7 +420,16 @@ CommandHandlers.Injure = function(sendingPlayer, args)
         return
     end
     local bodyPartStr, injury = args[1], args[2]
-    local bodyPartType = BodyPartType.FromString(bodyPartStr)
+    local bodyPartType = BodyPartType.FromString and BodyPartType.FromString(bodyPartStr)
+    if not bodyPartType then
+        for i=0, BodyPartType.MAX:index()-1 do
+            local bpt = BodyPartType.FromIndex(i)
+            if BodyPartType.ToString(bpt) == bodyPartStr then
+                bodyPartType = bpt
+                break
+            end
+        end
+    end
     if bodyPartType then
         sendServerCommand(sendingPlayer, "AC", "ApplyInjury", {bodyPartStr, injury})
     end
