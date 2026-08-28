@@ -68,7 +68,7 @@ local function canSee(player, otherPlayer, xyRange, zRange)
 end
 
 local function getChatRangeAndType(text)
-    local sandbox = SandboxVars.SVRPChat or SandboxVars.SVRPChat or {}
+    local sandbox = SandboxVars.SVRPChatLocal or SandboxVars.SVRPChat or {}
     if not text or text == "" then return "say", (sandbox.RangeXYSay or 20), (sandbox.RangeZSay or 2) end
     local clean = text:gsub("^%s+", "")
     if clean:sub(1,1) == "/" then
@@ -99,7 +99,7 @@ local function getChatRangeAndType(text)
 end
 
 local function dispatchVoiceChatter(sendingPlayer, text, x, y, z)
-    local sandbox = SandboxVars.SVRPChat or SandboxVars.SVRPChat or {}
+    local sandbox = SandboxVars.SVRPChatLocal or SandboxVars.SVRPChat or {}
     if sandbox.EnableVoiceChatter == false then return end
     if not sendingPlayer or not text or text == "" then return end
 
@@ -415,7 +415,7 @@ CommandHandlers.PrivateChat = function(sendingPlayer, args)
 end
 
 CommandHandlers.Injure = function(sendingPlayer, args)
-    local sandbox = SandboxVars.SVRPChat or SandboxVars.SVRPChat
+    local sandbox = SandboxVars.SVRPChatLocal or SandboxVars.SVRPChat
     if sandbox and sandbox.EnableSelfInjury == false then
         return
     end
@@ -436,7 +436,7 @@ CommandHandlers.Injure = function(sendingPlayer, args)
 end
 
 CommandHandlers.Ailment = function(sendingPlayer, args)
-    local sandbox = SandboxVars.SVRPChat or SandboxVars.SVRPChat
+    local sandbox = SandboxVars.SVRPChatLocal or SandboxVars.SVRPChat
     if sandbox and sandbox.EnableSelfInjury == false then
         return
     end
@@ -507,6 +507,7 @@ CommandHandlers.CombatCreate = function(sendingPlayer, args)
         isActive = false,
         round = 1,
         currentTurn = 1,
+        target = nil,
         participants = { hostName },
         viewers = {},
         history = {}
@@ -540,6 +541,20 @@ CommandHandlers.CombatAccept = function(sendingPlayer, args)
             if not found then table.insert(match.participants, username) end
         end
         PlayerDB.PlayerToCombatMatch[username] = hostName
+        broadcastCombatMatch(match, "CombatSync", {match})
+    end
+end
+
+CommandHandlers.CombatAddDummy = function(sendingPlayer, args)
+    local dummyName = args[1]
+    local hostName = sendingPlayer:getUsername()
+    PlayerDB.CombatMatches = PlayerDB.CombatMatches or {}
+    PlayerDB.PlayerToCombatMatch = PlayerDB.PlayerToCombatMatch or {}
+    local match = PlayerDB.CombatMatches[hostName]
+    if match then
+        match.participants = match.participants or {}
+        table.insert(match.participants, dummyName)
+        PlayerDB.PlayerToCombatMatch[dummyName] = hostName
         broadcastCombatMatch(match, "CombatSync", {match})
     end
 end
@@ -659,6 +674,7 @@ CommandHandlers.CombatNextTurn = function(sendingPlayer, args)
     PlayerDB.CombatMatches = PlayerDB.CombatMatches or {}
     local match = PlayerDB.CombatMatches[hostName]
     if match and match.isActive and #match.participants > 0 then
+        match.target = nil
         match.currentTurn = match.currentTurn + 1
         if match.currentTurn > #match.participants then
             match.currentTurn = 1
@@ -677,6 +693,7 @@ CommandHandlers.CombatPrevTurn = function(sendingPlayer, args)
     PlayerDB.CombatMatches = PlayerDB.CombatMatches or {}
     local match = PlayerDB.CombatMatches[hostName]
     if match and match.isActive and #match.participants > 0 then
+        match.target = nil
         match.currentTurn = match.currentTurn - 1
         if match.currentTurn < 1 then
             match.currentTurn = #match.participants
@@ -716,6 +733,30 @@ CommandHandlers.CombatHealth = function(sendingPlayer, args)
         if logText ~= "" then
             table.insert(match.history, { text = logText, r = 0.95, g = 0.4, b = 0.4 })
             if #match.history > 100 then table.remove(match.history, 1) end
+        end
+        broadcastCombatMatch(match, "CombatSync", {match})
+    end
+end
+
+CommandHandlers.CombatSetTarget = function(sendingPlayer, args)
+    local targetUser = args[1]
+    local hostName = sendingPlayer:getUsername()
+    
+    -- If it's a participant setting the target, they need to find the host
+    PlayerDB.PlayerToCombatMatch = PlayerDB.PlayerToCombatMatch or {}
+    hostName = PlayerDB.PlayerToCombatMatch[hostName]
+    
+    PlayerDB.CombatMatches = PlayerDB.CombatMatches or {}
+    local match = PlayerDB.CombatMatches[hostName]
+    if match and match.isActive then
+        match.target = targetUser
+        if targetUser then
+            local targetName = PlayerDB.PlayerNames and PlayerDB.PlayerNames[targetUser] or targetUser
+            local attacker = sendingPlayer:getUsername()
+            local attackerName = PlayerDB.PlayerNames and PlayerDB.PlayerNames[attacker] or attacker
+            table.insert(match.history, { text = string.format("--- %s targets %s! ---", attackerName, targetName), r = 1.0, g = 0.6, b = 0.2 })
+        else
+            table.insert(match.history, { text = "--- Target cleared ---", r = 0.7, g = 0.7, b = 0.7 })
         end
         broadcastCombatMatch(match, "CombatSync", {match})
     end
