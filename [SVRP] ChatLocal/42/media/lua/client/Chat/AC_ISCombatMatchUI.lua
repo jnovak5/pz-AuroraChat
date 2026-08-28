@@ -58,7 +58,7 @@ function AC_ISCombatMatchUI:createChildren()
     self:addChild(self.closeButton)
 
     -- Host Controls Bar
-    local hostBtnWid = (self.width - pad * 5) / 4
+    local hostBtnWid = (self.width - pad * 6) / 5
 
     self.inviteCombatantButton = ISButton:new(pad, topY, hostBtnWid, btnHgt, "+ Combatant", self, function() self:onInviteClick(false) end)
     self.inviteCombatantButton:initialise()
@@ -68,13 +68,18 @@ function AC_ISCombatMatchUI:createChildren()
     self.inviteViewerButton:initialise()
     self.inviteViewerButton.backgroundColor = {r=0.2, g=0.35, b=0.5, a=0.8}
     self:addChild(self.inviteViewerButton)
+    
+    self.addDummyButton = ISButton:new(pad * 3 + hostBtnWid * 2, topY, hostBtnWid, btnHgt, "Add Dummy", self, AC_ISCombatMatchUI.onAddDummyClick)
+    self.addDummyButton:initialise()
+    self.addDummyButton.backgroundColor = {r=0.4, g=0.4, b=0.2, a=0.8}
+    self:addChild(self.addDummyButton)
 
-    self.startMatchButton = ISButton:new(pad * 3 + hostBtnWid * 2, topY, hostBtnWid, btnHgt, "Start Match", self, AC_ISCombatMatchUI.onStartMatchClick)
+    self.startMatchButton = ISButton:new(pad * 4 + hostBtnWid * 3, topY, hostBtnWid, btnHgt, "Start Match", self, AC_ISCombatMatchUI.onStartMatchClick)
     self.startMatchButton:initialise()
     self.startMatchButton.backgroundColor = {r=0.1, g=0.5, b=0.2, a=0.8}
     self:addChild(self.startMatchButton)
 
-    self.leaveButton = ISButton:new(pad * 4 + hostBtnWid * 3, topY, hostBtnWid, btnHgt, "Leave Match", self, AC_ISCombatMatchUI.onLeaveClick)
+    self.leaveButton = ISButton:new(pad * 5 + hostBtnWid * 4, topY, hostBtnWid, btnHgt, "Leave Match", self, AC_ISCombatMatchUI.onLeaveClick)
     self.leaveButton:initialise()
     self.leaveButton.backgroundColor = {r=0.5, g=0.2, b=0.1, a=0.8}
     self:addChild(self.leaveButton)
@@ -94,27 +99,32 @@ function AC_ISCombatMatchUI:createChildren()
 
     -- Turn & Role Management Buttons
     local turnNavY = listY + listHgt + 8 * FONT_SCALE
-    local navBtnWid = (self.width - pad * 6) / 5
+    local navBtnWid = (self.width - pad * 7) / 6
 
-    self.prevTurnButton = ISButton:new(pad, turnNavY, navBtnWid, btnHgt, "< Prev Turn", self, AC_ISCombatMatchUI.onPrevTurn)
+    self.prevTurnButton = ISButton:new(pad, turnNavY, navBtnWid, btnHgt, "< Prev", self, AC_ISCombatMatchUI.onPrevTurn)
     self.prevTurnButton:initialise()
     self:addChild(self.prevTurnButton)
 
-    self.nextTurnButton = ISButton:new(pad * 2 + navBtnWid, turnNavY, navBtnWid, btnHgt, "Next Turn >", self, AC_ISCombatMatchUI.onNextTurn)
+    self.nextTurnButton = ISButton:new(pad * 2 + navBtnWid, turnNavY, navBtnWid, btnHgt, "Next >", self, AC_ISCombatMatchUI.onNextTurn)
     self.nextTurnButton:initialise()
     self.nextTurnButton.backgroundColor = {r=0.2, g=0.4, b=0.7, a=0.8}
     self:addChild(self.nextTurnButton)
+    
+    self.setTargetButton = ISButton:new(pad * 3 + navBtnWid * 2, turnNavY, navBtnWid, btnHgt, "Target", self, AC_ISCombatMatchUI.onSetTarget)
+    self.setTargetButton:initialise()
+    self.setTargetButton.backgroundColor = {r=0.8, g=0.4, b=0.1, a=0.8}
+    self:addChild(self.setTargetButton)
 
-    self.moveUpButton = ISButton:new(pad * 3 + navBtnWid * 2, turnNavY, navBtnWid, btnHgt, "Move Up", self, AC_ISCombatMatchUI.onMoveUp)
+    self.moveUpButton = ISButton:new(pad * 4 + navBtnWid * 3, turnNavY, navBtnWid, btnHgt, "Move Up", self, AC_ISCombatMatchUI.onMoveUp)
     self.moveUpButton:initialise()
     self:addChild(self.moveUpButton)
 
-    self.toggleRoleButton = ISButton:new(pad * 4 + navBtnWid * 3, turnNavY, navBtnWid, btnHgt, "Swap Role", self, AC_ISCombatMatchUI.onToggleRole)
+    self.toggleRoleButton = ISButton:new(pad * 5 + navBtnWid * 4, turnNavY, navBtnWid, btnHgt, "Swap Role", self, AC_ISCombatMatchUI.onToggleRole)
     self.toggleRoleButton:initialise()
     self.toggleRoleButton.backgroundColor = {r=0.4, g=0.3, b=0.6, a=0.8}
     self:addChild(self.toggleRoleButton)
 
-    self.removePlayerButton = ISButton:new(pad * 5 + navBtnWid * 4, turnNavY, navBtnWid, btnHgt, "Remove", self, AC_ISCombatMatchUI.onRemovePlayer)
+    self.removePlayerButton = ISButton:new(pad * 6 + navBtnWid * 5, turnNavY, navBtnWid, btnHgt, "Remove", self, AC_ISCombatMatchUI.onRemovePlayer)
     self.removePlayerButton:initialise()
     self.removePlayerButton.backgroundColor = {r=0.6, g=0.1, b=0.1, a=0.7}
     self:addChild(self.removePlayerButton)
@@ -301,9 +311,11 @@ function AC_ISCombatMatchUI:updateMatchView()
         self.inviteCombatantButton:setEnable(true)
         self.inviteViewerButton:setVisible(false)
         self.startMatchButton:setVisible(false)
+        self.addDummyButton:setVisible(false)
         self.leaveButton:setVisible(false)
         self.prevTurnButton:setVisible(false)
         self.nextTurnButton:setVisible(false)
+        self.setTargetButton:setVisible(false)
         self.moveUpButton:setVisible(false)
         self.toggleRoleButton:setVisible(false)
         self.removePlayerButton:setVisible(false)
@@ -312,12 +324,17 @@ function AC_ISCombatMatchUI:updateMatchView()
         self.inviteCombatantButton:setEnable(isHost)
         self.inviteViewerButton:setVisible(isHost)
         self.inviteViewerButton:setEnable(isHost)
+        self.addDummyButton:setVisible(isHost and not match.isActive)
         self.startMatchButton:setVisible(isHost)
         self.startMatchButton:setTitle(match.isActive and "End Match" or "Start Match")
         self.leaveButton:setVisible(true)
         self.leaveButton:setTitle(isHost and "Disband" or "Leave")
         self.prevTurnButton:setVisible(isHost and match.isActive)
         self.nextTurnButton:setVisible(isHost and match.isActive)
+        
+        local isCurrentActor = match.isActive and match.participants and match.participants[match.currentTurn] == myUsername
+        self.setTargetButton:setVisible(match.isActive and (isHost or isCurrentActor))
+        
         self.moveUpButton:setVisible(isHost and not match.isActive)
         self.toggleRoleButton:setVisible(isHost)
         self.removePlayerButton:setVisible(isHost)
@@ -336,6 +353,7 @@ function AC_ISCombatMatchUI:updateMatchView()
                     displayName = displayName,
                     isViewer = false,
                     isCurrent = match.isActive and (match.currentTurn == i),
+                    isTarget = match.isActive and (match.target == username),
                     isHost = (username == match.host)
                 }
                 self.turnList:addItem(displayName, item)
@@ -352,6 +370,7 @@ function AC_ISCombatMatchUI:updateMatchView()
                     displayName = displayName,
                     isViewer = true,
                     isCurrent = false,
+                    isTarget = match.isActive and (match.target == username),
                     isHost = (username == match.host)
                 }
                 self.turnList:addItem(displayName, item)
@@ -397,10 +416,14 @@ function AC_ISCombatMatchUI:drawTurnListItem(y, item, alt)
     end
     if data.isCurrent then
         nameText = nameText .. "  >>> [ACTING] <<<"
+    elseif data.isTarget then
+        nameText = nameText .. "  >>> [DODGING] <<<"
     end
 
     local r, g, b = 0.9, 0.9, 0.9
-    if data.isCurrent then
+    if data.isTarget then
+        r, g, b = 1.0, 0.6, 0.2
+    elseif data.isCurrent then
         r, g, b = 0.4, 1.0, 0.4
     elseif data.isViewer then
         r, g, b = 0.6, 0.75, 0.9
@@ -501,6 +524,23 @@ function AC_ISCombatMatchUI:onInviteClick(isViewer)
     end
 end
 
+function AC_ISCombatMatchUI:onAddDummyClick()
+    -- Only for debugging target mechanics locally
+    local me = getPlayer()
+    local r = ZombRand(1000)
+    local dummyName = "DummyUser" .. r
+    sendClientCommand(me, "AC", "CombatInvite", {dummyName, false})
+    -- Simulate acceptance immediately since the dummy isn't a real player
+    sendClientCommand(me, "AC", "CombatAccept", {me:getUsername(), false})
+    -- Then we need the server to accept it on behalf of the dummy, wait CombatAccept takes (hostName, isViewer)
+    -- So we need to modify AC_proxy to force add if it's a dummy, or just send a custom debug command.
+    -- Actually, if we send ClientCommand "CombatAccept" it adds `sendingPlayer:getUsername()`... 
+    -- So we'd need a server command. Let's just create a custom debug command in AC_proxy or do it here.
+    -- Wait, this mod isn't easily mockable. 
+    -- Let's just create a specific command "CombatAddDummy".
+    sendClientCommand(me, "AC", "CombatAddDummy", {dummyName})
+end
+
 function AC_ISCombatMatchUI:onStartMatchClick()
     local match = AC_Combat.CurrentMatch
     if not match then return end
@@ -525,6 +565,18 @@ end
 
 function AC_ISCombatMatchUI:onPrevTurn()
     sendClientCommand(getPlayer(), "AC", "CombatPrevTurn", {})
+end
+
+function AC_ISCombatMatchUI:onSetTarget()
+    local sel = self.turnList.selected
+    local targetUsername = nil
+    if sel and sel > 0 and AC_Combat.CurrentMatch then
+        local item = self.turnList.items[sel]
+        if item and item.item and not item.item.isViewer then
+            targetUsername = item.item.username
+        end
+    end
+    sendClientCommand(getPlayer(), "AC", "CombatSetTarget", {targetUsername})
 end
 
 function AC_ISCombatMatchUI:onMoveUp()
