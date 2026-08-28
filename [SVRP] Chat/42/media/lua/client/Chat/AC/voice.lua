@@ -628,7 +628,7 @@ end
 function AC.Voice.PlayChatVoice(player, chatType, text, isMuffled, pos, username)
     if not AC.Voice.IsEnabled() then return end
 
-    local sandbox = SandboxVars.SVRPChatLocal or SandboxVars.SVRPChat or {}
+    local sandbox = SandboxVars.SVRPChat or SandboxVars.SVRPChat or {}
     if sandbox.EnableVoiceChatter == false then return end
 
     chatType = chatType or "say"

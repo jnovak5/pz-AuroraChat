@@ -68,7 +68,7 @@ local function canSee(player, otherPlayer, xyRange, zRange)
 end
 
 local function getChatRangeAndType(text)
-    local sandbox = SandboxVars.SVRPChatLocal or SandboxVars.SVRPChat or {}
+    local sandbox = SandboxVars.SVRPChat or SandboxVars.SVRPChat or {}
     if not text or text == "" then return "say", (sandbox.RangeXYSay or 20), (sandbox.RangeZSay or 2) end
     local clean = text:gsub("^%s+", "")
     if clean:sub(1,1) == "/" then
@@ -99,7 +99,7 @@ local function getChatRangeAndType(text)
 end
 
 local function dispatchVoiceChatter(sendingPlayer, text, x, y, z)
-    local sandbox = SandboxVars.SVRPChatLocal or SandboxVars.SVRPChat or {}
+    local sandbox = SandboxVars.SVRPChat or SandboxVars.SVRPChat or {}
     if sandbox.EnableVoiceChatter == false then return end
     if not sendingPlayer or not text or text == "" then return end
 
@@ -415,7 +415,7 @@ CommandHandlers.PrivateChat = function(sendingPlayer, args)
 end
 
 CommandHandlers.Injure = function(sendingPlayer, args)
-    local sandbox = SandboxVars.SVRPChatLocal or SandboxVars.SVRPChat
+    local sandbox = SandboxVars.SVRPChat or SandboxVars.SVRPChat
     if sandbox and sandbox.EnableSelfInjury == false then
         return
     end
@@ -436,7 +436,7 @@ CommandHandlers.Injure = function(sendingPlayer, args)
 end
 
 CommandHandlers.Ailment = function(sendingPlayer, args)
-    local sandbox = SandboxVars.SVRPChatLocal or SandboxVars.SVRPChat
+    local sandbox = SandboxVars.SVRPChat or SandboxVars.SVRPChat
     if sandbox and sandbox.EnableSelfInjury == false then
         return
     end

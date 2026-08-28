@@ -700,7 +700,7 @@ function AC.Meta.CreateActionsContext(context, myPlayer, players)
         medicalOption.notAvailable = true
     end
 
-    local sandbox = SandboxVars.SVRPChatLocal or {}
+    local sandbox = SandboxVars.SVRPChat or SandboxVars.SVRPChat or {}
     if sandbox.EnablePrivate then
         if AC.Meta.HasPrivate(true) then
             actionsContext:addOption("Close Private Chat", nil, AC.Commands.StopPrivateChat)
@@ -738,7 +738,7 @@ function AC.Meta.CreateCharacterContext(context, myPlayer)
     end
     characterContext:addOption("Edit Bio", nil, openEditBio)
 
-    local sandbox = SandboxVars.SVRPChatLocal or SandboxVars.SVRPChat or {}
+    local sandbox = SandboxVars.SVRPChat or SandboxVars.SVRPChat or {}
     if sandbox.EnableModCharacter ~= false then
         characterContext:addOption("Set Name", nil, AC.MakeShowDialogPrompt("Input your new name", AC.Commands.SetName))
 

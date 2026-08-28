@@ -700,7 +700,7 @@ function AC.Meta.CreateActionsContext(context, myPlayer, players)
         medicalOption.notAvailable = true
     end
 
-    local sandbox = SandboxVars.SVRPChatLocal or {}
+    local sandbox = SandboxVars.SVRPChatLocal or SandboxVars.SVRPChat or {}
     if sandbox.EnablePrivate then
         if AC.Meta.HasPrivate(true) then
             actionsContext:addOption("Close Private Chat", nil, AC.Commands.StopPrivateChat)

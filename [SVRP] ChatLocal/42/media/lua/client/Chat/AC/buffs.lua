@@ -49,7 +49,7 @@ function AC.Buffs.ApplyRpBuffs()
         AC.Buffs.CleanClothing()
     end
 
-    local sandbox = SandboxVars.SVRPChatLocal or {}
+    local sandbox = SandboxVars.SVRPChatLocal or SandboxVars.SVRPChat or {}
     if not sandbox.EnableBuffs then
         return
     end

@@ -5,7 +5,7 @@ AC.Bio = AC.Bio or {}
 AC.Bio.OverheadUiElements = AC.Bio.OverheadUiElements or {}
 
 function AC.Bio.ShowBioOnPlayers()
-    local sandbox = SandboxVars.SVRPChatLocal or {}
+    local sandbox = SandboxVars.SVRPChatLocal or SandboxVars.SVRPChat or {}
     if not sandbox.EnableBioShortDescription then return end
     
     local zoom = getCore():getZoom(0)
