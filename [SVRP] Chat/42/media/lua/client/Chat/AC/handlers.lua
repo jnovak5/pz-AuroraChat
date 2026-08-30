@@ -934,11 +934,19 @@ function AC.Handlers.FixWorldRadios(myPlayer, parsedMessage)
                         if channel == parsedMessage.radioFrequency then
                             local txt = AC.Meta.GetName(parsedMessage.playerUsername) .. " " .. AC.Parsing.GetTextOnly(parsedMessage)
                             local function addTextSafe(t)
-                                local s = pcall(function() object:AddDeviceText(t, 0.7, 0.7, 0.7, "", "", 30) end)
-                                if not s then s = pcall(function() object:getDeviceData():AddDeviceText(t, 0.7, 0.7, 0.7, "radio", "-1", 30) end) end
-                                if not s then s = pcall(function() object:getDeviceData():AddDeviceText(t, 0.7, 0.7, 0.7, "radio", -1, 30) end) end
-                                if not s then s = pcall(function() object:getDeviceData():AddDeviceText(t, 0.7, 0.7, 0.7, "radio", "-1") end) end
-                                if not s then pcall(function() object:getDeviceData():AddDeviceText(t, 0.7, 0.7, 0.7, "radio", -1) end) end
+                                local s = false
+                                if object.AddDeviceText then
+                                    s = pcall(function() object:AddDeviceText(t, 0.7, 0.7, 0.7, "", "", 30) end)
+                                end
+                                if not s and object.getDeviceData then
+                                    local devData = object:getDeviceData()
+                                    if devData and devData.AddDeviceText then
+                                        s = pcall(function() devData:AddDeviceText(t, 0.7, 0.7, 0.7, "radio", "-1", 30) end)
+                                        if not s then s = pcall(function() devData:AddDeviceText(t, 0.7, 0.7, 0.7, "radio", -1, 30) end) end
+                                        if not s then s = pcall(function() devData:AddDeviceText(t, 0.7, 0.7, 0.7, "radio", "-1") end) end
+                                        if not s then pcall(function() devData:AddDeviceText(t, 0.7, 0.7, 0.7, "radio", -1) end) end
+                                    end
+                                end
                             end
                             addTextSafe("")
                             addTextSafe("")
@@ -961,11 +969,20 @@ function AC.Handlers.FixWorldRadios(myPlayer, parsedMessage)
                         if data and data:getIsTurnedOn() and data:getChannel() == parsedMessage.radioFrequency then
                             local txt = AC.Meta.GetName(parsedMessage.playerUsername) .. " " .. AC.Parsing.GetTextOnly(parsedMessage)
                             local function addTextSafe(t)
-                                local s = pcall(function() part:getVehicle():getChatElement():addChatLine(t, 0.7, 0.7, 0.7, UIFont.Dialogue, 30, "radio", true, true, true, true, true, true) end)
-                                if not s then s = pcall(function() data:AddDeviceText(t, 0.7, 0.7, 0.7, "radio", "-1", 30) end) end
-                                if not s then s = pcall(function() data:AddDeviceText(t, 0.7, 0.7, 0.7, "radio", -1, 30) end) end
-                                if not s then s = pcall(function() data:AddDeviceText(t, 0.7, 0.7, 0.7, "radio", "-1") end) end
-                                if not s then pcall(function() data:AddDeviceText(t, 0.7, 0.7, 0.7, "radio", -1) end) end
+                                local s = false
+                                local vehicle = part:getVehicle()
+                                if vehicle and vehicle.getChatElement then
+                                    local chatElement = vehicle:getChatElement()
+                                    if chatElement and chatElement.addChatLine then
+                                        s = pcall(function() chatElement:addChatLine(t, 0.7, 0.7, 0.7, UIFont.Dialogue, 30, "radio", true, true, true, true, true, true) end)
+                                    end
+                                end
+                                if not s and data and data.AddDeviceText then
+                                    s = pcall(function() data:AddDeviceText(t, 0.7, 0.7, 0.7, "radio", "-1", 30) end)
+                                    if not s then s = pcall(function() data:AddDeviceText(t, 0.7, 0.7, 0.7, "radio", -1, 30) end) end
+                                    if not s then s = pcall(function() data:AddDeviceText(t, 0.7, 0.7, 0.7, "radio", "-1") end) end
+                                    if not s then pcall(function() data:AddDeviceText(t, 0.7, 0.7, 0.7, "radio", -1) end) end
+                                end
                             end
                             addTextSafe("")
                             addTextSafe("")
