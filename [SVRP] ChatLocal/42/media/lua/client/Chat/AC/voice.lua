@@ -108,7 +108,7 @@ function AC.Voice.SetEnabled(enabled)
             modData._AC_VoiceChatterDisabled = not isBool
         end
         if isClient() then
-            sendClientCommand(myPlayer, "AC", "SetVoiceChatterPref", { isBool })
+            sendClientCommand(getPlayer(), "AC", "SetVoiceChatterPref", { isBool })
         end
     end
     if not isBool then

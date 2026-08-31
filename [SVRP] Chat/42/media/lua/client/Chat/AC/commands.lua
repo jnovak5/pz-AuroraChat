@@ -488,7 +488,7 @@ function AC.Commands.StaffChat(args)
         AC_Utils.addErrorToChat("Usage: /staff <message>")
         return
     end
-    sendClientCommand(player, 'AC', 'StaffChat', {args})
+    sendClientCommand(getPlayer(), 'AC', 'StaffChat', {args})
 end
 
 function AC.Commands.Override(args)
@@ -715,7 +715,7 @@ function AC.Commands.ApplyInjuryLocal(bodyPartStr, injury)
     local action = actionMap[injury]
     if action then
         local args = { bodyPartIndex = BodyPartType.ToIndex(bodyPart:getType()), action = action, id = player:getOnlineID() }
-        sendClientCommand(player, "player", "onHealthCheatCurrentPlayer", args)
+        sendClientCommand(getPlayer(), "player", "onHealthCheatCurrentPlayer", args)
         AC_Utils.addInfoToChat("<RGB:1.0,0.0,0.0>Injury applied!")
     end
 end
@@ -951,7 +951,7 @@ function AC.Commands.CellMsg(args)
     local author = player and player:getUsername() or "Admin"
 
     if isClient() then
-        sendClientCommand("AC", "CellMsg", { text = cleanText, x = px, y = py, author = author, radius = 25 })
+        sendClientCommand(getPlayer(), "AC", "CellMsg", { text = cleanText, x = px, y = py, author = author, radius = 25 })
     else
         AC.Alert.ShowCellMessage(cleanText, author)
         AC_Utils.addInfoToChat(string.format("[Local Area Broadcast] %s: %s", author, cleanText))

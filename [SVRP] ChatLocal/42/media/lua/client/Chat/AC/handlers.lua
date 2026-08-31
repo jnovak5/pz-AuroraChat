@@ -127,7 +127,7 @@ end
 function AC.Handlers.HandleStaffTabCommand(message)
     local player = getPlayer()
     if not player then return true end
-    sendClientCommand(player, 'AC', 'StaffChat', {message})
+    sendClientCommand(getPlayer(), 'AC', 'StaffChat', {message})
     return true
 end
 
@@ -547,13 +547,14 @@ function AC.Handlers.AddLineInChat(chatMessage, tabID)
         end
     end
 
+    local horizontalDist = 0
+    local zDist = 0
+    local isDifferentZ = false
+
     if not parsedMessage.isOwnRadio then
         local chatType = AC.ChatTypes[parsedMessage.chatType]
         local pos
         local effectiveDist = 0
-        local horizontalDist = 0
-        local zDist = 0
-        local isDifferentZ = false
 
         if parsedMessage.fromRecorder then
             chatType = AC.ChatTypes["low"]
@@ -861,12 +862,8 @@ function AC.Handlers.AddLineInChat(chatMessage, tabID)
 end
 
 function AC.Handlers.AddStaffMessage(otherPlayerUsername, message)
-    if not AC_Utils.isStaff(getPlayer()) then
-        return
-    end
-
     local fakeMessage = AC_FakeMessage:new(message, {
-        author = otherPlayerUsername,
+        author = "Server", -- Set to Server so vanilla ISChat doesn't filter it as a local echo
         radioChannel = nil,
     })
     AC.ISChatOriginal.addLineInChat(fakeMessage, AC.StaffTabId)

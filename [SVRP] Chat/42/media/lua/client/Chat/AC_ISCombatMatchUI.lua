@@ -239,7 +239,7 @@ function AC_ISCombatMatchUI:adjustHP(delta)
     local logText = string.format("[HP] %s: %d/%d HP (%s)", charName, newHP, maxHP, sign)
 
     if AC_Combat.CurrentMatch then
-        sendClientCommand(me, "AC", "CombatHealth", { newHP, maxHP, logText })
+        sendClientCommand(getPlayer(), "AC", "CombatHealth", { newHP, maxHP, logText })
     else
         self.historyList:addItem(logText, { text = logText, r = 0.95, g = 0.4, b = 0.4 })
         self.historyList:setYScroll(-10000)
@@ -258,7 +258,7 @@ function AC_ISCombatMatchUI:resetHP()
     local logText = string.format("[HP] %s: Full HP Restored (%d/%d)", charName, maxHP, maxHP)
 
     if AC_Combat.CurrentMatch then
-        sendClientCommand(me, "AC", "CombatHealth", { maxHP, maxHP, logText })
+        sendClientCommand(getPlayer(), "AC", "CombatHealth", { maxHP, maxHP, logText })
     else
         self.historyList:addItem(logText, { text = logText, r = 0.3, g = 0.95, b = 0.4 })
         self.historyList:setYScroll(-10000)
@@ -485,7 +485,7 @@ function AC_ISCombatMatchUI:onInviteClick(isViewer)
     local me = getPlayer()
     if not match then
         -- Host new match
-        sendClientCommand(me, "AC", "CombatCreate", {})
+        sendClientCommand(getPlayer(), "AC", "CombatCreate", {})
         return
     end
 
@@ -529,16 +529,16 @@ function AC_ISCombatMatchUI:onAddDummyClick()
     local me = getPlayer()
     local r = ZombRand(1000)
     local dummyName = "DummyUser" .. r
-    sendClientCommand(me, "AC", "CombatInvite", {dummyName, false})
+    sendClientCommand(getPlayer(), "AC", "CombatInvite", {dummyName, false})
     -- Simulate acceptance immediately since the dummy isn't a real player
-    sendClientCommand(me, "AC", "CombatAccept", {me:getUsername(), false})
+    sendClientCommand(getPlayer(), "AC", "CombatAccept", {me:getUsername(), false})
     -- Then we need the server to accept it on behalf of the dummy, wait CombatAccept takes (hostName, isViewer)
     -- So we need to modify AC_proxy to force add if it's a dummy, or just send a custom debug command.
     -- Actually, if we send ClientCommand "CombatAccept" it adds `sendingPlayer:getUsername()`... 
     -- So we'd need a server command. Let's just create a custom debug command in AC_proxy or do it here.
     -- Wait, this mod isn't easily mockable. 
     -- Let's just create a specific command "CombatAddDummy".
-    sendClientCommand(me, "AC", "CombatAddDummy", {dummyName})
+    sendClientCommand(getPlayer(), "AC", "CombatAddDummy", {dummyName})
 end
 
 function AC_ISCombatMatchUI:onStartMatchClick()
@@ -632,7 +632,7 @@ function AC_ISCombatMatchUI.doRollDice(diceName)
     local rollText = string.format("[%s] rolled 1%s: [%d] = %d", name, diceName, roll, roll)
 
     if AC_Combat.CurrentMatch then
-        sendClientCommand(me, "AC", "CombatRoll", {"1" .. diceName, roll, tostring(roll), 0, rollText})
+        sendClientCommand(getPlayer(), "AC", "CombatRoll", {"1" .. diceName, roll, tostring(roll), 0, rollText})
     else
         AC.Commands.Roll(diceName)
     end
@@ -678,7 +678,7 @@ function AC_ISCombatMatchUI:onCustomRoll()
     local rollText = string.format("[%s] rolled %dd%d%s: [%s]%s = %d", name, numDice, numSides, bonusStr, table.concat(rolls, ","), (bonusStr ~= "" and (" " .. bonusStr) or ""), total)
 
     if AC_Combat.CurrentMatch then
-        sendClientCommand(me, "AC", "CombatRoll", {numDice .. "d" .. numSides .. bonusStr, total, table.concat(rolls, ","), bonus, rollText})
+        sendClientCommand(getPlayer(), "AC", "CombatRoll", {numDice .. "d" .. numSides .. bonusStr, total, table.concat(rolls, ","), bonus, rollText})
     else
         AC.Commands.Roll(text)
     end

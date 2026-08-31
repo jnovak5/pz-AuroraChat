@@ -218,6 +218,8 @@ local function writeLanguages(languages)
     for i=1, numKnown do
         md["AC_KnownLanguage" .. i] = languages[i]
     end
+    local player = getPlayer()
+    if player and player.transmitModData then player:transmitModData() end
 end
 
 function AC.Meta.AddKnownLanguage(language)
@@ -329,7 +331,7 @@ function AC.Meta.SetName(newName)
     player:getDescriptor():setForename(newName)
     player:getDescriptor():setSurname("")
     sendPlayerStatsChange(player)
-    sendClientCommand(player, "AC", "SetPlayerName", {newName})
+    sendClientCommand(getPlayer(), "AC", "SetPlayerName", {newName})
 end
 
 function AC.Meta.GetNameColor(username)

@@ -17,23 +17,32 @@ end
 Events.OnFillWorldObjectContextMenu.Add(function(playerIndex, context, worldObjects, test)
     if test then return true end
 
+    local myPlayer = getSpecificPlayer(playerIndex) or getPlayer()
     local clickedPlayer = nil
+
+    -- Prioritize other players first so we don't accidentally click ourselves when standing close to someone
     for _, v in ipairs(worldObjects) do
-        if instanceof(v, "IsoPlayer") then
+        if instanceof(v, "IsoPlayer") and v ~= myPlayer then
             clickedPlayer = v
             break
         end
     end
 
+    -- If no other player found, see if we clicked ourselves
     if not clickedPlayer then
-        local myPlayer = getSpecificPlayer(playerIndex) or getPlayer()
-        if myPlayer then
-            clickedPlayer = myPlayer
+        for _, v in ipairs(worldObjects) do
+            if instanceof(v, "IsoPlayer") then
+                clickedPlayer = v
+                break
+            end
         end
     end
 
+    if not clickedPlayer and myPlayer then
+        clickedPlayer = myPlayer
+    end
+
     if clickedPlayer then
-        local myPlayer = getSpecificPlayer(playerIndex) or getPlayer()
         local isMe = (myPlayer and clickedPlayer:getUsername() == myPlayer:getUsername())
 
         if not isMe then

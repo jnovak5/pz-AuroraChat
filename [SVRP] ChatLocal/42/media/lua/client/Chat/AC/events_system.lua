@@ -33,7 +33,7 @@ function AC.PlayerEvents.CreateEvent(title, desc, category, radius, isPublic, wo
     }
 
     if isClient() then
-        sendClientCommand(player, "AC", "EventCreate", payload)
+        sendClientCommand(getPlayer(), "AC", "EventCreate", payload)
     else
         AC.PlayerEvents.ActiveEvents[payload.id] = payload
         AC_Utils.addInfoToChat(string.format("Created event '%s' successfully!", payload.title))
@@ -45,7 +45,7 @@ function AC.PlayerEvents.CancelEvent(eventId)
     local player = getPlayer()
     if not player or not eventId then return end
     if isClient() then
-        sendClientCommand(player, "AC", "EventCancel", { eventId })
+        sendClientCommand(getPlayer(), "AC", "EventCancel", { eventId })
     else
         AC.PlayerEvents.ActiveEvents[eventId] = nil
         AC_Utils.addInfoToChat("Event cancelled.")
@@ -57,7 +57,7 @@ function AC.PlayerEvents.InvitePlayers(eventId, playerUsernames)
     local player = getPlayer()
     if not player or not eventId or not playerUsernames then return end
     if isClient() then
-        sendClientCommand(player, "AC", "EventInvite", { eventId = eventId, players = playerUsernames })
+        sendClientCommand(getPlayer(), "AC", "EventInvite", { eventId = eventId, players = playerUsernames })
     else
         local event = AC.PlayerEvents.ActiveEvents[eventId]
         if event then
@@ -74,7 +74,7 @@ function AC.PlayerEvents.RSVP(eventId, status)
     if not player or not eventId then return end
     local charName = player:getDescriptor() and (player:getDescriptor():getForename() .. " " .. player:getDescriptor():getSurname()) or player:getUsername()
     if isClient() then
-        sendClientCommand(player, "AC", "EventRSVP", { eventId, status, charName })
+        sendClientCommand(getPlayer(), "AC", "EventRSVP", { eventId, status, charName })
     else
         local event = AC.PlayerEvents.ActiveEvents[eventId]
         if event then

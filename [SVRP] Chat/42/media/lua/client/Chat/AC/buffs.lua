@@ -66,7 +66,7 @@ function AC.Buffs.ApplyRpBuffs()
     local apm = AC.Buffs.AmountsPerMessage
     local multiplier = getGameTime():getMultiplier()
 
-    sendClientCommand(player, "AC", "ApplyRpBuffs", {
+    sendClientCommand(getPlayer(), "AC", "ApplyRpBuffs", {
         boredom = apm.boredom * multiplier,
         hunger = apm.hunger * multiplier,
         thirst = apm.thirst * multiplier,

@@ -20,7 +20,14 @@ function ISWriteBio:render()
 end
 
 function ISWriteBio.onLoad(args)
-  ISWriteBio.instance.entry:setText(args and args.description or "No Bio Set.")
+  local bioText = args and args.description or "No Bio Set."
+  if ISWriteBio.instance.canEdit then
+    ISWriteBio.instance.entry:setText(bioText)
+  else
+    local escapedBio = bioText:gsub("<", "&lt;"):gsub(">", "&gt;")
+    ISWriteBio.instance.entry:setText(escapedBio)
+    ISWriteBio.instance.entry.textDirty = true
+  end
 end
 
 
@@ -42,24 +49,29 @@ function ISWriteBio:createChildren()
 
 
 
-  self.entry = ISTextEntryBox:new("Loading...", padBottom, 30 * FONT_SCALE + FONT_HGT_MEDIUM, self.width - 20 * FONT_SCALE, height-100)
-  self.entry:initialise()
-  self.entry:instantiate()
-  self.entry:setMultipleLine(true)
-  self.entry.javaObject:setMaxLines(35)
-  self:addChild(self.entry)
-  sendClientCommand("AC", "BioLoad", {self.targetPlayerUsername})
-
-
   if self.canEdit then
+    self.entry = ISTextEntryBox:new("Loading...", padBottom, 30 * FONT_SCALE + FONT_HGT_MEDIUM, self.width - 20 * FONT_SCALE, height-100)
+    self.entry:initialise()
+    self.entry:instantiate()
+    self.entry:setMultipleLine(true)
+    self.entry.javaObject:setMaxLines(35)
+    self:addChild(self.entry)
 
     self.save = ISButton:new(padBottom, self.height - padBottom - btnHgt, btnWid, btnHgt, "SAVE", self, ISWriteBio.onSave)
     self.save:initialise()
     self.save.borderColor = self.buttonBorderColor
     self:addChild(self.save)
   else
-    self.entry:setEditable(false)
+    self.entry = ISRichTextPanel:new(padBottom, 30 * FONT_SCALE + FONT_HGT_MEDIUM, self.width - 20 * FONT_SCALE, height-100)
+    self.entry:initialise()
+    self.entry:instantiate()
+    self.entry.autosetheight = false
+    self.entry.clip = true
+    self.entry:addScrollBars()
+    self:addChild(self.entry)
   end
+
+  sendClientCommand(getPlayer(), "AC", "BioLoad", {self.targetPlayerUsername})
 
   self.cancel = ISButton:new(self.width - btnWid - padBottom, self.height - padBottom - btnHgt, btnWid, btnHgt, getText("UI_btn_close"), self, ISWriteBio.close)
   self.cancel:initialise()
@@ -72,7 +84,7 @@ local function round(num, numDecimalPlaces)
 end
 
 function ISWriteBio:onSave(button, x, y)
-  sendClientCommand("AC", "BioSave", {self.entry:getText()})
+  sendClientCommand(getPlayer(), "AC", "BioSave", {self.entry:getText()})
   AC.Handlers.CommandEntered("/me updated their description.")
   local sandbox = SandboxVars.SVRPChatLocal or SandboxVars.SVRPChat or {}
   if sandbox.EnableBioShortDescription then

@@ -149,7 +149,7 @@ function AC_FakeMessage:new(text, options)
     options = options or {}
     local o = {}
     setmetatable(o, self)
-    o.__index = self
+    self.__index = self
     o.text = text
     o.author = options.author or ""
     o.radioChannel = options.radioChannel or 0
@@ -214,6 +214,7 @@ end
 function AC_FakeMessage:getCustomTag()
     return ""
 end
+
 function AC_FakeMessage:setOverHeadSpeech() end
 function AC_FakeMessage:setShouldAttractZombies() end
 

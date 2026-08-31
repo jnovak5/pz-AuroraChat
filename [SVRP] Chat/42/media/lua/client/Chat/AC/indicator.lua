@@ -41,7 +41,7 @@ function AC.Indicator.doLog(text)
     local y = math.floor(p:getY())
     local z = math.floor(p:getZ())
     local currentLanguage = AC.Meta.GetCurrentLanguage(p:getUsername())
-    sendClientCommand(p, 'AC', 'doLog', {x, y, z, text, currentLanguage})
+    sendClientCommand(getPlayer(), 'AC', 'doLog', {x, y, z, text, currentLanguage})
 end
 
 function AC.Indicator.update()
