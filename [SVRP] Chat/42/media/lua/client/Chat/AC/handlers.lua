@@ -557,7 +557,11 @@ function AC.Handlers.AddLineInChat(chatMessage, tabID)
 
         if parsedMessage.fromRecorder then
             chatType = AC.ChatTypes["low"]
-            local recPlayer = getPlayerFromUsername(chatMessage:getAuthor())
+            local recPlayer = nil
+            local msgAuthor = chatMessage.getAuthor and chatMessage:getAuthor() or nil
+            if msgAuthor and msgAuthor ~= "" then
+                recPlayer = getPlayerFromUsername(msgAuthor)
+            end
             if not recPlayer then
                 if not isHearAll then
                     pcall(function() chatMessage:setText("") end)
@@ -755,7 +759,11 @@ function AC.Handlers.AddLineInChat(chatMessage, tabID)
         local rangeMult = (parsedMessage.chatType == "whisper" or parsedMessage.chatType == "low") and 1.2 or 1.4
         local effectiveRange = chatTypeObj and (chatTypeObj.maxRange or (typeRange * rangeMult + 0.99)) or 20.0
         local overheadRadius = isHearAll and 9999.0 or effectiveRange
-        if not AC.PlayerChatTimes then AC.PlayerChatTimes = {} end; AC.PlayerChatTimes[chattingPlayer:getUsername()] = getTimeInMillis(); pcall(function() chattingPlayer:addLineChatElement(textOnlyMessage .. "", colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, overheadRadius, "") end)
+        local isDistant = isHearAll and (horizontalDist > effectiveRange or zDist > (chatTypeObj and chatTypeObj.zRange or 2))
+        
+        if not isDistant then
+            if not AC.PlayerChatTimes then AC.PlayerChatTimes = {} end; AC.PlayerChatTimes[chattingPlayer:getUsername()] = getTimeInMillis(); pcall(function() chattingPlayer:addLineChatElement(textOnlyMessage .. "", colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, overheadRadius, "") end)
+        end
     end
 
     if parsedMessage.chatModifier == "alert" then
