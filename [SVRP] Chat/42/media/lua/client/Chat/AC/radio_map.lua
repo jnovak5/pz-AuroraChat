@@ -16,6 +16,10 @@ local function getRadioData(item)
         if success then data = result end
     end
     if data and data.getIsTwoWay and data:getIsTwoWay() then
+        local fullType = item:getFullType() or ""
+        if not (string.find(fullType, "Military") or string.find(fullType, "WalkieTalkie5")) then
+            return false, 0, 0
+        end
         local range = data:getTransmitRange() or 0
         if range <= 0 then
             local fullType = item:getFullType() or ""
@@ -198,25 +202,11 @@ function AC.RadioMap.Render(mapUI)
     local whiteTex = Texture:getWhite()
     local numSegments = 96
     local tm = getTextManager()
-
     -- 1. Close, Medium, and Long Distance Signal Radar Propagation Rings (Visible at Any Zoom Level!)
     local allDistanceRings = { 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000, 15000 }
     for _, refDist in ipairs(allDistanceRings) do
         if refDist < (range * 0.85) then
             drawWorldCircleRing(mapUI, px, py, refDist, 64, r, g, b, 0.40, 1)
-            local rx = mapUI.mapAPI:worldToUIX(px, py - refDist)
-            local ry = mapUI.mapAPI:worldToUIY(px, py - refDist)
-            if rx and ry and tm then
-                local lbl = refDist >= 1000 and string.format("%.1fkm", refDist / 1000) or string.format("%dm", refDist)
-                local font = UIFont.Small
-                local textW = tm:MeasureStringX(font, lbl)
-                local textH = tm:getFontHeight(font)
-
-                -- High-contrast pill badge behind distance text
-                mapUI:drawRect(rx - (textW / 2) - 4, ry - 16, textW + 8, textH + 2, 0.88, 0.05, 0.07, 0.12)
-                mapUI:drawRectBorder(rx - (textW / 2) - 4, ry - 16, textW + 8, textH + 2, 0.90, r, g, b)
-                mapUI:drawTextCentre(lbl, rx, ry - 15, 1.0, 1.0, 1.0, 1.0, font)
-            end
         end
     end
 
