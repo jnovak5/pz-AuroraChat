@@ -280,5 +280,32 @@ Events.OnGameStart.Add(function()
     if isClient() and getPlayer() and AC.Voice and AC.Voice.IsEnabled then
         sendClientCommand(getPlayer(), "AC", "SetVoiceChatterPref", { AC.Voice.IsEnabled() })
     end
+
+    -- Restore persisted hair/beard colors from mod data
+    local player = getPlayer()
+    if player and player.getModData then
+        local md = player:getModData()
+        if md then
+            if md._AC_HairColor then
+                local c = md._AC_HairColor
+                pcall(function()
+                    player:getHumanVisual():setHairColor(ImmutableColor.new(c.r, c.g, c.b, 1))
+                    player:getHumanVisual():setNaturalHairColor(ImmutableColor.new(c.r, c.g, c.b, 1))
+                end)
+            end
+            if md._AC_BeardColor then
+                local c = md._AC_BeardColor
+                pcall(function()
+                    player:getHumanVisual():setBeardColor(ImmutableColor.new(c.r, c.g, c.b, 1))
+                    player:getHumanVisual():setNaturalBeardColor(ImmutableColor.new(c.r, c.g, c.b, 1))
+                end)
+            end
+            if md._AC_HairColor or md._AC_BeardColor then
+                sendHumanVisual(player)
+                player:resetModel()
+                triggerEvent("OnClothingUpdated", player)
+            end
+        end
+    end
 end)
 Events.OnCreatePlayer.Add(function(playerNum) if AC.EnforceUserLimits then AC.EnforceUserLimits(getSpecificPlayer(playerNum)) end end)

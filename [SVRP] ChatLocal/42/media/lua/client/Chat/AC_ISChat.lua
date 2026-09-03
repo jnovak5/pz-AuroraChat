@@ -494,7 +494,25 @@ function ISChat:showMessageRange(range)
     self.groundHighlighter:highlightCircle(x, y, range + .99, z)
 end
 
-AC.ISChatOriginal.addLineInChat = AC.ISChatOriginal.addLineInChat or ISChat.addLineInChat
+if not AC.ISChatOriginal.TrueAddLineInChat then
+    AC.ISChatOriginal.TrueAddLineInChat = AC.ISChatOriginal.addLineInChat or ISChat.addLineInChat
+    AC.ISChatOriginal.addLineInChat = function(chatMessage, tabID)
+        AC.ISChatOriginal.TrueAddLineInChat(chatMessage, tabID)
+        
+        -- Fix vanilla PZ memory leak where chatMessages is never pruned
+        if ISChat.instance and ISChat.instance.tabs then
+            local maxLines = ISChat.maxLine or 500
+            for _, tab in ipairs(ISChat.instance.tabs) do
+                if tab and tab.chatMessages then
+                    while #tab.chatMessages > maxLines do
+                        table.remove(tab.chatMessages, 1)
+                    end
+                end
+            end
+        end
+    end
+end
+
 function ISChat.addLineInChat(chatMessage, tabID)
     if AC.Handlers.AddLineInChat(chatMessage, tabID) then
         return
