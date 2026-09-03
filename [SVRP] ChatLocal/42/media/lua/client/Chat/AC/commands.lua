@@ -466,6 +466,10 @@ function AC.Commands.SetHairColor(args)
     if not player then return end
     player:getHumanVisual():setHairColor(ImmutableColor.new(color.r, color.g, color.b, 1))
     player:getHumanVisual():setNaturalHairColor(ImmutableColor.new(color.r, color.g, color.b, 1))
+    -- Persist to mod data so it survives relogs
+    local md = player:getModData()
+    md._AC_HairColor = {r = color.r, g = color.g, b = color.b}
+    player:transmitModData()
     sendHumanVisual(player)
     player:resetModel()
     triggerEvent("OnClothingUpdated", player)
@@ -478,6 +482,10 @@ function AC.Commands.SetBeardColor(args)
     if not player then return end
     player:getHumanVisual():setBeardColor(ImmutableColor.new(color.r, color.g, color.b, 1))
     player:getHumanVisual():setNaturalBeardColor(ImmutableColor.new(color.r, color.g, color.b, 1))
+    -- Persist to mod data so it survives relogs
+    local md = player:getModData()
+    md._AC_BeardColor = {r = color.r, g = color.g, b = color.b}
+    player:transmitModData()
     sendHumanVisual(player)
     player:resetModel()
     triggerEvent("OnClothingUpdated", player)

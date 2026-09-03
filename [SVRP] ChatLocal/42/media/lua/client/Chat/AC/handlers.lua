@@ -519,22 +519,14 @@ function AC.Handlers.AddLineInChat(chatMessage, tabID)
         end
 
         if parsedMessage.isOwnRadio then
-            local textToDisplay = ""
-            if parsedMessage.parts then
-                for _, part in ipairs(parsedMessage.parts) do
-                    if part.text then
-                        textToDisplay = textToDisplay .. part.text
-                    end
-                end
-            else
-                textToDisplay = rawText
-            end
+            local textToDisplay = AC.Parsing.GetTextOnly(parsedMessage)
+            textToDisplay = textToDisplay:gsub("\r\n", " "):gsub("\n", " "):gsub("\r", " ")
             textToDisplay = AC.Parsing.CleanOverheadText(textToDisplay)
-            local colorRGB = AC.ChatTypes[parsedMessage.chatType].colorRGB
+            local colorRGB = (AC.Meta and AC.Meta.GetSpeechColorRGB and AC.Meta.GetSpeechColorRGB()) or {r = 0.6, g = 0.6, b = 0.8}
             pcall(function() myPlayer:addLineChatElement(textToDisplay .. "", colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, AC.ChatTypes[parsedMessage.chatType].xyRange, "radio") end)
             
             if parsedMessage.activeRadio then
-                local xyRange = AC.ChatTypes[parsedMessage.chatType].xyRange
+                local xyRange = (AC.ChatTypes[parsedMessage.chatType] and AC.ChatTypes[parsedMessage.chatType].xyRange) or AC.ChatTypes["say"].xyRange
                 if instanceof(parsedMessage.activeRadio, "IsoRadio") then
                     local success = pcall(function() parsedMessage.activeRadio:addLineChatElement(textToDisplay .. "", colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, xyRange, "radio") end)
                     if not success then success = pcall(function() parsedMessage.activeRadio:getChatElement():addChatLine(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, xyRange, "radio", true, true, true, true, true, true) end) end
