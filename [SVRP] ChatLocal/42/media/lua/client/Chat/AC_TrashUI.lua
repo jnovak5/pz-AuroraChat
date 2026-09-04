@@ -9,6 +9,7 @@ end
 
 function AC_TrashUI:create()
     self.trashIcon = getTexture("media/ui/AC_trash.png")
+    self.moveWithMouse = true
 end
 
 function AC_TrashUI:prerender()
@@ -31,6 +32,17 @@ end
 
 function AC_TrashUI:onMouseUp(x, y)
     if not self:getIsVisible() then return end
+    
+    if self.moving then
+        local player = getPlayer()
+        if player then
+            local md = player:getModData()
+            md.AC_TrashUI_X = self:getX()
+            md.AC_TrashUI_Y = self:getY()
+        end
+    end
+    
+    ISPanel.onMouseUp(self, x, y)
     
     if ISMouseDrag.dragging ~= nil and ISMouseDrag.draggingFocus ~= self then
         local deletedCount = 0
@@ -56,6 +68,19 @@ function AC_TrashUI:onMouseUp(x, y)
             getSoundManager():PlayWorldSound("TrashcanEmpty", getPlayer():getCurrentSquare(), 0, 10, 1, false)
         end
     end
+end
+
+function AC_TrashUI:onMouseUpOutside(x, y)
+    if not self:getIsVisible() then return end
+    if self.moving then
+        local player = getPlayer()
+        if player then
+            local md = player:getModData()
+            md.AC_TrashUI_X = self:getX()
+            md.AC_TrashUI_Y = self:getY()
+        end
+    end
+    ISPanel.onMouseUpOutside(self, x, y)
 end
 
 function AC_TrashUI:deleteItem(item)
@@ -100,6 +125,15 @@ local function initTrashUI()
         -- Place it below the default UI buttons on the left
         local x = 10
         local y = getCore():getScreenHeight() / 2 + 150
+        
+        local player = getPlayer()
+        if player then
+            local md = player:getModData()
+            if md.AC_TrashUI_X and md.AC_TrashUI_Y then
+                x = md.AC_TrashUI_X
+                y = md.AC_TrashUI_Y
+            end
+        end
         
         AC_TrashUI_Instance = AC_TrashUI:new(x, y, w, h)
         AC_TrashUI_Instance:initialise()

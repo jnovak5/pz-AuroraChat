@@ -300,7 +300,11 @@ function AC.Parsing.GetTextConvertedToOoc(parsedMessage)
 end
 
 function AC.Parsing.PrependPlayerData(player, message, lang)
-    return message
+    local x = tostring(math.floor(player:getX()))
+    local y = tostring(math.floor(player:getY()))
+    local z = tostring(math.floor(player:getZ()))
+    local langTag = lang and ("[LANG:" .. lang .. "]") or ""
+    return "[UN:" .. player:getUsername() .. "][POS:" .. x .. "," .. y .. "," .. z .. "]" .. langTag .. message
 end
 
 function AC.Parsing.GetRandomWordsFromMessage(message, percentChancePerWord)
@@ -521,7 +525,7 @@ function AC.Parsing.FormatMessage(parsedMessage)
 end
 
 function AC.Parsing.GetTextOnly(parsedMessage)
-    local message = ""
+    local message = AC.Meta.GetName(parsedMessage.playerUsername)
     for n, part in ipairs(parsedMessage.parts) do
         if n == 1 and part.type == "emote" and AC.Parsing.GetSpecialStart(part.text) then
             message = message .. part.text
