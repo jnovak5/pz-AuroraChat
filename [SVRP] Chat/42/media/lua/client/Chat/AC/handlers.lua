@@ -242,7 +242,7 @@ function AC.Handlers.CommandEntered(message)
     end
 
     if (isIntoRadioTab or isGeneralTab) and #radiosOn > 0 then
-        message = "[radio]" .. message
+        -- We no longer prepend [radio] here so it doesn't show up on vanilla overhead text
     end
 
     message = AC.Parsing.PrependPlayerData(player, message, parsedMessage.language)

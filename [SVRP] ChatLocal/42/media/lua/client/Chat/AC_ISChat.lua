@@ -214,8 +214,22 @@ function ISChat:createChildren()
     self.showRangeButton:setVisible(true)
     self.showRangeTicks = 0
 
-    -- 4. Combat & Dice Button
-    local diceX = rangeX - btnWid - btnGap
+    -- 4. Calendar Button
+    local calendarX = rangeX - btnWid - btnGap
+    self.calendarButton = ISButton:new(calendarX, 1, btnWid, btnHgt, "", self, function() AC.OpenCalendarUI() end)
+    self.calendarButton.anchorRight = true
+    self.calendarButton.anchorLeft = false
+    self.calendarButton:initialise()
+    self.calendarButton.borderColor.a = 0.0
+    self.calendarButton.backgroundColor.a = 0.0
+    self.calendarButton.backgroundColorMouseOver.a = 0.3
+    self.calendarButton:setImage(getTexture("media/ui/AC_calendar.png"))
+    self.calendarButton.tooltip = "Current In-Game and IRL Date Calendar"
+    self:addChild(self.calendarButton)
+    self.calendarButton:setVisible(true)
+
+    -- 5. Combat & Dice Button
+    local diceX = calendarX - btnWid - btnGap
     self.combatDiceButton = ISButton:new(diceX, 1, btnWid, btnHgt, "", self, function() AC.OpenCombatMatchUI() end)
     self.combatDiceButton.anchorRight = true
     self.combatDiceButton.anchorLeft = false

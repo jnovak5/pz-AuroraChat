@@ -15,27 +15,6 @@ function ISWorldMap:createChildren()
         btnSize = self.closeBtn:getWidth()
     end
 
-    -- 1. Radio Range Button (using military walkie item icon)
-    local radioTex = getTexture("Item_WalkieTalkieMilitary") 
-        or getTexture("media/textures/Item_WalkieTalkieMilitary.png")
-        or getTexture("Item_Radio")
-        or getTexture("media/textures/worldMap/Map_On.png")
-
-    self.acRadioRangeBtn = ISButton:new(0, 0, btnSize, btnSize, "", self, function(mapObj)
-        local state = AC.RadioMap.ToggleRange()
-        if mapObj and mapObj.acRadioRangeBtn then
-            mapObj.acRadioRangeBtn.backgroundColor = state and {r=0.1, g=0.45, b=0.55, a=0.9} or {r=0, g=0, b=0, a=0.7}
-        end
-    end)
-    self.acRadioRangeBtn:initialise()
-    self.acRadioRangeBtn:instantiate()
-    if radioTex then
-        self.acRadioRangeBtn:setImage(radioTex)
-    end
-    self.acRadioRangeBtn.tooltip = "Toggle Handheld Radio Signal Range"
-    self.acRadioRangeBtn.backgroundColor = (AC.RadioMap and AC.RadioMap.ShowRange) and {r=0.1, g=0.45, b=0.55, a=0.9} or {r=0, g=0, b=0, a=0.7}
-    self.acRadioRangeBtn.borderColor = {r=0.2, g=0.8, b=0.95, a=0.8}
-
     -- 2. Player / Server Event Button
     local noteTex = getTexture("media/ui/inventoryPanes/Button_Note.png") or getTexture("media/textures/worldMap/Map_On.png")
     self.acEventBtn = ISButton:new(0, 0, btnSize, btnSize, "EV", self, function(mapObj)
@@ -61,19 +40,13 @@ function ISWorldMap:createChildren()
     if self.buttonPanel then
         local rightBtn = self.closeBtn or self.optionBtn
         local nextX = rightBtn and (rightBtn:getRight() + 10) or 0
-        self.acRadioRangeBtn:setX(nextX)
-        self.buttonPanel:addChild(self.acRadioRangeBtn)
 
-        self.acEventBtn:setX(self.acRadioRangeBtn:getRight() + 10)
+        self.acEventBtn:setX(nextX)
         self.buttonPanel:addChild(self.acEventBtn)
 
         self.buttonPanel:shrinkWrap(0, 0, nil)
         self.buttonPanel:setX(self.width - 10 - self.buttonPanel.width)
     else
-        self.acRadioRangeBtn:setX(self.width - 190)
-        self.acRadioRangeBtn:setY(10)
-        self:addChild(self.acRadioRangeBtn)
-
         self.acEventBtn:setX(self.width - 145)
         self.acEventBtn:setY(10)
         self:addChild(self.acEventBtn)
@@ -144,14 +117,6 @@ function ISWorldMap:onRightMouseUp(x, y)
         end)
     end
 
-    -- Toggle Radio Range option in context menu
-    if AC.RadioMap then
-        local radioState = AC.RadioMap.ShowRange
-        context:addOption((radioState and "Hide" or "Show") .. " Handheld Radio Signal Range", nil, function()
-            AC.RadioMap.ToggleRange()
-        end)
-    end
-
     -- If admin/debug, also allow vanilla admin menu items
     if getDebug() or (isClient() and (getAccessLevel() == "admin")) or (not isClient()) then
         if original_ISWorldMap_onRightMouseUp then
@@ -167,13 +132,6 @@ end
 local original_ISWorldMap_prerender = ISWorldMap.prerender
 function ISWorldMap:prerender()
     original_ISWorldMap_prerender(self)
-
-    -- 1. Render Radio Range Overlay Circle
-    if AC.RadioMap then
-        pcall(function()
-            AC.RadioMap.Render(self)
-        end)
-    end
 
     -- 2. Render Player & Admin Event Markers
     if AC.PlayerEvents then
