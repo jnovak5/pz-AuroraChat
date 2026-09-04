@@ -79,7 +79,28 @@ function AC_CalendarUI:createCalendar()
     nextBtn.backgroundColor = {r=0, g=0, b=0, a=0.6}
     headerBg:addChild(nextBtn)
     
+    local season = "winter"
+    local seasonColor = {r=0.5, g=0.8, b=0.9} -- Icy Cyan
+    if self.viewMonth >= 3 and self.viewMonth <= 5 then
+        season = "spring"
+        seasonColor = {r=0.6, g=0.9, b=0.6} -- Light Green
+    elseif self.viewMonth >= 6 and self.viewMonth <= 8 then
+        season = "summer"
+        seasonColor = {r=1.0, g=0.8, b=0.3} -- Sunny Yellow
+    elseif self.viewMonth >= 9 and self.viewMonth <= 11 then
+        season = "autumn"
+        seasonColor = {r=1.0, g=0.6, b=0.3} -- Orange
+    end
+    
+    self.sunsetTexture = getTexture("media/ui/AC_season_" .. season .. ".png")
+    
+    local seasonName = season:sub(1,1):upper() .. season:sub(2)
+    local seasonLbl = ISLabel:new(50, 10, 20, seasonName, seasonColor.r, seasonColor.g, seasonColor.b, 1, UIFont.Medium, true)
+    seasonLbl:initialise()
+    headerBg:addChild(seasonLbl)
+    
     local monthLbl = ISLabel:new(self.width / 2, 10, 20, viewMonthName .. " " .. self.viewYear, 1, 1, 1, 1, UIFont.Large, true)
+    monthLbl:initialise()
     monthLbl.center = true
     headerBg:addChild(monthLbl)
     
@@ -230,9 +251,9 @@ function AC_CalendarUI:new(x, y, width, height)
     local o = ISCollapsableWindow:new(x, y, width, height)
     setmetatable(o, self)
     self.__index = self
-    o.sunsetTexture = getTexture("media/ui/AC_sunset.png")
+    o.sunsetTexture = getTexture("media/ui/AC_season_summer.png") -- Default fallback
     o.backgroundColor = {r=0, g=0, b=0, a=0} -- Let the gradient show through
-    o.borderColor = {r=1.0, g=0.5, b=0.2, a=1} -- Orange sunset border
+    o.borderColor = {r=0.4, g=0.4, b=0.4, a=1} -- Neutral border
     o.width = width
     o.height = height
     o.anchorLeft = true
