@@ -389,11 +389,14 @@ function AC.Handlers.AddLineInChat(chatMessage, tabID)
         return true
     end
 
+    if not parsedMessage.playerUsername then
+        parsedMessage.playerUsername = chatMessage:getAuthor()
+    end
+
     local wasZombieYell = false
-    if chatId == 2 and parsedMessage.chatType ~= "shout" and not parsedMessage.playerUsername then
+    if chatId == 2 and parsedMessage.chatType ~= "shout" then
         wasZombieYell = true
         parsedMessage.chatType = "shout"
-        parsedMessage.playerUsername = chatMessage:getAuthor()
     end
 
     if not parsedMessage.playerUsername
@@ -490,6 +493,16 @@ function AC.Handlers.AddLineInChat(chatMessage, tabID)
     local hasRadio, radioChannel = pcall(function() return chatMessage:getRadioChannel() end)
     if hasRadio and radioChannel > 0 then
         parsedMessage.radioFrequency = radioChannel
+
+        local sandbox = SandboxVars.SVRPChat or SandboxVars.SVRPChatLocal or {}
+        local staticFactor = sandbox.RadioStaticFactor or 0
+        if staticFactor > 0 then
+            for _, part in ipairs(parsedMessage.parts) do
+                if part.type == "text" or part.type == "textmuted" or part.type == "emote" then
+                    part.text = AC.Parsing.ApplyStatic(part.text, staticFactor)
+                end
+            end
+        end
 
         if   lastRadioAuthor == parsedMessage.playerUsername
         and  lastRadioChannel == parsedMessage.radioFrequency

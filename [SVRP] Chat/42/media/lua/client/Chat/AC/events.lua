@@ -101,6 +101,29 @@ function AC.Events.onServerCommand(module, command, args)
         if msg then
             AC_Utils.addInfoToChat(msg)
         end
+    elseif command == "GunLog" then
+        -- Server-echoed admin feedback for /gunshot and /chopper errors
+        local msg = args.msg or args[1]
+        if msg then
+            AC_Utils.addErrorToChat(msg)
+        end
+    elseif command == "PlaySound" then
+        local sound = args.name
+        local p = getPlayer()
+        if p and sound then
+            local px = p:getX()
+            local py = p:getY()
+            local tx = args.x or px
+            local ty = args.y or py
+            if math.abs(px - tx) <= 80 and math.abs(py - ty) <= 80 then
+                local sq = getCell():getGridSquare(tx, ty, args.z or 0) or p:getCurrentSquare()
+                if sq and getSoundManager():PlayWorldSound(sound, sq, 0, 80, 1.0, false) then
+                    -- success
+                else
+                    p:getEmitter():playSound(sound)
+                end
+            end
+        end
     elseif command == "EventInvite" then
         local eventId = args[1]
         local eventTitle = args[2]
@@ -274,6 +297,36 @@ Events.OnConnected.Add(AC.Events.OnConnected)
 Events.OnServerCommand.Add(AC.Events.onServerCommand)
 Events.OnTick.Add(AC.Indicator.update)
 Events.EveryOneMinute.Add(AC.Afk.CheckLocalPlayersForAfk)
+-- Helper: apply persisted hair/beard colors to the player visual
+local function AC_ApplyPersistedColors(player)
+    if not player or not player.getModData then return false end
+    local md = player:getModData()
+    if not md then return false end
+    local applied = false
+    if md._AC_HairColor then
+        local c = md._AC_HairColor
+        pcall(function()
+            player:getHumanVisual():setHairColor(ImmutableColor.new(c.r, c.g, c.b, 1))
+            player:getHumanVisual():setNaturalHairColor(ImmutableColor.new(c.r, c.g, c.b, 1))
+        end)
+        applied = true
+    end
+    if md._AC_BeardColor then
+        local c = md._AC_BeardColor
+        pcall(function()
+            player:getHumanVisual():setBeardColor(ImmutableColor.new(c.r, c.g, c.b, 1))
+            player:getHumanVisual():setNaturalBeardColor(ImmutableColor.new(c.r, c.g, c.b, 1))
+        end)
+        applied = true
+    end
+    if applied then
+        sendHumanVisual(player)
+        player:resetModel()
+        triggerEvent("OnClothingUpdated", player)
+    end
+    return applied
+end
+
 Events.OnGameStart.Add(function()
     if AC.EnforceUserLimits then AC.EnforceUserLimits() end
     if AC.Voice and AC.Voice.UpdateChatButton then AC.Voice.UpdateChatButton() end
@@ -281,31 +334,80 @@ Events.OnGameStart.Add(function()
         sendClientCommand(getPlayer(), "AC", "SetVoiceChatterPref", { AC.Voice.IsEnabled() })
     end
 
-    -- Restore persisted hair/beard colors from mod data
+    -- Delayed restore of persisted hair/beard colors.
+    -- The server sends its authoritative HumanVisual AFTER OnGameStart, so we
+    -- must wait and then reapply several times to ensure our colors win the
+    -- race against the server sync.
     local player = getPlayer()
     if player and player.getModData then
         local md = player:getModData()
-        if md then
-            if md._AC_HairColor then
-                local c = md._AC_HairColor
-                pcall(function()
-                    player:getHumanVisual():setHairColor(ImmutableColor.new(c.r, c.g, c.b, 1))
-                    player:getHumanVisual():setNaturalHairColor(ImmutableColor.new(c.r, c.g, c.b, 1))
-                end)
+        if md and (md._AC_HairColor or md._AC_BeardColor) then
+            -- Tell the server to apply colors from its side too
+            if isClient() then
+                sendClientCommand(player, "AC", "RestoreHairColors", {})
             end
-            if md._AC_BeardColor then
-                local c = md._AC_BeardColor
-                pcall(function()
-                    player:getHumanVisual():setBeardColor(ImmutableColor.new(c.r, c.g, c.b, 1))
-                    player:getHumanVisual():setNaturalBeardColor(ImmutableColor.new(c.r, c.g, c.b, 1))
-                end)
+            -- Schedule delayed client-side reapplications via OnTick
+            local DELAY_TICKS = 120 -- ~2 seconds before first apply
+            local REAPPLY_INTERVAL = 60 -- ~1 second between reapplications
+            local REAPPLY_COUNT = 6 -- reapply 6 times over ~8 seconds
+            local tickCounter = 0
+            local appliedCount = 0
+            local tickFn
+            tickFn = function()
+                tickCounter = tickCounter + 1
+                if tickCounter >= DELAY_TICKS + (appliedCount * REAPPLY_INTERVAL) then
+                    local p = getPlayer()
+                    if p then
+                        AC_ApplyPersistedColors(p)
+                    end
+                    appliedCount = appliedCount + 1
+                    if appliedCount >= REAPPLY_COUNT then
+                        Events.OnTick.Remove(tickFn)
+                    end
+                end
             end
-            if md._AC_HairColor or md._AC_BeardColor then
-                sendHumanVisual(player)
-                player:resetModel()
-                triggerEvent("OnClothingUpdated", player)
-            end
+            Events.OnTick.Add(tickFn)
         end
     end
 end)
-Events.OnCreatePlayer.Add(function(playerNum) if AC.EnforceUserLimits then AC.EnforceUserLimits(getSpecificPlayer(playerNum)) end end)
+Events.OnCreatePlayer.Add(function(playerNum) 
+    if AC.EnforceUserLimits then AC.EnforceUserLimits(getSpecificPlayer(playerNum)) end 
+
+    if playerNum == 0 then
+        local msg = "<RGB:0.35,0.80,1.00> Welcome to S.V.R.P. — Serious Veteran Roleplay. <LINE> <RGB:0.85,0.85,0.85> Current Year: 2027. <RGB:0.85,0.85,0.85> <LINE> Thirty-three years have passed since the first outbreak of ANUMEUCOR-5L. <LINE> <LINE> <RGB:1.00,0.85,0.35> The world did not end. It survived long enough to begin falling apart again. <RGB:0.85,0.85,0.85> Humanity rebuilt after the First Collapse. Governments, cities, trade routes, hospitals, and protected settlements returned across the surviving world.<LINE> <RGB:0.85,0.85,0.85> Your character begins within the Knox County Safe Zone, a functioning population center where civilian life continued for decades. <LINE> <RGB:1.00,0.45,0.35> Now communications are failing, checkpoints are falling silent, and ANUMEUCOR-5L has returned to Knox County.<LINE> <LINE> <RGB:1.00,0.75,0.25> Please read World Lore before beginning roleplay.<LINE> <RGB:0.35,0.80,1.00> Survivor Radio operates on 100 MHz.  <LINE> <RGB:0.85,0.85,0.85> Use the Gear icon to customize chat and voice settings. <RGB:0.85,0.85,0.85> Submit all support requests through the Discord Ticket Panel. <LINE> <LINE> <RGB:0.35,0.80,1.00> Your character inherited a rebuilt world. What remains of it will be shaped through roleplay. <LINE> <LINE><RGB:0.62,0.78,0.20>TEMPORARY ENVRIONMENTAL EFFECT: RADIO COMMUNICATIONS DEGRADED. SIGNAL LOSS AND INTERFERENCE EXPECTED. <LINE>"
+        
+        if msg and msg ~= "" then
+            -- Ensure all line breaks are uniformly formatted for ISRichTextPanel
+            msg = msg:gsub("<line>", " <LINE> ")
+            msg = msg:gsub("\\n", " <LINE> ")
+            msg = msg:gsub("\n", " <LINE> ")
+
+            local w, h = 600, 450
+            local x = (getCore():getScreenWidth() - w) / 2
+            local y = (getCore():getScreenHeight() - h) / 2
+            local modal = AC_WelcomeUI:new(x, y, w, h, msg)
+            modal:initialise()
+            modal:addToUIManager()
+            modal:setAlwaysOnTop(true)
+        end
+    end
+end)
+
+-- ============================================================
+-- Override vanilla Medical Check to bypass the acceptance request
+-- ============================================================
+local function overrideMedicalCheck()
+    if ISWorldObjectContextMenu and ISWorldObjectContextMenu.onMedicalCheck then
+        ISWorldObjectContextMenu.onMedicalCheck = function(worldobjects, playerObjOrIndex, otherPlayer)
+            if not playerObjOrIndex or not otherPlayer then return end
+            
+            -- Handle both player index and IsoPlayer object
+            local playerObj = type(playerObjOrIndex) == "number" and getSpecificPlayer(playerObjOrIndex) or playerObjOrIndex
+            
+            if luautils.walkAdj(playerObj, otherPlayer:getSquare()) then
+                ISTimedActionQueue.add(ISMedicalCheckAction:new(playerObj, otherPlayer))
+            end
+        end
+    end
+end
+Events.OnGameStart.Add(overrideMedicalCheck)

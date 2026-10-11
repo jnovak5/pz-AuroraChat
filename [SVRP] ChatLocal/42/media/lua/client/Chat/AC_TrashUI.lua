@@ -87,9 +87,24 @@ function AC_TrashUI:deleteItem(item)
     local container = item:getContainer()
     if container then
         local player = getPlayer()
-        if container:getParent() == player then
-            -- Item is inside player inventory. Remove locally and notify server.
-            -- DoRemoveItem handles local removal and UI update.
+        
+        local inPlayerInv = false
+        local checkCont = container
+        while checkCont do
+            if checkCont == player:getInventory() or checkCont:getParent() == player then
+                inPlayerInv = true
+                break
+            end
+            local outerItem = checkCont:getContainingItem()
+            if outerItem then
+                checkCont = outerItem:getContainer()
+            else
+                break
+            end
+        end
+        
+        if inPlayerInv then
+            -- Item is inside player inventory (or a bag in the inventory). Remove locally and notify server.
             container:DoRemoveItem(item)
             sendClientCommand(player, "SVRPChat", "DeleteItem", {itemID = item:getID()})
         else

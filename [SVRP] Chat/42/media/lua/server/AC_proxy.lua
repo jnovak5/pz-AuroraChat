@@ -68,7 +68,7 @@ local function canSee(player, otherPlayer, xyRange, zRange)
 end
 
 local function getChatRangeAndType(text)
-    local sandbox = SandboxVars.SVRPChat or SandboxVars.SVRPChat or {}
+    local sandbox = SandboxVars.SVRPChatLocal or SandboxVars.SVRPChat or {}
     if not text or text == "" then return "say", (sandbox.RangeXYSay or 20), (sandbox.RangeZSay or 2) end
     local clean = text:gsub("^%s+", "")
     if clean:sub(1,1) == "/" then
@@ -99,7 +99,7 @@ local function getChatRangeAndType(text)
 end
 
 local function dispatchVoiceChatter(sendingPlayer, text, x, y, z)
-    local sandbox = SandboxVars.SVRPChat or SandboxVars.SVRPChat or {}
+    local sandbox = SandboxVars.SVRPChatLocal or SandboxVars.SVRPChat or {}
     if sandbox.EnableVoiceChatter == false then return end
     if not sendingPlayer or not text or text == "" then return end
 
@@ -415,7 +415,7 @@ CommandHandlers.PrivateChat = function(sendingPlayer, args)
 end
 
 CommandHandlers.Injure = function(sendingPlayer, args)
-    local sandbox = SandboxVars.SVRPChat or SandboxVars.SVRPChat
+    local sandbox = SandboxVars.SVRPChatLocal or SandboxVars.SVRPChat
     if sandbox and sandbox.EnableSelfInjury == false then
         return
     end
@@ -436,7 +436,7 @@ CommandHandlers.Injure = function(sendingPlayer, args)
 end
 
 CommandHandlers.Ailment = function(sendingPlayer, args)
-    local sandbox = SandboxVars.SVRPChat or SandboxVars.SVRPChat
+    local sandbox = SandboxVars.SVRPChatLocal or SandboxVars.SVRPChat
     if sandbox and sandbox.EnableSelfInjury == false then
         return
     end
@@ -869,6 +869,105 @@ CommandHandlers.CellMsg = function(sendingPlayer, args)
 
     sendServerCommand("AC", "CellMsg", { text = text, author = author, x = x, y = y, radius = radius })
 end
+
+-- ── Gunshot: admin-triggered gunshot sound + zombie attraction ──────────────
+CommandHandlers.Gunshot = function(sendingPlayer, args)
+    if not sendingPlayer then return end
+    -- Admin-only check (strict: admin access level only)
+    local accessLevel = sendingPlayer.getAccessLevel and sendingPlayer:getAccessLevel() or ""
+    if string.lower(accessLevel) ~= "admin" then return end
+
+    local targetUsername = args.target or args[1]
+    if not targetUsername or targetUsername == "" then return end
+
+    -- Find the target player
+    local allPlayers = getOnlinePlayers()
+    local targetPlayer = nil
+    if allPlayers then
+        for i = 0, allPlayers:size() - 1 do
+            local p = allPlayers:get(i)
+            if p:getUsername() == targetUsername then
+                targetPlayer = p
+                break
+            end
+        end
+    end
+
+    if not targetPlayer then
+        sendServerCommand(sendingPlayer, "AC", "GunLog", { msg = "[Gunshot] Target player not found: " .. targetUsername })
+        return
+    end
+
+    local sq = targetPlayer:getCurrentSquare()
+    if sq then
+        -- addSound(source, x, y, z, range, volume) — range 40 = very loud gunshot
+        sq:addSound(targetPlayer, sq:getX(), sq:getY(), sq:getZ(), 40, 40)
+        sendServerCommand("AC", "PlaySound", { name = "M16Shoot", x = sq:getX(), y = sq:getY(), z = sq:getZ() })
+        print(string.format("[AC] Admin %s triggered gunshot at %s (%d,%d,%d)",
+            sendingPlayer:getUsername(), targetUsername, sq:getX(), sq:getY(), sq:getZ()))
+    end
+end
+
+-- ── Chopper: admin-triggered helicopter event steered to target ─────────────
+CommandHandlers.Chopper = function(sendingPlayer, args)
+    if not sendingPlayer then return end
+    -- Admin-only check (strict: admin access level only)
+    local accessLevel = sendingPlayer.getAccessLevel and sendingPlayer:getAccessLevel() or ""
+    if string.lower(accessLevel) ~= "admin" then return end
+
+    local targetUsername = args.target or args[1]
+    if not targetUsername or targetUsername == "" then return end
+
+    -- Find the target player
+    local allPlayers = getOnlinePlayers()
+    local targetPlayer = nil
+    if allPlayers then
+        for i = 0, allPlayers:size() - 1 do
+            local p = allPlayers:get(i)
+            if p:getUsername() == targetUsername then
+                targetPlayer = p
+                break
+            end
+        end
+    end
+
+    if not targetPlayer then
+        print(string.format("[AC] Chopper: target player not found: %s", targetUsername))
+        return
+    end
+
+    local tx = math.floor(targetPlayer:getX())
+    local ty = math.floor(targetPlayer:getY())
+
+    -- Use the vanilla server-side helicopter event system
+    -- getServerOptions() exposes helicopter controls in Build 42
+    local ok = pcall(function()
+        -- Method 1: Via GameTime helicopter control (B41 compat)
+        local gt = GameTime.getInstance()
+        if gt and gt.setHelicopterPosition then
+            gt:setHelicopterPosition(tx, ty)
+        end
+    end)
+
+    if not ok then
+        -- Method 2: Trigger the helicopter meta-event via SandboxVars-aware event scheduling
+        pcall(function()
+            local event = GameServer and GameServer.getServer and GameServer.getServer()
+            if event and event.addSound then
+                -- fallback: trigger loud sound to simulate helicopter pass
+                local sq = targetPlayer:getCurrentSquare()
+                if sq then
+                    sq:addSound(targetPlayer, tx, ty, math.floor(targetPlayer:getZ()), 60, 80)
+                end
+            end
+        end)
+    end
+    sendServerCommand("AC", "PlaySound", { name = "Helicopter", x = tx, y = ty, z = 0 })
+
+    print(string.format("[AC] Admin %s triggered chopper toward %s at (%d,%d)",
+        sendingPlayer:getUsername(), targetUsername, tx, ty))
+end
+
 
 local function onACCommand(module, command, sendingPlayer, args)
     if module ~= "AC" then return end

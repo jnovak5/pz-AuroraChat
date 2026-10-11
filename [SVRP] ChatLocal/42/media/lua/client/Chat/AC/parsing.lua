@@ -33,6 +33,27 @@ function AC.Parsing.ScrambleTextByDistance(text, distance, clearRange, maxRange)
     return scrambledText
 end
 
+function AC.Parsing.ApplyStatic(text, staticChance)
+    if AC.CanHearAll and AC.CanHearAll() then return text end
+    if not text or text == "" or staticChance <= 0 then
+        return text
+    end
+    
+    local scrambleFactor = staticChance / 100.0
+    if scrambleFactor > 0.9 then scrambleFactor = 0.9 end
+    
+    local scrambledText = ""
+    for i = 1, #text do
+        local c = text:sub(i, i)
+        if c:match("[%w]") and ZombRandFloat(0.0, 1.0) < scrambleFactor then
+            scrambledText = scrambledText .. "~"
+        else
+            scrambledText = scrambledText .. c
+        end
+    end
+    return scrambledText
+end
+
 function AC.Parsing.CleanOverheadText(text)
     if not text or text == "" then return text end
     text = text:gsub("\226\128\148", "-") -- em dash
@@ -300,11 +321,8 @@ function AC.Parsing.GetTextConvertedToOoc(parsedMessage)
 end
 
 function AC.Parsing.PrependPlayerData(player, message, lang)
-    local x = tostring(math.floor(player:getX()))
-    local y = tostring(math.floor(player:getY()))
-    local z = tostring(math.floor(player:getZ()))
     local langTag = lang and ("[LANG:" .. lang .. "]") or ""
-    return "[UN:" .. player:getUsername() .. "][POS:" .. x .. "," .. y .. "," .. z .. "]" .. langTag .. message
+    return "[UN:" .. player:getUsername() .. "]" .. langTag .. message
 end
 
 function AC.Parsing.GetRandomWordsFromMessage(message, percentChancePerWord)

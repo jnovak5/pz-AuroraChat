@@ -6,7 +6,7 @@ option SVRPChat.EnablePM
   default = true,
 
   page = SVRPChat,
-  translation = SVRPChat.EnablePM,
+  translation = AuroraChat_EnablePM,
 }
 
 option SVRPChat.EnableOOC
@@ -15,7 +15,7 @@ option SVRPChat.EnableOOC
   default = true,
 
   page = SVRPChat,
-  translation = SVRPChat.EnableOOC,
+  translation = AuroraChat_EnableOOC,
 }
 
 option SVRPChat.EnableAll
@@ -24,7 +24,7 @@ option SVRPChat.EnableAll
   default = true,
 
   page = SVRPChat,
-  translation = SVRPChat.EnableAll,
+  translation = AuroraChat_EnableAll,
 }
 
 option SVRPChat.EnablePrivate
@@ -33,7 +33,7 @@ option SVRPChat.EnablePrivate
   default = true,
 
   page = SVRPChat,
-  translation = SVRPChat.EnablePrivate,
+  translation = AuroraChat_EnablePrivate,
 }
 
 option SVRPChat.EnableBuffs
@@ -42,7 +42,7 @@ option SVRPChat.EnableBuffs
   default = true,
 
   page = SVRPChat,
-  translation = SVRPChat.EnableBuffs,
+  translation = AuroraChat_EnableBuffs,
 }
 
 option SVRPChat.RangeXYWhisper
@@ -51,7 +51,7 @@ option SVRPChat.RangeXYWhisper
   default = 2,
 
   page = SVRPChat,
-  translation = SVRPChat.RangeXYWhisper,
+  translation = AuroraChat_RangeXYWhisper,
 }
 
 option SVRPChat.RangeZWhisper
@@ -60,7 +60,7 @@ option SVRPChat.RangeZWhisper
   default = 0,
 
   page = SVRPChat,
-  translation = SVRPChat.RangeZWhisper,
+  translation = AuroraChat_RangeZWhisper,
 }
 
 option SVRPChat.RangeXYLow
@@ -69,7 +69,7 @@ option SVRPChat.RangeXYLow
   default = 6,
 
   page = SVRPChat,
-  translation = SVRPChat.RangeXYLow,
+  translation = AuroraChat_RangeXYLow,
 }
 
 option SVRPChat.RangeZLow
@@ -78,7 +78,7 @@ option SVRPChat.RangeZLow
   default = 0,
 
   page = SVRPChat,
-  translation = SVRPChat.RangeZLow,
+  translation = AuroraChat_RangeZLow,
 }
 
 option SVRPChat.RangeXYSay
@@ -87,7 +87,7 @@ option SVRPChat.RangeXYSay
   default = 20,
 
   page = SVRPChat,
-  translation = SVRPChat.RangeXYSay,
+  translation = AuroraChat_RangeXYSay,
 }
 
 option SVRPChat.RangeZSay
@@ -96,7 +96,7 @@ option SVRPChat.RangeZSay
   default = 2,
 
   page = SVRPChat,
-  translation = SVRPChat.RangeZSay,
+  translation = AuroraChat_RangeZSay,
 }
 
 option SVRPChat.RangeXYLoud
@@ -105,7 +105,7 @@ option SVRPChat.RangeXYLoud
   default = 45,
 
   page = SVRPChat,
-  translation = SVRPChat.RangeXYLoud,
+  translation = AuroraChat_RangeXYLoud,
 }
 
 option SVRPChat.RangeZLoud
@@ -114,7 +114,7 @@ option SVRPChat.RangeZLoud
   default = 4,
 
   page = SVRPChat,
-  translation = SVRPChat.RangeZLoud,
+  translation = AuroraChat_RangeZLoud,
 }
 
 option SVRPChat.RangeXYShout
@@ -123,7 +123,7 @@ option SVRPChat.RangeXYShout
   default = 80,
 
   page = SVRPChat,
-  translation = SVRPChat.RangeXYShout,
+  translation = AuroraChat_RangeXYShout,
 }
 
 option SVRPChat.RangeZShout
@@ -132,7 +132,7 @@ option SVRPChat.RangeZShout
   default = 7,
 
   page = SVRPChat,
-  translation = SVRPChat.RangeZShout,
+  translation = AuroraChat_RangeZShout,
 }
 
 option SVRPChat.EnableHardOfHearing
@@ -141,7 +141,7 @@ option SVRPChat.EnableHardOfHearing
   default = false,
 
   page = SVRPChat,
-  translation = SVRPChat.EnableHardOfHearing,
+  translation = AuroraChat_EnableHardOfHearing,
 }
 
 option SVRPChat.EnableDeaf
@@ -150,7 +150,7 @@ option SVRPChat.EnableDeaf
   default = false,
 
   page = SVRPChat,
-  translation = SVRPChat.EnableDeaf,
+  translation = AuroraChat_EnableDeaf,
 }
 
 option SVRPChat.AllowPlayerCoords
@@ -159,7 +159,7 @@ option SVRPChat.AllowPlayerCoords
   default = true,
 
   page = SVRPChat,
-  translation = SVRPChat.AllowPlayerCoords,
+  translation = AuroraChat_AllowPlayerCoords,
 }
 
 option SVRPChat.EnableModCharacter
@@ -168,7 +168,7 @@ option SVRPChat.EnableModCharacter
   default = true,
 
   page = SVRPChat,
-  translation = SVRPChat.EnableModCharacter,
+  translation = AuroraChat_EnableModCharacter,
 }
 
 option SVRPChat.EnableSelfInjury
@@ -177,7 +177,7 @@ option SVRPChat.EnableSelfInjury
   default = true,
 
   page = SVRPChat,
-  translation = SVRPChat.EnableSelfInjury,
+  translation = AuroraChat_EnableSelfInjury,
 }
 
 option SVRPChat.EnableAutoCleanup
@@ -186,7 +186,7 @@ option SVRPChat.EnableAutoCleanup
   default = true,
 
   page = SVRPChat,
-  translation = SVRPChat.EnableAutoCleanup,
+  translation = AuroraChat_EnableAutoCleanup,
 }
 
 option SVRPChat.EnableBioShortDescription
@@ -195,7 +195,7 @@ option SVRPChat.EnableBioShortDescription
   default = true,
 
   page = SVRPChat,
-  translation = SVRPChat.EnableBioShortDescription,
+  translation = AuroraChat_EnableBioShortDescription,
 }
 
 option SVRPChat.EnableVoiceChatter
@@ -204,7 +204,16 @@ option SVRPChat.EnableVoiceChatter
   default = true,
 
   page = SVRPChat,
-  translation = SVRPChat.EnableVoiceChatter,
+  translation = AuroraChat_EnableVoiceChatter,
+}
+
+option SVRPChat.RadioStaticFactor
+{
+  type = integer, min = 0, max = 100,
+  default = 0,
+
+  page = SVRPChat,
+  translation = AuroraChat_RadioStaticFactor,
 }
 
 

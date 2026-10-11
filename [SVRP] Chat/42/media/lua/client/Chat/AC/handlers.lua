@@ -114,7 +114,7 @@ function AC.Handlers.SpecialCommand(message)
                 end
             end
 
-            local sandbox = SandboxVars.SVRPChat or SandboxVars.SVRPChat or {}
+            local sandbox = SandboxVars.SVRPChatLocal or SandboxVars.SVRPChat or {}
             if command == "/all" and not sandbox.EnableAll and not AC.Override(true) then
                 AC_Utils.addErrorToChat("All chat is disabled")
                 return true
@@ -175,7 +175,7 @@ function AC.Handlers.CommandEntered(message)
         return false
     end
 
-    local sandbox = SandboxVars.SVRPChat or SandboxVars.SVRPChat or {}
+    local sandbox = SandboxVars.SVRPChatLocal or SandboxVars.SVRPChat or {}
     if parsedMessage.chatModifier == "ooc" and not sandbox.EnableOOC and not AC.Override(true) then
         AC_Utils.addErrorToChat("OOC chat is disabled")
         return true
@@ -389,11 +389,14 @@ function AC.Handlers.AddLineInChat(chatMessage, tabID)
         return true
     end
 
+    if not parsedMessage.playerUsername then
+        parsedMessage.playerUsername = chatMessage:getAuthor()
+    end
+
     local wasZombieYell = false
-    if chatId == 2 and parsedMessage.chatType ~= "shout" and not parsedMessage.playerUsername then
+    if chatId == 2 and parsedMessage.chatType ~= "shout" then
         wasZombieYell = true
         parsedMessage.chatType = "shout"
-        parsedMessage.playerUsername = chatMessage:getAuthor()
     end
 
     if not parsedMessage.playerUsername
@@ -490,6 +493,16 @@ function AC.Handlers.AddLineInChat(chatMessage, tabID)
     local hasRadio, radioChannel = pcall(function() return chatMessage:getRadioChannel() end)
     if hasRadio and radioChannel > 0 then
         parsedMessage.radioFrequency = radioChannel
+
+        local sandbox = SandboxVars.SVRPChat or SandboxVars.SVRPChatLocal or {}
+        local staticFactor = sandbox.RadioStaticFactor or 0
+        if staticFactor > 0 then
+            for _, part in ipairs(parsedMessage.parts) do
+                if part.type == "text" or part.type == "textmuted" or part.type == "emote" then
+                    part.text = AC.Parsing.ApplyStatic(part.text, staticFactor)
+                end
+            end
+        end
 
         if   lastRadioAuthor == parsedMessage.playerUsername
         and  lastRadioChannel == parsedMessage.radioFrequency
@@ -699,7 +712,7 @@ function AC.Handlers.AddLineInChat(chatMessage, tabID)
             end
         end
 
-        local sandbox = SandboxVars.SVRPChat or SandboxVars.SVRPChat or {}
+        local sandbox = SandboxVars.SVRPChatLocal or SandboxVars.SVRPChat or {}
         if parsedMessage.chatModifier ~= "ooc" and AC.Meta.CanUnderstand(parsedMessage.language) and safeHasTrait(myPlayer, "HardOfHearing") and sandbox.EnableHardOfHearing and not isMe and not isHearAll then
             local xyRange = chatType.xyRange + 0.99
             local xDist = myPlayer:getX() - (pos and pos.x or myPlayer:getX())
@@ -714,7 +727,7 @@ function AC.Handlers.AddLineInChat(chatMessage, tabID)
         return true
     end
 
-    local sandbox = SandboxVars.SVRPChat or SandboxVars.SVRPChat or {}
+    local sandbox = SandboxVars.SVRPChatLocal or SandboxVars.SVRPChat or {}
     if parsedMessage.chatModifier ~= "ooc" and safeHasTrait(myPlayer, "Deaf") and sandbox.EnableDeaf and (not isMe or parsedMessage.fromRecorder) and not isHearAll then
         AC.Parsing.AdjustForDeaf(parsedMessage)
     elseif parsedMessage.chatModifier ~= "ooc" and not AC.Meta.CanUnderstand(parsedMessage.language) and not isHearAll then
@@ -887,7 +900,7 @@ function AC.Handlers.AddPrivateMessage(otherPlayerUsername, message)
     if not parsedMessage.language then
         parsedMessage.language = AC.Meta.GetCurrentLanguage(parsedMessage.playerUsername)
     end
-    local sandbox = SandboxVars.SVRPChat or SandboxVars.SVRPChat or {}
+    local sandbox = SandboxVars.SVRPChatLocal or SandboxVars.SVRPChat or {}
     local isHearAll = AC.CanHearAll(myPlayer)
     if isHearAll then
         -- Skip all hard of hearing, deaf, and language checks

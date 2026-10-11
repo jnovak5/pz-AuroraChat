@@ -6,7 +6,7 @@ option SVRPChatLocal.EnablePM
   default = true,
 
   page = SVRPChatLocal,
-  translation = SVRPChatLocal.EnablePM,
+  translation = AuroraChat_EnablePM,
 }
 
 option SVRPChatLocal.EnableOOC
@@ -15,7 +15,7 @@ option SVRPChatLocal.EnableOOC
   default = true,
 
   page = SVRPChatLocal,
-  translation = SVRPChatLocal.EnableOOC,
+  translation = AuroraChat_EnableOOC,
 }
 
 option SVRPChatLocal.EnableAll
@@ -24,7 +24,7 @@ option SVRPChatLocal.EnableAll
   default = true,
 
   page = SVRPChatLocal,
-  translation = SVRPChatLocal.EnableAll,
+  translation = AuroraChat_EnableAll,
 }
 
 option SVRPChatLocal.EnablePrivate
@@ -33,7 +33,7 @@ option SVRPChatLocal.EnablePrivate
   default = true,
 
   page = SVRPChatLocal,
-  translation = SVRPChatLocal.EnablePrivate,
+  translation = AuroraChat_EnablePrivate,
 }
 
 option SVRPChatLocal.EnableBuffs
@@ -42,7 +42,7 @@ option SVRPChatLocal.EnableBuffs
   default = true,
 
   page = SVRPChatLocal,
-  translation = SVRPChatLocal.EnableBuffs,
+  translation = AuroraChat_EnableBuffs,
 }
 
 option SVRPChatLocal.RangeXYWhisper
@@ -51,7 +51,7 @@ option SVRPChatLocal.RangeXYWhisper
   default = 2,
 
   page = SVRPChatLocal,
-  translation = SVRPChatLocal.RangeXYWhisper,
+  translation = AuroraChat_RangeXYWhisper,
 }
 
 option SVRPChatLocal.RangeZWhisper
@@ -60,7 +60,7 @@ option SVRPChatLocal.RangeZWhisper
   default = 0,
 
   page = SVRPChatLocal,
-  translation = SVRPChatLocal.RangeZWhisper,
+  translation = AuroraChat_RangeZWhisper,
 }
 
 option SVRPChatLocal.RangeXYLow
@@ -69,7 +69,7 @@ option SVRPChatLocal.RangeXYLow
   default = 6,
 
   page = SVRPChatLocal,
-  translation = SVRPChatLocal.RangeXYLow,
+  translation = AuroraChat_RangeXYLow,
 }
 
 option SVRPChatLocal.RangeZLow
@@ -78,7 +78,7 @@ option SVRPChatLocal.RangeZLow
   default = 0,
 
   page = SVRPChatLocal,
-  translation = SVRPChatLocal.RangeZLow,
+  translation = AuroraChat_RangeZLow,
 }
 
 option SVRPChatLocal.RangeXYSay
@@ -87,7 +87,7 @@ option SVRPChatLocal.RangeXYSay
   default = 20,
 
   page = SVRPChatLocal,
-  translation = SVRPChatLocal.RangeXYSay,
+  translation = AuroraChat_RangeXYSay,
 }
 
 option SVRPChatLocal.RangeZSay
@@ -96,7 +96,7 @@ option SVRPChatLocal.RangeZSay
   default = 2,
 
   page = SVRPChatLocal,
-  translation = SVRPChatLocal.RangeZSay,
+  translation = AuroraChat_RangeZSay,
 }
 
 option SVRPChatLocal.RangeXYLoud
@@ -105,7 +105,7 @@ option SVRPChatLocal.RangeXYLoud
   default = 45,
 
   page = SVRPChatLocal,
-  translation = SVRPChatLocal.RangeXYLoud,
+  translation = AuroraChat_RangeXYLoud,
 }
 
 option SVRPChatLocal.RangeZLoud
@@ -114,7 +114,7 @@ option SVRPChatLocal.RangeZLoud
   default = 4,
 
   page = SVRPChatLocal,
-  translation = SVRPChatLocal.RangeZLoud,
+  translation = AuroraChat_RangeZLoud,
 }
 
 option SVRPChatLocal.RangeXYShout
@@ -123,7 +123,7 @@ option SVRPChatLocal.RangeXYShout
   default = 80,
 
   page = SVRPChatLocal,
-  translation = SVRPChatLocal.RangeXYShout,
+  translation = AuroraChat_RangeXYShout,
 }
 
 option SVRPChatLocal.RangeZShout
@@ -132,7 +132,7 @@ option SVRPChatLocal.RangeZShout
   default = 7,
 
   page = SVRPChatLocal,
-  translation = SVRPChatLocal.RangeZShout,
+  translation = AuroraChat_RangeZShout,
 }
 
 option SVRPChatLocal.EnableHardOfHearing
@@ -141,7 +141,7 @@ option SVRPChatLocal.EnableHardOfHearing
   default = false,
 
   page = SVRPChatLocal,
-  translation = SVRPChatLocal.EnableHardOfHearing,
+  translation = AuroraChat_EnableHardOfHearing,
 }
 
 option SVRPChatLocal.EnableDeaf
@@ -150,7 +150,7 @@ option SVRPChatLocal.EnableDeaf
   default = false,
 
   page = SVRPChatLocal,
-  translation = SVRPChatLocal.EnableDeaf,
+  translation = AuroraChat_EnableDeaf,
 }
 
 option SVRPChatLocal.AllowPlayerCoords
@@ -159,7 +159,7 @@ option SVRPChatLocal.AllowPlayerCoords
   default = true,
 
   page = SVRPChatLocal,
-  translation = SVRPChatLocal.AllowPlayerCoords,
+  translation = AuroraChat_AllowPlayerCoords,
 }
 
 option SVRPChatLocal.EnableModCharacter
@@ -168,7 +168,7 @@ option SVRPChatLocal.EnableModCharacter
   default = true,
 
   page = SVRPChatLocal,
-  translation = SVRPChatLocal.EnableModCharacter,
+  translation = AuroraChat_EnableModCharacter,
 }
 
 option SVRPChatLocal.EnableSelfInjury
@@ -177,7 +177,7 @@ option SVRPChatLocal.EnableSelfInjury
   default = true,
 
   page = SVRPChatLocal,
-  translation = SVRPChatLocal.EnableSelfInjury,
+  translation = AuroraChat_EnableSelfInjury,
 }
 
 option SVRPChatLocal.EnableAutoCleanup
@@ -186,7 +186,7 @@ option SVRPChatLocal.EnableAutoCleanup
   default = true,
 
   page = SVRPChatLocal,
-  translation = SVRPChatLocal.EnableAutoCleanup,
+  translation = AuroraChat_EnableAutoCleanup,
 }
 
 option SVRPChatLocal.EnableBioShortDescription
@@ -195,7 +195,7 @@ option SVRPChatLocal.EnableBioShortDescription
   default = true,
 
   page = SVRPChatLocal,
-  translation = SVRPChatLocal.EnableBioShortDescription,
+  translation = AuroraChat_EnableBioShortDescription,
 }
 
 option SVRPChatLocal.EnableVoiceChatter
@@ -204,7 +204,16 @@ option SVRPChatLocal.EnableVoiceChatter
   default = true,
 
   page = SVRPChatLocal,
-  translation = SVRPChatLocal.EnableVoiceChatter,
+  translation = AuroraChat_EnableVoiceChatter,
+}
+
+option SVRPChatLocal.RadioStaticFactor
+{
+  type = integer, min = 0, max = 100,
+  default = 0,
+
+  page = SVRPChatLocal,
+  translation = AuroraChat_RadioStaticFactor,
 }
 
 

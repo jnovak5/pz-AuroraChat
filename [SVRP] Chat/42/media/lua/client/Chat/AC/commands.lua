@@ -332,7 +332,7 @@ function AC.Commands.Help()
 end
 
 function AC.Commands.SendPM(args)
-    local sandbox = SandboxVars.SVRPChat or SandboxVars.SVRPChat or {}
+    local sandbox = SandboxVars.SVRPChatLocal or SandboxVars.SVRPChat or {}
     if not sandbox.EnablePM and not AC.Override(true) then
         AC_Utils.addErrorToChat("Private messages are disabled.")
         return
@@ -687,12 +687,9 @@ function AC.Commands.MedicalCheck(args)
         AC_Utils.addErrorToChat("Player not found or too far. Use /med username")
         return
     end
-    if ISWorldObjectContextMenu.onMedicalCheck then
-        ISWorldObjectContextMenu.onMedicalCheck(nil, player, target)
-    else
-        if luautils.walkAdj(player, target:getSquare()) then
-            ISTimedActionQueue.add(ISMedicalCheckAction:new(player, target))
-        end
+
+    if luautils.walkAdj(player, target:getSquare()) then
+        ISTimedActionQueue.add(ISMedicalCheckAction:new(player, target))
     end
 end
 
@@ -843,7 +840,7 @@ function AC.Commands.SetStatus(args)
 end
 
 function AC.Commands.PrivateChat(args)
-    local sandbox = SandboxVars.SVRPChat or SandboxVars.SVRPChat or {}
+    local sandbox = SandboxVars.SVRPChatLocal or SandboxVars.SVRPChat or {}
     if not sandbox.EnablePrivate then
         AC_Utils.addErrorToChat("Private chat is disabled.")
         return
@@ -874,7 +871,7 @@ function AC.Commands.StopPrivateChat()
 end
 
 function AC.Commands.Coords()
-    local sandbox = SandboxVars.SVRPChat or SandboxVars.SVRPChat or {}
+    local sandbox = SandboxVars.SVRPChatLocal or SandboxVars.SVRPChat or {}
     if not sandbox.AllowPlayerCoords and not AC.Override() then
         AC_Utils.addErrorToChat("Coordinates are disabled.")
         return
@@ -1070,6 +1067,99 @@ function AC.Commands.SetTheme(args)
     end
 end
 
+
 function AC.TabHandlers.ThemeNames(text)
     return AC.TabListHandler({"midnight", "noir", "amber"}, text)
+end
+
+-- ── Admin: Gunshot ─────────────────────────────────────────────
+-- Usage: /gunshot "Username"
+-- Fires a loud gunshot sound at the target player's location, attracting
+-- zombies to that position. Admin only.
+function AC.Commands.Gunshot(args)
+    local player = getPlayer()
+    local isAdmin = false
+    local accessLevel = player and player.getAccessLevel and player:getAccessLevel()
+    if type(accessLevel) == "string" and string.lower(accessLevel) == "admin" then
+        isAdmin = true
+    end
+    if not isClient() and not isServer() then
+        isAdmin = (getDebug and getDebug()) or isAdmin
+    end
+
+    if not isAdmin then
+        if AC_Utils and AC_Utils.addErrorToChat then
+            AC_Utils.addErrorToChat("You must be an admin to use /gunshot.")
+        end
+        return
+    end
+
+    local raw = args and args:gsub("^%s*(.-)%s*$", "%1") or ""
+    -- Strip surrounding quotes if provided
+    if (raw:sub(1,1) == '"' and raw:sub(-1) == '"') or (raw:sub(1,1) == "'" and raw:sub(-1) == "'") then
+        raw = raw:sub(2, -2):gsub("^%s*(.-)%s*$", "%1")
+    end
+
+    if raw == "" then
+        AC_Utils.addErrorToChat('Usage: /gunshot "Username"')
+        return
+    end
+
+    if isClient() then
+        sendClientCommand(player, "AC", "Gunshot", { target = raw })
+    else
+        -- Singleplayer fallback: find player locally
+        local target = getPlayerFromUsername(raw)
+        if not target then
+            AC_Utils.addErrorToChat("Player not found: " .. raw)
+            return
+        end
+        local cell = getCell()
+        local sq = target:getCurrentSquare()
+        if sq then
+            sq:addSound(target, sq:getX(), sq:getY(), sq:getZ(), 40, 40)
+        end
+    end
+
+    AC_Utils.addInfoToChat("<RGB:1.0,0.7,0.2>Gunshot triggered at " .. raw .. "'s position.")
+end
+
+-- ── Admin: Chopper ─────────────────────────────────────────────
+-- Usage: /chopper "Username"
+-- Triggers/steers the vanilla helicopter event to fly toward the target
+-- player's current world position. Admin only.
+function AC.Commands.Chopper(args)
+    local player = getPlayer()
+    local isAdmin = false
+    local accessLevel = player and player.getAccessLevel and player:getAccessLevel()
+    if type(accessLevel) == "string" and string.lower(accessLevel) == "admin" then
+        isAdmin = true
+    end
+    if not isClient() and not isServer() then
+        isAdmin = (getDebug and getDebug()) or isAdmin
+    end
+
+    if not isAdmin then
+        if AC_Utils and AC_Utils.addErrorToChat then
+            AC_Utils.addErrorToChat("You must be an admin to use /chopper.")
+        end
+        return
+    end
+
+    local raw = args and args:gsub("^%s*(.-)%s*$", "%1") or ""
+    -- Strip surrounding quotes if provided
+    if (raw:sub(1,1) == '"' and raw:sub(-1) == '"') or (raw:sub(1,1) == "'" and raw:sub(-1) == "'") then
+        raw = raw:sub(2, -2):gsub("^%s*(.-)%s*$", "%1")
+    end
+
+    if raw == "" then
+        AC_Utils.addErrorToChat('Usage: /chopper "Username"')
+        return
+    end
+
+    if isClient() then
+        sendClientCommand(player, "AC", "Chopper", { target = raw })
+    end
+
+    AC_Utils.addInfoToChat("<RGB:0.3,0.85,1.0>Helicopter event triggered toward " .. raw .. "'s position.")
 end

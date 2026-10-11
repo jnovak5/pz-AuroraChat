@@ -410,4 +410,18 @@ AC.SpecialCommands["/cmsg"] = {
     help = "Broadcast an announcement banner to players within a 50x50 tile area.",
     adminOnly = true,
 }
+AC.SpecialCommands["/gunshot"] = {
+    handler = "Gunshot",
+    tabHandlers = {"Username"},
+    usage = '/gunshot "Username"',
+    help = "Trigger a gunshot sound + zombie attraction at the target player's position. Admin only.",
+    adminOnly = true,
+}
+AC.SpecialCommands["/chopper"] = {
+    handler = "Chopper",
+    tabHandlers = {"Username"},
+    usage = '/chopper "Username"',
+    help = "Trigger the helicopter event toward the target player's position. Admin only.",
+    adminOnly = true,
+}
 
