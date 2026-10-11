@@ -702,7 +702,7 @@ function AC.Meta.CreateActionsContext(context, myPlayer, players)
         medicalOption.notAvailable = true
     end
 
-    local sandbox = SandboxVars.SVRPChatLocal or SandboxVars.SVRPChat or {}
+    local sandbox = SandboxVars.SVRPChat or SandboxVars.SVRPChat or {}
     if sandbox.EnablePrivate then
         if AC.Meta.HasPrivate(true) then
             actionsContext:addOption("Close Private Chat", nil, AC.Commands.StopPrivateChat)
@@ -740,7 +740,7 @@ function AC.Meta.CreateCharacterContext(context, myPlayer)
     end
     characterContext:addOption("Edit Bio", nil, openEditBio)
 
-    local sandbox = SandboxVars.SVRPChatLocal or SandboxVars.SVRPChat or {}
+    local sandbox = SandboxVars.SVRPChat or SandboxVars.SVRPChat or {}
     if sandbox.EnableModCharacter ~= false then
         characterContext:addOption("Set Name", nil, AC.MakeShowDialogPrompt("Input your new name", AC.Commands.SetName))
 
@@ -943,6 +943,41 @@ function AC.Meta.CreateCharacterContext(context, myPlayer)
         injureSelfContext:addSubMenu(ailmentOption, ailmentContext)
         for _, ailment in ipairs(AC.GetAilments()) do
             ailmentContext:addOption(ailment, ailment, AC.Commands.Ailment)
+        end
+    end
+
+    -- In-Game Character Voice Style Selection Submenu
+    if AC.Voice and AC.Voice.NativeVoiceStyles then
+        local isFemale = myPlayer:isFemale()
+        local styleList = isFemale and AC.Voice.NativeVoiceStyles.female or AC.Voice.NativeVoiceStyles.male
+        local currentVoiceId = AC.Voice.GetNativeVoice(myPlayer)
+
+        local voiceOption = characterContext:addOption("Character Voice Style", nil, nil)
+        local voiceContext = characterContext:getNew(characterContext)
+        characterContext:addSubMenu(voiceOption, voiceContext)
+
+        for _, vInfo in ipairs(styleList) do
+            local isSelected = (vInfo.id == currentVoiceId)
+            local label = (isSelected and "[X] " or "[ ] ") .. vInfo.name
+            voiceContext:addOption(label, vInfo.id, function(vid)
+                AC.Voice.SetNativeVoice(myPlayer, vid)
+                AC_Utils.addInfoToChat("Character Voice Style set to: " .. vInfo.name)
+            end)
+        end
+
+        -- Voice Pitch Selection
+        local currentPitchId = AC.Voice.GetNativePitch(myPlayer)
+        local pitchOption = characterContext:addOption("Character Voice Pitch", nil, nil)
+        local pitchContext = characterContext:getNew(characterContext)
+        characterContext:addSubMenu(pitchOption, pitchContext)
+
+        for _, pInfo in ipairs(AC.Voice.NativePitchStyles) do
+            local isSelected = (pInfo.id == currentPitchId)
+            local label = (isSelected and "[X] " or "[ ] ") .. pInfo.name
+            pitchContext:addOption(label, pInfo.id, function(pid)
+                AC.Voice.SetNativePitch(myPlayer, pid)
+                AC_Utils.addInfoToChat("Character Voice Pitch set to: " .. pInfo.name)
+            end)
         end
     end
 end

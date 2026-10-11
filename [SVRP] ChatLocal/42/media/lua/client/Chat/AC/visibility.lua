@@ -3,12 +3,48 @@ if isServer() and not isClient() then return end
 AC = AC or {}
 AC.Visibility = AC.Visibility or {}
 
---- Get the visibility alpha of a player based on their tile's light level
+local function GetSandbox()
+    return (SandboxVars and (SandboxVars.SVRPChatLocal or SandboxVars.SVRPChat)) or {}
+end
+
+--- Check if the local player has an unobstructed line of sight to another player
+--- @param player IsoPlayer
+--- @return boolean
+function AC.Visibility.HasLineOfSight(player)
+    local me = getPlayer()
+    if not me or not player then return false end
+    if player == me then return true end
+    if GetSandbox().NameplateRequireLOS == false then return true end
+
+    -- Verified staff with override enabled can see all
+    if AC.isStaff(me) and not (AC.Meta and AC.Meta.DisableOverride) then
+        return true
+    end
+
+    local square = player:getCurrentSquare()
+    if not square then return false end
+    local playerNum = me:getPlayerNum() or 0
+
+    -- The engine's per-player tile visibility: false for tiles behind walls (no vision cone)
+    if square.isCouldSee and not square:isCouldSee(playerNum) then return false end
+
+    -- Direct line check between the two characters (walls, closed doors)
+    if me.CanSee and not me:CanSee(player) then return false end
+
+    -- The engine hides characters it won't draw for us (HidePlayersBehindYou, sneaking, invisible); follow that
+    if player.getTargetAlpha and player:getTargetAlpha(playerNum) <= 0.01 then return false end
+
+    return true
+end
+
+--- Get the visibility alpha of a player based on line of sight and their tile's light level
 --- @param player IsoPlayer
 --- @return number alpha (0.0 to 1.0)
 function AC.Visibility.GetPlayerAlpha(player)
     if AC.Meta.GetAdminHideOverheads() then return 0.0 end
     if not player then return 1.0 end
+
+    if not AC.Visibility.HasLineOfSight(player) then return 0.0 end
 
     local square = player:getCurrentSquare()
     if not square then return 1.0 end
@@ -17,9 +53,11 @@ function AC.Visibility.GetPlayerAlpha(player)
     -- getLightLevel typically returns a value where 1.0 is bright. In some PZ versions it can be slightly different.
     local lightLevel = square:getLightLevel(playerNum)
 
-    -- Define our thresholds
-    local minLight = 0.25
-    local maxLight = 0.65
+    -- Thresholds from sandbox (percent of full light)
+    local sandbox = GetSandbox()
+    local minLight = (tonumber(sandbox.NameplateDarkLight) or 25) / 100
+    local maxLight = (tonumber(sandbox.NameplateFullLight) or 65) / 100
+    if maxLight <= minLight then maxLight = minLight + 0.01 end
 
     if lightLevel <= minLight then
         return 0.0

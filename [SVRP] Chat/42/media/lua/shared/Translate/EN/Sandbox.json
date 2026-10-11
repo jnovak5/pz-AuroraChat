@@ -27,6 +27,16 @@
     "Sandbox_AuroraChat_EnableSelfInjury_desc": "Allow players to apply injuries to themselves.",
     "Sandbox_AuroraChat_EnableAutoCleanup": "Enable Auto Cleanup",
     "Sandbox_AuroraChat_EnableAutoCleanup_desc": "Allow players to enable auto clean",
-    "Sandbox_AuroraChat_RadioStaticFactor": "Radio Additional Static (%)",
-    "Sandbox_AuroraChat_RadioStaticFactor_desc": "Adds a random percentage of extra static to all received radio chatter."
+    "Sandbox_AuroraChat_EnableBioShortDescription": "Show Short Bio Above Players",
+    "Sandbox_AuroraChat_EnableBioShortDescription_desc": "Show each character's short description as overhead text above them.",
+    "Sandbox_AuroraChat_EnableVoiceChatter": "Enable Voice Chatter",
+    "Sandbox_AuroraChat_EnableVoiceChatter_desc": "Play a short character voice sound when a player speaks in character. Players can still turn it off for themselves.",
+    "Sandbox_AuroraChat_RadioStaticFactor": "Radio Additional Static (%%)",
+    "Sandbox_AuroraChat_RadioStaticFactor_desc": "Adds a random percentage of extra static to all received radio chatter.",
+    "Sandbox_AuroraChat_NameplateRequireLOS": "Nameplates Require Line of Sight",
+    "Sandbox_AuroraChat_NameplateRequireLOS_desc": "Hide overhead names, bios and statuses unless the player's tile is in your view and the game is drawing them (respects HidePlayersBehindYou and sneaking). When off, only the basic wall check is used.",
+    "Sandbox_AuroraChat_NameplateDarkLight": "Nameplate Hidden Light Level (%%)",
+    "Sandbox_AuroraChat_NameplateDarkLight_desc": "At or below this tile light level, overhead names are fully hidden.",
+    "Sandbox_AuroraChat_NameplateFullLight": "Nameplate Full Light Level (%%)",
+    "Sandbox_AuroraChat_NameplateFullLight_desc": "At or above this tile light level, overhead names are fully visible. Between the two values they fade."
 }

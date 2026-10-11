@@ -280,6 +280,7 @@ local function extractSpokenDialogue(text, chatType)
     clean = clean:gsub("%[Recorder%]", "")
     clean = clean:gsub("%[npc%]", "")
     clean = clean:gsub("^%s+", ""):gsub("%s+$", "")
+    clean = clean:gsub("''", '"') -- the chat parser treats '' as a quote mark
 
     -- 1. Check for quoted dialogue ("..." or “...”)
     local quotes = {}
@@ -300,7 +301,7 @@ local function extractSpokenDialogue(text, chatType)
     -- 2. If no quotes are found:
     -- If it's an action/emote command (/me, /do, /it, /emote, /roll, /status, /env, /event) or enclosed in asterisks *...*, there is no spoken dialogue
     local isActionChat = (chatType == "me" or chatType == "do" or chatType == "it" or chatType == "emote")
-        or clean:match("^/me%s") or clean:match("^/do%s") or clean:match("^/it%s")
+        or clean:match("^/me%s") or clean:match("^/m%s") or clean:match("^/do%s") or clean:match("^/it%s")
         or clean:match("^/roll") or clean:match("^/status") or clean:match("^/env") or clean:match("^/event")
         or clean:match("^%*.*%*$")
 
@@ -628,7 +629,7 @@ end
 function AC.Voice.PlayChatVoice(player, chatType, text, isMuffled, pos, username)
     if not AC.Voice.IsEnabled() then return end
 
-    local sandbox = SandboxVars.SVRPChatLocal or SandboxVars.SVRPChat or {}
+    local sandbox = SandboxVars.SVRPChat or SandboxVars.SVRPChat or {}
     if sandbox.EnableVoiceChatter == false then return end
 
     chatType = chatType or "say"

@@ -257,6 +257,14 @@ function AC.Handlers.CommandEntered(message)
         ARU_Utils.setRadioBroadcastingInstant(player, radio, true)
     end
 
+    -- Only in-character speech gets a voice line (not OOC, alerts, /env, sign language or
+    -- /me narration without quoted dialogue)
+    local hasDialogue = parsedMessage.chatModifier == nil
+        or (parsedMessage.chatModifier == "me" and (message:find('"') or message:find('“') or message:find("''")))
+    if hasDialogue and parsedMessage.language ~= "asl" then
+        AC.Handlers.LastVoiceType = parsedMessage.chatType
+    end
+
     if parsedMessage.chatModifier == nil then
         if AC.Meta.IsSaveLastChatEnabled() then
             if parsedMessage.chatType == "say" then
@@ -342,24 +350,31 @@ function AC.Handlers.AddLineInChat(chatMessage, tabID)
         local activeRadio = radios[1]
         
         if activeRadio then
+            -- Guarded calls only: ChatElement is not exposed to Lua, and calling a missing
+            -- Java method inside pcall is still reported as an error.
+            local r, g, b = colorRGB.r, colorRGB.g, colorRGB.b
+            local xyRange = AC.ChatTypes["say"].xyRange
+            local function addDeviceText()
+                local dd = activeRadio.getDeviceData and activeRadio:getDeviceData() or nil
+                if dd and dd.AddDeviceText then
+                    return pcall(dd.AddDeviceText, dd, textToDisplay, r, g, b, "radio", "-1", 30)
+                end
+                return false
+            end
+            local function addOverPlayer()
+                if myPlayer.addLineChatElement then
+                    pcall(myPlayer.addLineChatElement, myPlayer, textToDisplay .. "", r, g, b, UIFont.Dialogue, xyRange, "radio")
+                end
+            end
             if instanceof(activeRadio, "IsoRadio") then
-                local success = pcall(function() activeRadio:addLineChatElement(textToDisplay .. "", colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, AC.ChatTypes["say"].xyRange, "radio") end)
-                if not success then success = pcall(function() activeRadio:getChatElement():addChatLine(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, AC.ChatTypes["say"].xyRange, "radio", true, true, true, true, true, true) end) end
-                if not success then success = pcall(function() activeRadio:getDeviceData():AddDeviceText(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, "radio", "-1", 30) end) end
-                if not success then success = pcall(function() activeRadio:getDeviceData():AddDeviceText(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, "radio", -1, 30) end) end
-                if not success then success = pcall(function() activeRadio:AddDeviceText(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, "radio", "-1", 30) end) end
-                if not success then success = pcall(function() activeRadio:AddDeviceText(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, "radio", -1, 30) end) end
-                if not success then success = pcall(function() activeRadio:getDeviceData():AddDeviceText(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, "radio", "-1") end) end
-                if not success then success = pcall(function() activeRadio:getDeviceData():AddDeviceText(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, "radio", -1) end) end
-                if not success then success = pcall(function() activeRadio:AddDeviceText(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, "radio", "-1") end) end
-                if not success then success = pcall(function() activeRadio:AddDeviceText(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, "radio", -1) end) end
-                if not success then pcall(function() myPlayer:addLineChatElement(textToDisplay .. "", colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, AC.ChatTypes["say"].xyRange, "radio") end) end
+                local success = false
+                if activeRadio.addLineChatElement then
+                    success = pcall(activeRadio.addLineChatElement, activeRadio, textToDisplay .. "", r, g, b, UIFont.Dialogue, xyRange, "radio")
+                end
+                if not success then success = addDeviceText() end
+                if not success then addOverPlayer() end
             elseif instanceof(activeRadio, "VehiclePart") then
-                local success = pcall(function() activeRadio:getVehicle():getChatElement():addChatLine(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, AC.ChatTypes["say"].xyRange, "radio", true, true, true, true, true, true) end)
-                if not success then success = pcall(function() activeRadio:getDeviceData():AddDeviceText(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, "radio", "-1", 30) end) end
-                if not success then success = pcall(function() activeRadio:getDeviceData():AddDeviceText(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, "radio", -1, 30) end) end
-                if not success then success = pcall(function() activeRadio:getDeviceData():AddDeviceText(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, "radio", "-1") end) end
-                if not success then success = pcall(function() activeRadio:getDeviceData():AddDeviceText(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, "radio", -1) end) end
+                if not addDeviceText() then addOverPlayer() end
             else
                 pcall(function() myPlayer:addLineChatElement(textToDisplay .. "", colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, AC.ChatTypes["say"].xyRange, "radio") end)
             end
@@ -540,13 +555,26 @@ function AC.Handlers.AddLineInChat(chatMessage, tabID)
             
             if parsedMessage.activeRadio then
                 local xyRange = (AC.ChatTypes[parsedMessage.chatType] and AC.ChatTypes[parsedMessage.chatType].xyRange) or AC.ChatTypes["say"].xyRange
-                if instanceof(parsedMessage.activeRadio, "IsoRadio") then
-                    local success = pcall(function() parsedMessage.activeRadio:addLineChatElement(textToDisplay .. "", colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, xyRange, "radio") end)
-                    if not success then success = pcall(function() parsedMessage.activeRadio:getChatElement():addChatLine(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, xyRange, "radio", true, true, true, true, true, true) end) end
-                    if not success then pcall(function() parsedMessage.activeRadio:getDeviceData():AddDeviceText(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, "radio", "-1", 30) end) end
-                elseif instanceof(parsedMessage.activeRadio, "VehiclePart") then
-                    local success = pcall(function() parsedMessage.activeRadio:getVehicle():getChatElement():addChatLine(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, UIFont.Dialogue, xyRange, "radio", true, true, true, true, true, true) end)
-                    if not success then pcall(function() parsedMessage.activeRadio:getDeviceData():AddDeviceText(textToDisplay, colorRGB.r, colorRGB.g, colorRGB.b, "radio", "-1", 30) end) end
+                -- zombie.chat.ChatElement is not exposed to Lua (even indexing it throws), so
+                -- radios can only use addLineChatElement when present, else device text.
+                -- Check each method exists first: calling a missing Java method inside pcall
+                -- is still reported as an error.
+                local radio = parsedMessage.activeRadio
+                local r, g, b = colorRGB.r, colorRGB.g, colorRGB.b
+                local function addDeviceText()
+                    local dd = radio.getDeviceData and radio:getDeviceData() or nil
+                    if dd and dd.AddDeviceText then
+                        pcall(dd.AddDeviceText, dd, textToDisplay, r, g, b, "radio", "-1", 30)
+                    end
+                end
+                if instanceof(radio, "IsoRadio") then
+                    local success = false
+                    if radio.addLineChatElement then
+                        success = pcall(radio.addLineChatElement, radio, textToDisplay .. "", r, g, b, UIFont.Dialogue, xyRange, "radio")
+                    end
+                    if not success then addDeviceText() end
+                elseif instanceof(radio, "VehiclePart") then
+                    addDeviceText()
                 end
             end
         end
@@ -979,15 +1007,9 @@ function AC.Handlers.FixWorldRadios(myPlayer, parsedMessage)
                         if data and data:getIsTurnedOn() and data:getChannel() == parsedMessage.radioFrequency then
                             local txt = AC.Meta.GetName(parsedMessage.playerUsername) .. " " .. AC.Parsing.GetTextOnly(parsedMessage)
                             local function addTextSafe(t)
+                                -- ChatElement is not exposed to Lua (indexing it throws); use device text.
                                 local s = false
-                                local vehicle = part:getVehicle()
-                                if vehicle and vehicle.getChatElement then
-                                    local chatElement = vehicle:getChatElement()
-                                    if chatElement and chatElement.addChatLine then
-                                        s = pcall(function() chatElement:addChatLine(t, 0.7, 0.7, 0.7, UIFont.Dialogue, 30, "radio", true, true, true, true, true, true) end)
-                                    end
-                                end
-                                if not s and data and data.AddDeviceText then
+                                if data and data.AddDeviceText then
                                     s = pcall(function() data:AddDeviceText(t, 0.7, 0.7, 0.7, "radio", "-1", 30) end)
                                     if not s then s = pcall(function() data:AddDeviceText(t, 0.7, 0.7, 0.7, "radio", -1, 30) end) end
                                     if not s then s = pcall(function() data:AddDeviceText(t, 0.7, 0.7, 0.7, "radio", "-1") end) end

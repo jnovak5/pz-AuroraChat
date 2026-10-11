@@ -67,49 +67,45 @@ local function canSee(player, otherPlayer, xyRange, zRange)
     return true
 end
 
-local function getChatRangeAndType(text)
-    local sandbox = SandboxVars.SVRPChatLocal or SandboxVars.SVRPChat or {}
-    if not text or text == "" then return "say", (sandbox.RangeXYSay or 20), (sandbox.RangeZSay or 2) end
-    local clean = text:gsub("^%s+", "")
-    if clean:sub(1,1) == "/" then
-        local firstWord = clean:match("^/(%w+)")
-        if firstWord then
-            firstWord = string.lower(firstWord)
-            if firstWord == "whisper" or firstWord == "w" then
-                return "whisper", (sandbox.RangeXYWhisper or 2), (sandbox.RangeZWhisper or 0)
-            elseif firstWord == "low" or firstWord == "l" or firstWord == "quiet" or firstWord == "q" then
-                return "low", (sandbox.RangeXYLow or 6), (sandbox.RangeZLow or 0)
-            elseif firstWord == "say" then
-                return "say", (sandbox.RangeXYSay or 20), (sandbox.RangeZSay or 2)
-            elseif firstWord == "loud" or firstWord == "yell" or firstWord == "y" then
-                return "loud", (sandbox.RangeXYLoud or 45), (sandbox.RangeZLoud or 4)
-            elseif firstWord == "shout" or firstWord == "s" then
-                return "shout", (sandbox.RangeXYShout or 80), (sandbox.RangeZShout or 7)
-            elseif firstWord == "ooc" or firstWord == "all" or firstWord == "roll" or firstWord == "card" or firstWord == "event" or firstWord == "status" or firstWord == "env" or firstWord == "me" or firstWord == "do" or firstWord == "it" or firstWord == "emote" then
-                if firstWord == "me" or firstWord == "do" or firstWord == "it" or firstWord == "emote" then
-                    if clean:find('"') or clean:find('“') then
-                        return "say", (sandbox.RangeXYSay or 20), (sandbox.RangeZSay or 2)
-                    end
-                end
-                return nil, 0, 0
-            end
-        end
+--- Ranges for a spoken chat type; nil for anything that isn't speech
+local function getVoiceRange(chatType)
+    local sandbox = SandboxVars.SVRPChat or SandboxVars.SVRPChat or {}
+    if chatType == "whisper" then
+        return (sandbox.RangeXYWhisper or 2), (sandbox.RangeZWhisper or 0)
+    elseif chatType == "low" then
+        return (sandbox.RangeXYLow or 6), (sandbox.RangeZLow or 0)
+    elseif chatType == "say" then
+        return (sandbox.RangeXYSay or 20), (sandbox.RangeZSay or 2)
+    elseif chatType == "loud" then
+        return (sandbox.RangeXYLoud or 45), (sandbox.RangeZLoud or 4)
+    elseif chatType == "shout" then
+        return (sandbox.RangeXYShout or 80), (sandbox.RangeZShout or 7)
     end
-    return "say", (sandbox.RangeXYSay or 20), (sandbox.RangeZSay or 2)
+    return nil, nil
 end
 
-local function dispatchVoiceChatter(sendingPlayer, text, x, y, z)
-    local sandbox = SandboxVars.SVRPChatLocal or SandboxVars.SVRPChat or {}
+local LastVoiceDispatch = {}
+
+--- @param chatTypeStr string|nil set by the client only for in-character spoken messages
+local function dispatchVoiceChatter(sendingPlayer, text, x, y, z, chatTypeStr)
+    local sandbox = SandboxVars.SVRPChat or SandboxVars.SVRPChat or {}
     if sandbox.EnableVoiceChatter == false then return end
     if not sendingPlayer or not text or text == "" then return end
 
-    local chatTypeStr, xyRange, zRange = getChatRangeAndType(text)
-    if not chatTypeStr or xyRange <= 0 then return end
+    local xyRange, zRange = getVoiceRange(chatTypeStr)
+    if not xyRange or xyRange <= 0 then return end
 
     local onlinePlayers = getOnlinePlayers()
     if not onlinePlayers or onlinePlayers:size() == 0 then return end
 
     local speakerUsername = sendingPlayer:getUsername()
+
+    -- One voice line per message: ignore the same line sent again within 10s
+    local now = getTimestampMs()
+    local last = LastVoiceDispatch[speakerUsername]
+    if last and last.text == text and (now - last.time) < 10000 then return end
+    LastVoiceDispatch[speakerUsername] = { text = text, time = now }
+
     local sx = x or sendingPlayer:getX()
     local sy = y or sendingPlayer:getY()
     local sz = z or sendingPlayer:getZ()
@@ -193,10 +189,10 @@ end
 local function doLog(sendingPlayer, args)
     local username = sendingPlayer:getUsername()
     local forname = sendingPlayer:getDescriptor():getForename()
-    local x, y, z, text, lang = args[1], args[2], args[3], args[4], args[5]
+    local x, y, z, text, lang, voiceType = args[1], args[2], args[3], args[4], args[5], args[6]
     local logMessage = string.format("%s (%s) @ %s,%s,%s: [%s] %s", username, forname, x, y, z, lang, text)
     writeLog("ReadableChat", logMessage)
-    dispatchVoiceChatter(sendingPlayer, text, x, y, z)
+    dispatchVoiceChatter(sendingPlayer, text, x, y, z, voiceType)
 end
 
 local function doPrivateLog(sendingPlayer, args)
@@ -415,7 +411,7 @@ CommandHandlers.PrivateChat = function(sendingPlayer, args)
 end
 
 CommandHandlers.Injure = function(sendingPlayer, args)
-    local sandbox = SandboxVars.SVRPChatLocal or SandboxVars.SVRPChat
+    local sandbox = SandboxVars.SVRPChat or SandboxVars.SVRPChat
     if sandbox and sandbox.EnableSelfInjury == false then
         return
     end
@@ -436,7 +432,7 @@ CommandHandlers.Injure = function(sendingPlayer, args)
 end
 
 CommandHandlers.Ailment = function(sendingPlayer, args)
-    local sandbox = SandboxVars.SVRPChatLocal or SandboxVars.SVRPChat
+    local sandbox = SandboxVars.SVRPChat or SandboxVars.SVRPChat
     if sandbox and sandbox.EnableSelfInjury == false then
         return
     end

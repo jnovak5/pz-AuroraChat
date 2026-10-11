@@ -35,13 +35,14 @@ function AC.Indicator.onCleared(immediately)
     end
 end
 
-function AC.Indicator.doLog(text)
+--- @param voiceType string|nil chat type of an in-character spoken message; nil means no voice line
+function AC.Indicator.doLog(text, voiceType)
     local p = getPlayer()
     local x = math.floor(p:getX())
     local y = math.floor(p:getY())
     local z = math.floor(p:getZ())
     local currentLanguage = AC.Meta.GetCurrentLanguage(p:getUsername())
-    sendClientCommand(getPlayer(), 'AC', 'doLog', {x, y, z, text, currentLanguage})
+    sendClientCommand(getPlayer(), 'AC', 'doLog', {x, y, z, text, currentLanguage, voiceType})
 end
 
 function AC.Indicator.update()

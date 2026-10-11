@@ -374,8 +374,11 @@ Events.OnCreatePlayer.Add(function(playerNum)
     if AC.EnforceUserLimits then AC.EnforceUserLimits(getSpecificPlayer(playerNum)) end 
 
     if playerNum == 0 then
-        local msg = "<RGB:0.35,0.80,1.00> Welcome to S.V.R.P. — Serious Veteran Roleplay. <LINE> <RGB:0.85,0.85,0.85> Current Year: 2027. <RGB:0.85,0.85,0.85> <LINE> Thirty-three years have passed since the first outbreak of ANUMEUCOR-5L. <LINE> <LINE> <RGB:1.00,0.85,0.35> The world did not end. It survived long enough to begin falling apart again. <RGB:0.85,0.85,0.85> Humanity rebuilt after the First Collapse. Governments, cities, trade routes, hospitals, and protected settlements returned across the surviving world.<LINE> <RGB:0.85,0.85,0.85> Your character begins within the Knox County Safe Zone, a functioning population center where civilian life continued for decades. <LINE> <RGB:1.00,0.45,0.35> Now communications are failing, checkpoints are falling silent, and ANUMEUCOR-5L has returned to Knox County.<LINE> <LINE> <RGB:1.00,0.75,0.25> Please read World Lore before beginning roleplay.<LINE> <RGB:0.35,0.80,1.00> Survivor Radio operates on 100 MHz.  <LINE> <RGB:0.85,0.85,0.85> Use the Gear icon to customize chat and voice settings. <RGB:0.85,0.85,0.85> Submit all support requests through the Discord Ticket Panel. <LINE> <LINE> <RGB:0.35,0.80,1.00> Your character inherited a rebuilt world. What remains of it will be shaped through roleplay. <LINE> <LINE><RGB:0.62,0.78,0.20>TEMPORARY ENVRIONMENTAL EFFECT: RADIO COMMUNICATIONS DEGRADED. SIGNAL LOSS AND INTERFERENCE EXPECTED. <LINE>"
-        
+        local msg = ""
+        pcall(function()
+            local opt = getServerOptions():getOptionByName("ServerWelcomeMessage")
+            if opt then msg = opt:getValue() end
+        end)
         if msg and msg ~= "" then
             -- Ensure all line breaks are uniformly formatted for ISRichTextPanel
             msg = msg:gsub("<line>", " <LINE> ")

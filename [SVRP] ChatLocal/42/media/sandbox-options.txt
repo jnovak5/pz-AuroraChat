@@ -216,6 +216,29 @@ option SVRPChatLocal.RadioStaticFactor
   translation = AuroraChat_RadioStaticFactor,
 }
 
+option SVRPChatLocal.NameplateRequireLOS
+{
+  type = boolean,
+  default = true,
 
+  page = SVRPChatLocal,
+  translation = AuroraChat_NameplateRequireLOS,
+}
 
+option SVRPChatLocal.NameplateDarkLight
+{
+  type = integer, min = 0, max = 100,
+  default = 25,
 
+  page = SVRPChatLocal,
+  translation = AuroraChat_NameplateDarkLight,
+}
+
+option SVRPChatLocal.NameplateFullLight
+{
+  type = integer, min = 0, max = 100,
+  default = 65,
+
+  page = SVRPChatLocal,
+  translation = AuroraChat_NameplateFullLight,
+}

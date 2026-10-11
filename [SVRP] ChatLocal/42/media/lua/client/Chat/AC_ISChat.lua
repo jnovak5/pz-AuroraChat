@@ -152,14 +152,31 @@ AC.ISChatOriginal.createChildren = AC.ISChatOriginal.createChildren or ISChat.cr
 function ISChat:createChildren()
     AC.ISChatOriginal.createChildren(self)
     self.textEntry:setMaxTextLength(1250)
+    self.textEntry.onPressUp = ISChat.onPressUp
+    self.textEntry.onPressDown = ISChat.onPressDown
 
     local btnWid = 20
     local btnHgt = 16
     local btnGap = 4
     local rightX = self.gearButton and self.gearButton:getX() or (self.width - 26)
 
+    -- 0. Roleplay & Character Button
+    local rpX = rightX - btnWid - btnGap
+    self.roleplayButton = ISButton:new(rpX, 1, btnWid, btnHgt, "", self, ISChat.onRoleplayButtonClick)
+    self.roleplayButton.anchorRight = true
+    self.roleplayButton.anchorLeft = false
+    self.roleplayButton:initialise()
+    self.roleplayButton.borderColor.a = 0.0
+    self.roleplayButton.backgroundColor.a = 0.0
+    self.roleplayButton.backgroundColorMouseOver.a = 0.3
+    self.roleplayButton:setImage(getTexture("media/ui/AC_user.png"))
+    self.roleplayButton.tooltip = "Roleplay Actions & Character"
+    self.roleplayButton:setUIName("open roleplay manager")
+    self:addChild(self.roleplayButton)
+    self.roleplayButton:setVisible(true)
+
     -- 1. Mute Typing Button
-    local muteX = rightX - btnWid - btnGap
+    local muteX = rpX - btnWid - btnGap
     self.muteTypingButton = ISButton:new(muteX, 1, btnWid, btnHgt, "", self, ISChat.onMuteTypingButtonClick)
     self.muteTypingButton.anchorRight = true
     self.muteTypingButton.anchorLeft = false
@@ -243,6 +260,21 @@ function ISChat:createChildren()
     self:addChild(self.combatDiceButton)
     self.combatDiceButton:setVisible(true)
 
+    -- 6. Help Button
+    local helpX = diceX - btnWid - btnGap
+    self.helpButton = ISButton:new(helpX, 1, btnWid, btnHgt, "", self, function() if AC.OpenHelpUI then AC.OpenHelpUI() end end)
+    self.helpButton.anchorRight = true
+    self.helpButton.anchorLeft = false
+    self.helpButton:initialise()
+    self.helpButton.borderColor.a = 0.0
+    self.helpButton.backgroundColor.a = 0.0
+    self.helpButton.backgroundColorMouseOver.a = 0.3
+    self.helpButton:setImage(getTexture("media/ui/AC_info.png"))
+    self.helpButton.tooltip = "Chat Help & Features Guide"
+    self.helpButton:setUIName("open chat help")
+    self:addChild(self.helpButton)
+    self.helpButton:setVisible(true)
+
     -- 5. Scroll To Bottom Button
     self.scrollToBottomButton = ISButton:new(self.width - 20, self.height - self.textEntry.height - 30, 20, 16, "", self, ISChat.onScrollToBottomClick)
     self.scrollToBottomButton.anchorRight = true
@@ -261,7 +293,7 @@ function ISChat:createChildren()
 
     -- Gear button tooltip
     if self.gearButton then
-        self.gearButton.tooltip = "Chat Settings & Roleplay Actions"
+        self.gearButton.tooltip = "Chat Settings"
     end
 
     self.groundHighlighter = GroundHightlighter:new()
@@ -336,6 +368,13 @@ function ISChat:onGearButtonClick()
     AC.ISChatOriginal.onGearButtonClick(self)
     local context = getPlayerContextMenu(0)
     if context then
+        -- Fix vanilla placement (which tries to center it or place it weirdly)
+        -- by snapping it exactly under the gear button
+        local btnX = self:getAbsoluteX() + self.gearButton:getX()
+        local btnY = self:getAbsoluteY() + self.gearButton:getY() + self.gearButton:getHeight()
+        context:setX(btnX)
+        context:setY(btnY)
+
         local myPlayer = getPlayer()
         local isStaff = AC_Utils and AC_Utils.isStaff and AC_Utils.isStaff(myPlayer)
 
@@ -362,13 +401,26 @@ function ISChat:onGearButtonClick()
         end
 
         local players = getOnlinePlayers()
-        AC.Meta.CreateCombatContext(context)
-        AC.Meta.CreateActionsContext(context, myPlayer, players)
-        AC.Meta.CreateCharacterContext(context, myPlayer)
         AC.Meta.CreateChatSettingsContext(context)
         if isStaff and AC.Override(true) then
             AC.Meta.CreateAdminContext(context, myPlayer, players)
         end
+    end
+end
+
+function ISChat:onRoleplayButtonClick()
+    -- Mirror exactly how the vanilla gear button opens its context menu.
+    -- ISContextMenu.get creates a fresh menu at the given screen position.
+    -- Hardcode player 0 — self.playerNum is nil on ISChat (it is not a player panel).
+    local btnX = self:getAbsoluteX() + self.roleplayButton:getX()
+    local btnY = self:getAbsoluteY() + self.roleplayButton:getY()
+    local context = ISContextMenu.get(0, btnX, btnY)
+    if context then
+        local myPlayer = getPlayer()
+        local players = getOnlinePlayers()
+        AC.Meta.CreateCombatContext(context)
+        AC.Meta.CreateActionsContext(context, myPlayer, players)
+        AC.Meta.CreateCharacterContext(context, myPlayer)
     end
 end
 
@@ -420,6 +472,8 @@ end
 AC.ISChatOriginal.focus = AC.ISChatOriginal.focus or ISChat.focus
 function ISChat:focus()
     AC.ISChatOriginal.focus(self)
+    if self.chatText then self.chatText.logIndex = 0 end
+    self.historyDraft = nil
     if self.chatDraft and self.chatDraft ~= "" then
         self.textEntry:setText(self.chatDraft)
         ISChat.onTextChange()
@@ -438,11 +492,18 @@ function ISChat:onCommandEntered()
 
     AC.Indicator.onCleared(true)
     local currentTabId = ISChat.instance.tabs[ISChat.instance.currentTabID].tabID
-    if currentTabId ~= AC.PrivateTabId then
-        AC.Indicator.doLog(text)
-    end
 
-    if AC.Handlers.SpecialCommand(text) or AC.Handlers.CommandEntered(text) or AC.Handlers.IsOutdated(text) then
+    AC.Handlers.LastVoiceType = nil
+    local handled = AC.Handlers.SpecialCommand(text) or AC.Handlers.CommandEntered(text) or AC.Handlers.IsOutdated(text)
+
+    -- Log after handling so only messages actually spoken in character carry a voice line
+    -- (commands, staff/OOC chat and rejected messages stay silent)
+    if currentTabId ~= AC.PrivateTabId then
+        AC.Indicator.doLog(text, AC.Handlers.LastVoiceType)
+    end
+    AC.Handlers.LastVoiceType = nil
+
+    if handled then
         ISChat.instance:logChatCommand(text)
         ISChat.instance:unfocus()
         ISChat.instance.chatDraft = ""
@@ -454,6 +515,67 @@ function ISChat:onCommandEntered()
     AC.ISChatOriginal.onCommandEntered(self or ISChat.instance)
     ISChat.instance.chatDraft = ""
 end
+
+-- True when the box holds something the player typed, not just a command prefix like "/me "
+local function hasTypedText(text)
+    if not text then return false end
+    local trimmed = text:gsub("^%s+", ""):gsub("%s+$", "")
+    return trimmed ~= "" and not trimmed:match("^/%S*$")
+end
+
+-- Up/Down browse sent-message history. Vanilla overwrites whatever is in the box, so a stray
+-- arrow key wipes an unsent message. Only browse when nothing typed would be lost, and bring
+-- back what was in the box when the player arrows down past the newest entry.
+function ISChat:onPressUp()
+    local chat = ISChat.instance
+    local chatText = chat.chatText
+    if not chatText or not chatText.log or #chatText.log == 0 then return end
+
+    local text = chat.textEntry:getText()
+    if chatText.logIndex == 0 then
+        if hasTypedText(text) then return end
+        chat.historyDraft = text
+    elseif text ~= chatText.log[chatText.logIndex] then
+        return -- player edited a recalled message; keep the edit
+    end
+
+    chatText.logIndex = math.min(chatText.logIndex + 1, #chatText.log)
+    if chatText.log[chatText.logIndex] then
+        chat.textEntry:setText(chatText.log[chatText.logIndex])
+    end
+end
+
+function ISChat:onPressDown()
+    local chat = ISChat.instance
+    local chatText = chat.chatText
+    if not chatText or not chatText.log or chatText.logIndex == 0 then return end
+
+    local text = chat.textEntry:getText()
+    if text ~= chatText.log[chatText.logIndex] then
+        return -- player edited a recalled message; keep the edit
+    end
+
+    chatText.logIndex = chatText.logIndex - 1
+    if chatText.logIndex > 0 and chatText.log[chatText.logIndex] then
+        chat.textEntry:setText(chatText.log[chatText.logIndex])
+    else
+        chatText.logIndex = 0
+        chat.textEntry:setText(chat.historyDraft or "")
+        chat.historyDraft = nil
+    end
+end
+
+-- The game only ignores hotkeys while a text box is its active text entry. If another text box
+-- takes that slot and then releases it, the chat box still shows as typing but nothing is
+-- active, so keys reach the game too (E opens doors, etc.). Take the slot back in that case.
+local function keepChatTextEntryActive()
+    local chat = ISChat.instance
+    if not chat or not ISChat.focused or not chat.textEntry then return end
+    if not chat:isReallyVisible() or not chat.textEntry:isFocused() then return end
+    if getCore():isDoingTextEntry() then return end
+    chat.textEntry:focus()
+end
+Events.OnTick.Add(keepChatTextEntryActive)
 
 function ISChat:onMuteTypingButtonClick()
     AC.Indicator.muteTyping = not AC.Indicator.muteTyping
